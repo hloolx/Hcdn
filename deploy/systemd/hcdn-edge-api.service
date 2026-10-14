@@ -1,0 +1,26 @@
+[Unit]
+Description=Hcdn control plane API (EdgeAPI)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=hcdn
+Group=hcdn
+WorkingDirectory=/opt/hcdn/edge-api
+ExecStart=/opt/hcdn/edge-api/bin/edge-api
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65535
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/opt/hcdn
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+
+[Install]
+WantedBy=multi-user.target

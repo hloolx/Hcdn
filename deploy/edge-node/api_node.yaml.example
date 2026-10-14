@@ -1,0 +1,7 @@
+# /opt/hcdn/edge-node/configs/api_node.yaml  (mode 0600)
+rpc.endpoints: [ "https://api.example.com:8004" ]
+rpc.caFile: "/opt/hcdn/edge-node/configs/ca.pem"   # trust only the control plane CA
+# rpc.serverName: "api.example.com"               # when the endpoint is an IP not in the certificate
+rpc.disableUpdate: true                            # never adopt API addresses pushed by the server
+nodeId: "<node unique id>"
+secret: "<node secret>"

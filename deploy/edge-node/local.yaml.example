@@ -1,0 +1,10 @@
+# /opt/hcdn/edge-node/configs/local.yaml  (node-local, never synced from the control plane)
+listen:
+  remap:
+    - port: 443                # sites keep listening on :443 in the control plane...
+      addr: "127.0.0.1:10443"  # ...but this node binds here, behind the L4 router
+      proxyProtocol: true      # PROXY v1/v2 header required
+  proxyProtocolTrusted: ["127.0.0.1/32"]
+  proxyProtocolHeaderTimeout: 2s
+firewall:
+  kernel: false                # app-level blocking only; don't add kernel drop rules on shared servers

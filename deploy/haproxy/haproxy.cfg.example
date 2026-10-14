@@ -1,0 +1,36 @@
+# TCP 443 SNI router for an edge server that also hosts another TLS service.
+# Connections whose SNI is listed in the "reserved" ACL go to that local service;
+# everything else (including connections without SNI) goes to the edge node.
+# Both backends receive a PROXY protocol v2 header with the real client address.
+global
+    log /dev/log local0 warning
+    maxconn 20000
+    user haproxy
+    group haproxy
+    stats socket /run/haproxy/admin.sock mode 600 level admin
+
+defaults
+    log global
+    mode tcp
+    option dontlognull
+    timeout connect 5s
+    timeout client 1h
+    timeout server 1h
+    timeout tunnel 4h
+    timeout client-fin 30s
+    timeout server-fin 30s
+
+frontend tls_443
+    bind 0.0.0.0:443
+    # bind :::443 v6only          # uncomment when the server has public IPv6
+    tcp-request inspect-delay 5s
+    tcp-request content accept if { req.ssl_hello_type 1 }
+    use_backend reserved if { req.ssl_sni -i reserved.example.com }
+    default_backend edge
+
+backend reserved
+    server local 127.0.0.1:20443 send-proxy-v2
+
+backend edge
+    # edge-node: configs/local.yaml remaps port 443 to this address and requires PROXY headers
+    server edge 127.0.0.1:10443 send-proxy-v2

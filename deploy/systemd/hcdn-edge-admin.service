@@ -1,0 +1,26 @@
+[Unit]
+Description=Hcdn legacy admin (EdgeAdmin) - keep it on loopback, reach it through an SSH tunnel
+After=network-online.target hcdn-edge-api.service
+Wants=network-online.target hcdn-edge-api.service
+
+[Service]
+Type=simple
+User=hcdn
+Group=hcdn
+WorkingDirectory=/opt/hcdn/edge-admin
+ExecStart=/opt/hcdn/edge-admin/bin/edge-admin
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65535
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/opt/hcdn
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+
+[Install]
+WantedBy=multi-user.target

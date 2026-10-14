@@ -1,0 +1,30 @@
+[Unit]
+Description=Hcdn edge node
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Unprivileged: binding :80 only needs CAP_NET_BIND_SERVICE. Run as root only if you
+# need kernel firewall integration (configs/local.yaml firewall.kernel: true).
+User=hcdn-node
+Group=hcdn-node
+WorkingDirectory=/opt/hcdn/edge-node
+ExecStart=/opt/hcdn/edge-node/bin/edge-node
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=1048576
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/opt/hcdn/edge-node
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+MemoryMax=512M
+
+[Install]
+WantedBy=multi-user.target
