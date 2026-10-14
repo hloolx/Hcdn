@@ -45,6 +45,9 @@ type App struct {
 	userAPI  *http.ServeMux
 	adminAPI *http.ServeMux
 
+	dnsMu    sync.Mutex
+	dnsCache map[int64]dnsCacheEntry
+
 	regionMu      sync.Mutex
 	regionByID    map[int64]region
 	regionByCode  map[string]int64
@@ -70,6 +73,7 @@ func New(cfg *config.Config, st *store.Store, edge *edgeapi.Client, log *slog.Lo
 		csrf:     &httpx.CSRF{Secure: cfg.CookieSecure()},
 		globalRL: httpx.NewLimiter(cfg.RateLimit.GlobalRPS, cfg.RateLimit.GlobalRPS*4),
 		authRL:   httpx.NewLimiter(cfg.RateLimit.AuthPerMinute/60, cfg.RateLimit.AuthPerMinute),
+		dnsCache: map[int64]dnsCacheEntry{},
 	}
 	if st != nil {
 		a.sessions = st

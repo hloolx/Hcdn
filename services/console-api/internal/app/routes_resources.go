@@ -3,37 +3,66 @@ package app
 import "net/http"
 
 func (a *App) routesUserResources(m *http.ServeMux, p string) {
+	u := a.user
 	ni := a.notImplemented
-	for _, pat := range []string{
-		"GET /overview", "GET /stats",
-		"GET /sites", "POST /sites", "GET /sites/{id}", "PATCH /sites/{id}", "DELETE /sites/{id}",
-		"PUT /sites/{id}/domains", "PUT /sites/{id}/origins", "POST /sites/{id}/dns-check",
-		"GET /sites/{id}/https", "PUT /sites/{id}/https", "GET /sites/{id}/cache", "PUT /sites/{id}/cache",
-		"GET /sites/{id}/security", "PUT /sites/{id}/security", "GET /logs",
-		"GET /certs", "POST /certs", "DELETE /certs/{id}", "POST /certs/acme", "GET /certs/acme/{id}",
-		"POST /cache/purge", "POST /cache/preheat", "GET /cache/tasks", "GET /cache/quota",
-		"PUT /account", "PUT /account/password", "GET /account/access-keys", "POST /account/access-keys",
-		"PATCH /account/access-keys/{id}", "DELETE /account/access-keys/{id}", "GET /account/activity",
-	} {
-		method, path, _ := cut(pat)
-		m.HandleFunc(method+" "+p+path, ni)
+	routes := map[string]http.HandlerFunc{
+		"GET /overview": u(a.overview),
+		"GET /stats":    u(a.statsH),
+		"GET /logs":     u(a.logs),
+
+		"GET /sites":                       u(a.listSites),
+		"POST /sites":                      u(a.createSite),
+		"GET /sites/{id}":                  u(a.getSite),
+		"PATCH /sites/{id}":                u(a.updateSite),
+		"DELETE /sites/{id}":               u(a.deleteSite),
+		"PUT /sites/{id}/domains":          u(a.updateDomains),
+		"PUT /sites/{id}/origins":          u(a.updateOrigins),
+		"POST /sites/{id}/dns-check":       u(a.dnsCheck),
+		"GET /sites/{id}/https":            u(a.getHTTPS),
+		"PUT /sites/{id}/https":            u(a.putHTTPS),
+		"GET /sites/{id}/cache":            u(a.getCache),
+		"PUT /sites/{id}/cache":            u(a.putCache),
+		"GET /sites/{id}/security":         ni,
+		"PUT /sites/{id}/security":         ni,
+		"GET /certs":                       ni,
+		"POST /certs":                      ni,
+		"DELETE /certs/{id}":               ni,
+		"POST /certs/acme":                 ni,
+		"GET /certs/acme/{id}":             ni,
+		"POST /cache/purge":                ni,
+		"POST /cache/preheat":              ni,
+		"GET /cache/tasks":                 ni,
+		"GET /cache/quota":                 ni,
+		"PUT /account":                     ni,
+		"PUT /account/password":            ni,
+		"GET /account/access-keys":         ni,
+		"POST /account/access-keys":        ni,
+		"PATCH /account/access-keys/{id}":  ni,
+		"DELETE /account/access-keys/{id}": ni,
+		"GET /account/activity":            ni,
 	}
+	register(m, p, routes)
 }
 
 func (a *App) routesAdminResources(m *http.ServeMux, p string) {
 	ni := a.notImplemented
-	for _, pat := range []string{
-		"GET /dashboard",
-		"GET /nodes", "GET /nodes/{id}", "POST /nodes", "PATCH /nodes/{id}", "DELETE /nodes/{id}",
-		"GET /clusters", "POST /clusters", "PATCH /clusters/{id}", "PUT /clusters/{id}/dns",
-		"GET /users", "POST /users", "PATCH /users/{id}", "POST /users/{id}/reset-password", "DELETE /users/{id}",
-		"GET /sites", "PATCH /sites/{id}", "GET /certs",
-		"GET /dns/providers", "POST /dns/providers", "DELETE /dns/providers/{id}",
-		"GET /dns/domains", "POST /dns/domains", "POST /dns/domains/{id}/sync",
-		"GET /settings", "PUT /settings", "GET /audit-logs",
-	} {
+	routes := map[string]http.HandlerFunc{
+		"GET /dashboard": ni,
+		"GET /nodes":     ni, "GET /nodes/{id}": ni, "POST /nodes": ni, "PATCH /nodes/{id}": ni, "DELETE /nodes/{id}": ni,
+		"GET /clusters": ni, "POST /clusters": ni, "PATCH /clusters/{id}": ni, "PUT /clusters/{id}/dns": ni,
+		"GET /users": ni, "POST /users": ni, "PATCH /users/{id}": ni, "POST /users/{id}/reset-password": ni, "DELETE /users/{id}": ni,
+		"GET /sites": ni, "PATCH /sites/{id}": ni, "GET /certs": ni,
+		"GET /dns/providers": ni, "POST /dns/providers": ni, "DELETE /dns/providers/{id}": ni,
+		"GET /dns/domains": ni, "POST /dns/domains": ni, "POST /dns/domains/{id}/sync": ni,
+		"GET /settings": ni, "PUT /settings": ni, "GET /audit-logs": ni,
+	}
+	register(m, p, routes)
+}
+
+func register(m *http.ServeMux, prefix string, routes map[string]http.HandlerFunc) {
+	for pat, h := range routes {
 		method, path, _ := cut(pat)
-		m.HandleFunc(method+" "+p+path, ni)
+		m.HandleFunc(method+" "+prefix+path, h)
 	}
 }
 

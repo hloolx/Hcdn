@@ -267,6 +267,7 @@ type SiteMeta struct {
 	ServerID     int64
 	UserID       int64
 	AutoCert     bool
+	ForceHTTPS   bool
 	DNSCheckedAt int64
 	DNSOK        bool
 	DNSChecks    []DNSCheck
@@ -278,7 +279,7 @@ func (s *Store) SiteMetas(ctx context.Context, ids []int64) (map[int64]*SiteMeta
 	if len(ids) == 0 {
 		return out, nil
 	}
-	q, args := inClause("SELECT server_id, user_id, auto_cert, dns_checked_at, dns_ok, dns_checks FROM site_meta WHERE server_id IN ", ids)
+	q, args := inClause("SELECT server_id, user_id, auto_cert, force_https, dns_checked_at, dns_ok, dns_checks FROM site_meta WHERE server_id IN ", ids)
 	rows, err := s.DB.QueryContext(ctx, q, args...)
 	if err != nil {
 		return out, err
@@ -286,13 +287,13 @@ func (s *Store) SiteMetas(ctx context.Context, ids []int64) (map[int64]*SiteMeta
 	defer rows.Close()
 	for rows.Next() {
 		m := &SiteMeta{}
-		var auto, ok int
+		var auto, force, ok int
 		var checked sql.NullInt64
 		var checks sql.NullString
-		if err := rows.Scan(&m.ServerID, &m.UserID, &auto, &checked, &ok, &checks); err != nil {
+		if err := rows.Scan(&m.ServerID, &m.UserID, &auto, &force, &checked, &ok, &checks); err != nil {
 			return out, err
 		}
-		m.AutoCert, m.DNSOK, m.DNSCheckedAt = auto == 1, ok == 1, checked.Int64
+		m.AutoCert, m.ForceHTTPS, m.DNSOK, m.DNSCheckedAt = auto == 1, force == 1, ok == 1, checked.Int64
 		if checks.Valid && checks.String != "" {
 			_ = json.Unmarshal([]byte(checks.String), &m.DNSChecks)
 		}
@@ -301,15 +302,25 @@ func (s *Store) SiteMetas(ctx context.Context, ids []int64) (map[int64]*SiteMeta
 	return out, rows.Err()
 }
 
-// SetSiteAutoCert stores the autoCert flag.
-func (s *Store) SetSiteAutoCert(ctx context.Context, serverID, userID int64, on bool) error {
-	v := 0
-	if on {
-		v = 1
-	}
-	_, err := s.DB.ExecContext(ctx, `INSERT INTO site_meta (server_id, user_id, auto_cert) VALUES (?, ?, ?)
-ON DUPLICATE KEY UPDATE auto_cert = VALUES(auto_cert)`, serverID, userID, v)
+// SetSiteOptions stores the autoCert / forceHTTPS wishes of a site.
+func (s *Store) SetSiteOptions(ctx context.Context, serverID, userID int64, autoCert, forceHTTPS bool) error {
+	_, err := s.DB.ExecContext(ctx, `INSERT INTO site_meta (server_id, user_id, auto_cert, force_https) VALUES (?, ?, ?, ?)
+ON DUPLICATE KEY UPDATE auto_cert = VALUES(auto_cert), force_https = VALUES(force_https)`, serverID, userID, b2i(autoCert), b2i(forceHTTPS))
 	return err
+}
+
+// ResetSiteDNS marks a site as not yet DNS-verified (after a domain change).
+func (s *Store) ResetSiteDNS(ctx context.Context, serverID, userID int64) error {
+	_, err := s.DB.ExecContext(ctx, `INSERT INTO site_meta (server_id, user_id, dns_ok) VALUES (?, ?, 0)
+ON DUPLICATE KEY UPDATE dns_ok = 0, dns_checked_at = NULL, dns_checks = NULL`, serverID, userID)
+	return err
+}
+
+func b2i(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
 }
 
 // SetSiteDNS stores a DNS check result.

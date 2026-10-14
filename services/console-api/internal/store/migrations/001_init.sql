@@ -73,6 +73,7 @@ CREATE TABLE IF NOT EXISTS site_meta (
   server_id      BIGINT      NOT NULL,
   user_id        BIGINT      NOT NULL,
   auto_cert      TINYINT     NOT NULL DEFAULT 0,
+  force_https    TINYINT     NOT NULL DEFAULT 0,
   dns_checked_at BIGINT      NULL,
   dns_ok         TINYINT     NOT NULL DEFAULT 0,
   dns_checks     MEDIUMTEXT  NULL,
