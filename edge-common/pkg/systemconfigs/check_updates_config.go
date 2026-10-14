@@ -10,6 +10,6 @@ type CheckUpdatesConfig struct {
 
 func NewCheckUpdatesConfig() *CheckUpdatesConfig {
 	return &CheckUpdatesConfig{
-		AutoCheck: true,
+		AutoCheck: false,
 	}
 }
