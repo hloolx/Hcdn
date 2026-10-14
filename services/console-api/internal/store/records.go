@@ -409,3 +409,29 @@ func nullStr(s string) any {
 	}
 	return s
 }
+
+// ---------------------------------------------------------------- access key meta
+
+// RecordAccessKey remembers when console-api created an access key.
+func (s *Store) RecordAccessKey(ctx context.Context, keyID, userID int64, now time.Time) error {
+	_, err := s.DB.ExecContext(ctx, "INSERT IGNORE INTO access_key_meta (key_id, user_id, created_at) VALUES (?, ?, ?)", keyID, userID, now.Unix())
+	return err
+}
+
+// AccessKeyCreated returns creation times for a user's keys.
+func (s *Store) AccessKeyCreated(ctx context.Context, userID int64) (map[int64]int64, error) {
+	out := map[int64]int64{}
+	rows, err := s.DB.QueryContext(ctx, "SELECT key_id, created_at FROM access_key_meta WHERE user_id = ?", userID)
+	if err != nil {
+		return out, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id, t int64
+		if err := rows.Scan(&id, &t); err != nil {
+			return out, err
+		}
+		out[id] = t
+	}
+	return out, rows.Err()
+}

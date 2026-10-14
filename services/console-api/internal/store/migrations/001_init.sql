@@ -95,3 +95,11 @@ CREATE TABLE IF NOT EXISTS acme_jobs (
   PRIMARY KEY (id),
   KEY idx_user (user_id, id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS access_key_meta (
+  key_id     BIGINT NOT NULL COMMENT 'EdgeAPI edgeUserAccessKeys.id',
+  user_id    BIGINT NOT NULL,
+  created_at BIGINT NOT NULL,
+  PRIMARY KEY (key_id),
+  KEY idx_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

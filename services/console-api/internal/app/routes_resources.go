@@ -4,7 +4,6 @@ import "net/http"
 
 func (a *App) routesUserResources(m *http.ServeMux, p string) {
 	u := a.user
-	ni := a.notImplemented
 	routes := map[string]http.HandlerFunc{
 		"GET /overview": u(a.overview),
 		"GET /stats":    u(a.statsH),
@@ -33,13 +32,13 @@ func (a *App) routesUserResources(m *http.ServeMux, p string) {
 		"POST /cache/preheat":              u(a.preheat),
 		"GET /cache/tasks":                 u(a.cacheTasks),
 		"GET /cache/quota":                 u(a.cacheQuotaH),
-		"PUT /account":                     ni,
-		"PUT /account/password":            ni,
-		"GET /account/access-keys":         ni,
-		"POST /account/access-keys":        ni,
-		"PATCH /account/access-keys/{id}":  ni,
-		"DELETE /account/access-keys/{id}": ni,
-		"GET /account/activity":            ni,
+		"PUT /account":                     u(a.updateProfile),
+		"PUT /account/password":            u(a.changePassword),
+		"GET /account/access-keys":         u(a.listAccessKeys),
+		"POST /account/access-keys":        u(a.createAccessKey),
+		"PATCH /account/access-keys/{id}":  u(a.updateAccessKey),
+		"DELETE /account/access-keys/{id}": u(a.deleteAccessKey),
+		"GET /account/activity":            u(a.activity),
 	}
 	register(m, p, routes)
 }
