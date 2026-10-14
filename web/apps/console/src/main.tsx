@@ -13,6 +13,9 @@ import { router } from "./routes";
 
 async function enableMocks() {
   if (import.meta.env.MODE !== "mock") return;
+  // `?mock=empty|error` switches the demo data scenario for this tab (see mocks/handlers.ts).
+  const scenario = new URLSearchParams(window.location.search).get("mock");
+  if (scenario != null) sessionStorage.setItem("hcdn-mock", scenario);
   const { setupWorker } = await import("msw/browser");
   const { handlers } = await import("./mocks/handlers");
   await setupWorker(...handlers).start({ onUnhandledRequest: "bypass", quiet: true });

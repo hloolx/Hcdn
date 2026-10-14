@@ -41,6 +41,7 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   const [typed, setTyped] = React.useState("");
   const [busy, setBusy] = React.useState(false);
+  const phraseRef = React.useRef<HTMLInputElement>(null);
   React.useEffect(() => {
     if (!open) {
       setTyped("");
@@ -64,7 +65,15 @@ export function ConfirmDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={(v) => !busy && onOpenChange(v)}>
-      <AlertDialogContent>
+      <AlertDialogContent
+        onOpenAutoFocus={(e) => {
+          // Radix focuses Cancel by default; with a typed confirmation the input must get focus.
+          if (confirmPhrase != null) {
+            e.preventDefault();
+            phraseRef.current?.focus();
+          }
+        }}
+      >
         <AlertDialogHeader>
           <div className="flex items-start gap-3">
             {destructive ? (
@@ -87,7 +96,20 @@ export function ConfirmDialog({
                 </>
               )}
             </p>
-            <Input value={typed} onChange={(e) => setTyped(e.target.value)} autoFocus autoComplete="off" spellCheck={false} />
+            <Input
+              ref={phraseRef}
+              value={typed}
+              onChange={(e) => setTyped(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  void handleConfirm();
+                }
+              }}
+              aria-label={confirmPhrase}
+              autoComplete="off"
+              spellCheck={false}
+            />
           </div>
         ) : null}
         <AlertDialogFooter>
