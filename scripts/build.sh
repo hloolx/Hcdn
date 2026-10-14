@@ -233,43 +233,35 @@ mkdir -p "$ADMIN_DIST/bin" "$ADMIN_DIST/configs" "$ADMIN_DIST/logs"
 cp -R "$REPO/edge-admin/web" "$ADMIN_DIST/"
 cp "$REPO/edge-admin/build/configs/server.template.yaml" "$ADMIN_DIST/configs/"
 
-# Generate components.src.js the way upstream does ("edge-admin generate"),
-# but against the staged copy of web/ so the source tree is never modified.
-# TeaGo resolves its web root from $PWD (the nearest dir holding a go.mod)
-# when the program runs from a "go run" binary named "main"; a marker go.mod
-# in the staging dir pins that root to the staged copy.
-log "generating components.src.js (go run ... generate) ..."
+# The tracked components.js / utils.min.js are packaged as they are. The
+# upstream build regenerated components.src.js with "edge-admin generate",
+# but the open-source component sources only reproduce 226 of the 247
+# components upstream committed, so regenerating would drop components that
+# admin pages still reference. HCDN_REGENERATE_COMPONENTS=1 restores the
+# upstream step (against the staged copy; the source tree is never modified).
 JS_STAGE="$ADMIN_DIST/web/public/js"
-rm -f "$JS_STAGE/components.src.js"
-: >"$ADMIN_DIST/go.mod"
-(
-	cd "$REPO/edge-admin"
-	env CGO_ENABLED=0 PWD="$(native "$ADMIN_DIST")" \
-		go run -trimpath -tags "$TAGS" ./cmd/edge-admin/main.go generate
-)
-rm -f "$ADMIN_DIST/go.mod"
-rm -rf "$ADMIN_DIST/build"
-[ -s "$JS_STAGE/components.src.js" ] || die "generate step did not produce components.src.js"
-
-# Report whether a clean checkout regenerates the tracked file byte for byte.
-# (The tracked file is not modified; the package always uses fresh output.)
-TRACKED_SRC="$REPO/edge-admin/web/public/js/components.src.js"
-if cmp -s "$TRACKED_SRC" "$JS_STAGE/components.src.js"; then
-	log "generate: regenerated components.src.js is identical to the tracked file"
+if [ "${HCDN_REGENERATE_COMPONENTS:-0}" = "1" ]; then
+	# TeaGo resolves its web root from $PWD (the nearest dir holding a go.mod)
+	# when the program runs from a "go run" binary named "main"; a marker go.mod
+	# in the staging dir pins that root to the staged copy.
+	log "regenerating components.src.js (go run ... generate) ..."
+	rm -f "$JS_STAGE/components.src.js"
+	: >"$ADMIN_DIST/go.mod"
+	(
+		cd "$REPO/edge-admin"
+		env CGO_ENABLED=0 PWD="$(native "$ADMIN_DIST")" \
+			go run -trimpath -tags "$TAGS" ./cmd/edge-admin/main.go generate
+	)
+	rm -f "$ADMIN_DIST/go.mod"
+	rm -rf "$ADMIN_DIST/build"
+	[ -s "$JS_STAGE/components.src.js" ] || die "generate step did not produce components.src.js"
+	cp "$JS_STAGE/components.src.js" "$JS_STAGE/components.js"
+	cp "$JS_STAGE/utils.js" "$JS_STAGE/utils.min.js"
 else
-	echo "WARNING: edge-admin/web/public/js/components.src.js differs from the regenerated output;"
-	echo "         the package uses the regenerated file. Summary (tracked => regenerated):"
-	git -C "$REPO" diff --no-index --stat=120 -- "$TRACKED_SRC" "$JS_STAGE/components.src.js" | sed 's/^/    /' || true
+	log "packaging tracked components.js and utils.min.js (no regeneration)"
+	[ -s "$JS_STAGE/components.js" ] || die "tracked web/public/js/components.js is missing"
+	[ -s "$JS_STAGE/utils.min.js" ] || die "tracked web/public/js/utils.min.js is missing"
 fi
-
-# Upstream fallback when uglifyjs is absent: plain copies. uglifyjs is never
-# used here so the output does not depend on the installed minifier.
-cp "$JS_STAGE/components.src.js" "$JS_STAGE/components.js"
-cp "$JS_STAGE/utils.js" "$JS_STAGE/utils.min.js"
-for f in components.js utils.min.js; do
-	cmp -s "$REPO/edge-admin/web/public/js/$f" "$JS_STAGE/$f" ||
-		echo "NOTE: packaged web/public/js/$f (unminified copy) differs from the tracked $f"
-done
 
 if [ -d "$ADMIN_DIST/web/tmp" ]; then
 	find "$ADMIN_DIST/web/tmp" -mindepth 1 -delete
