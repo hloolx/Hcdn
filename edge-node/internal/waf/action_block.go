@@ -1,10 +1,12 @@
 package waf
 
 import (
+	"errors"
 	"github.com/TeaOSLab/EdgeCommon/pkg/serverconfigs/firewallconfigs"
 	teaconst "github.com/TeaOSLab/EdgeNode/internal/const"
 	"github.com/TeaOSLab/EdgeNode/internal/utils"
 	"github.com/TeaOSLab/EdgeNode/internal/utils/bytepool"
+	"github.com/TeaOSLab/EdgeNode/internal/utils/safepath"
 	"github.com/TeaOSLab/EdgeNode/internal/waf/requests"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/logs"
@@ -123,9 +125,18 @@ func (this *BlockAction) Perform(waf *WAF, group *RuleGroup, set *RuleSet, reque
 				_, _ = io.CopyBuffer(writer, resp.Body, buf.Bytes)
 				bytepool.Pool1k.Put(buf)
 			} else {
+				// 本地文件只允许读取 Tea.Root/pages/ 目录之内的内容，防止通过配置
+				// 一个任意的（相对或绝对）路径读取节点上的任意文件。
+				var pagesDir = filepath.Clean(Tea.Root + string(os.PathSeparator) + "pages")
 				var path = this.URL
 				if !filepath.IsAbs(this.URL) {
-					path = Tea.Root + string(os.PathSeparator) + path
+					path = pagesDir + string(os.PathSeparator) + path
+				}
+				path = filepath.Clean(path)
+
+				if !safepath.Contains(pagesDir, path) {
+					logs.Error(errors.New("block action: ignoring 'url' outside of '" + pagesDir + "': " + this.URL))
+					return PerformResult{}
 				}
 
 				data, err := os.ReadFile(path)
