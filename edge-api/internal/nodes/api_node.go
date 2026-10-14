@@ -140,6 +140,10 @@ func (this *APINode) Start() {
 	this.processTableNames()
 	dbs.NotifyReady()
 
+	// 封存历史明文/弱加密的敏感数据（证书私钥、SSH安装凭据、数据库节点口令）
+	this.setProgress("DATABASE", "正在加密迁移历史敏感数据")
+	this.migrateSealedSecrets()
+
 	// 设置时区
 	this.setProgress("TIMEZONE", "正在设置时区")
 	this.setupTimeZone()

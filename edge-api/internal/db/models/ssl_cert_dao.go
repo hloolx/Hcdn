@@ -6,11 +6,13 @@ import (
 	"errors"
 	dbutils "github.com/TeaOSLab/EdgeAPI/internal/db/utils"
 	"github.com/TeaOSLab/EdgeAPI/internal/utils"
+	"github.com/TeaOSLab/EdgeAPI/internal/utils/sealed"
 	"github.com/TeaOSLab/EdgeCommon/pkg/serverconfigs/shared"
 	"github.com/TeaOSLab/EdgeCommon/pkg/serverconfigs/sslconfigs"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/dbs"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/types"
 	timeutil "github.com/iwind/TeaGo/utils/time"
 	"regexp"
@@ -24,6 +26,36 @@ const (
 )
 
 type SSLCertDAO dbs.DAO
+
+// sealCertKeyData seals certificate private key material for storage so it
+// is never written to the database in clear. Empty input is left empty.
+func sealCertKeyData(keyData []byte) ([]byte, error) {
+	if len(keyData) == 0 {
+		return keyData, nil
+	}
+	sealedValue, err := sealed.Seal(keyData)
+	if err != nil {
+		return nil, err
+	}
+	return []byte(sealedValue), nil
+}
+
+// openCertKeyData decrypts sealed certificate private key material for use:
+// building node configs, or returning it to an authorized owner. Legacy rows
+// written before sealing was introduced are plain PEM bytes and pass through
+// unchanged. A decryption failure (corruption/tampering/wrong key) is logged
+// and treated as "no key available" rather than returned as ciphertext.
+func openCertKeyData(keyData []byte) []byte {
+	if len(keyData) == 0 {
+		return keyData
+	}
+	plain, err := sealed.Open(string(keyData))
+	if err != nil {
+		logs.Println("[SSL_CERT]failed to open sealed keyData: " + err.Error())
+		return nil
+	}
+	return plain
+}
 
 func NewSSLCertDAO() *SSLCertDAO {
 	return dbs.NewDAO(&SSLCertDAO{
@@ -79,7 +111,9 @@ func (this *SSLCertDAO) FindEnabledSSLCert(tx *dbs.Tx, id int64) (*SSLCert, erro
 	if result == nil {
 		return nil, err
 	}
-	return result.(*SSLCert), err
+	var cert = result.(*SSLCert)
+	cert.KeyData = openCertKeyData(cert.KeyData)
+	return cert, err
 }
 
 // FindSSLCertName 根据主键查找名称
@@ -102,7 +136,12 @@ func (this *SSLCertDAO) CreateCert(tx *dbs.Tx, adminId int64, userId int64, isOn
 	op.ServerName = serverName
 	op.IsCA = isCA
 	op.CertData = certData
-	op.KeyData = keyData
+
+	sealedKeyData, err := sealCertKeyData(keyData)
+	if err != nil {
+		return 0, err
+	}
+	op.KeyData = sealedKeyData
 	op.TimeBeginAt = timeBeginAt
 	op.TimeEndAt = timeEndAt
 
@@ -152,7 +191,9 @@ func (this *SSLCertDAO) UpdateCert(tx *dbs.Tx,
 		return nil
 	}
 	var oldCert = oldOne.(*SSLCert)
-	var dataIsChanged = !bytes.Equal(certData, oldCert.CertData) || !bytes.Equal(keyData, oldCert.KeyData)
+	// 旧keyData存储的是封存后的数据，这里用解封后的明文与新提交的明文比较，
+	// 以保持"是否变更"的判断语义不变
+	var dataIsChanged = !bytes.Equal(certData, oldCert.CertData) || !bytes.Equal(keyData, openCertKeyData(oldCert.KeyData))
 
 	var op = NewSSLCertOperator()
 	op.Id = certId
@@ -167,7 +208,11 @@ func (this *SSLCertDAO) UpdateCert(tx *dbs.Tx,
 		op.CertData = certData
 	}
 	if len(keyData) > 0 {
-		op.KeyData = keyData
+		sealedKeyData, sealErr := sealCertKeyData(keyData)
+		if sealErr != nil {
+			return sealErr
+		}
+		op.KeyData = sealedKeyData
 	}
 
 	op.TimeBeginAt = timeBeginAt
@@ -491,6 +536,9 @@ func (this *SSLCertDAO) ListCertsToUpdateOCSP(tx *dbs.Tx, maxTries int, size int
 		Limit(size).
 		Slice(&result).
 		FindAll()
+	for _, cert := range result {
+		cert.KeyData = openCertKeyData(cert.KeyData)
+	}
 	return
 }
 
@@ -679,6 +727,49 @@ func (this *SSLCertDAO) NotifyUpdate(tx *dbs.Tx, certId int64) error {
 
 	// TODO 通知用户节点、API节点、管理系统（将来实现选择）更新
 
+	return nil
+}
+
+// MigrateLegacyKeyData 将历史明文keyData批量封存为实例密钥加密后的数据。
+// 幂等：已封存的记录不再匹配过滤条件，重复执行（例如每次启动）代价很小。
+// 仅记录处理的数量，不记录证书或密钥内容。
+func (this *SSLCertDAO) MigrateLegacyKeyData(tx *dbs.Tx) error {
+	const batchSize = 200
+	var total = 0
+	for {
+		var rows []*SSLCert
+		_, err := this.Query(tx).
+			Result("id", "keyData").
+			Where("keyData IS NOT NULL AND LENGTH(keyData) > 0 AND keyData NOT LIKE :prefixPattern").
+			Param("prefixPattern", sealed.Prefix+"%").
+			Limit(batchSize).
+			Slice(&rows).
+			FindAll()
+		if err != nil {
+			return err
+		}
+		if len(rows) == 0 {
+			break
+		}
+
+		for _, row := range rows {
+			sealedKeyData, sealErr := sealCertKeyData(row.KeyData)
+			if sealErr != nil {
+				return sealErr
+			}
+			updateErr := this.Query(tx).
+				Pk(row.Id).
+				Set("keyData", sealedKeyData).
+				UpdateQuickly()
+			if updateErr != nil {
+				return updateErr
+			}
+			total++
+		}
+	}
+	if total > 0 {
+		logs.Println("[SSL_CERT]sealed " + types.String(total) + " legacy certificate key(s)")
+	}
 	return nil
 }
 
