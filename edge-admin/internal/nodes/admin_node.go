@@ -14,7 +14,6 @@ import (
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/maps"
-	"github.com/iwind/TeaGo/rands"
 	"github.com/iwind/TeaGo/types"
 	"github.com/iwind/gosock/pkg/gosock"
 	"gopkg.in/yaml.v3"
@@ -28,6 +27,9 @@ import (
 	"syscall"
 	"time"
 )
+
+// secretFileName 存放genSecret()生成的secret的文件名，位于管理端自己的配置目录下（0600）
+const secretFileName = "secret.key"
 
 var SharedAdminNode *AdminNode = nil
 
@@ -354,14 +356,19 @@ func (this *AdminNode) startAPINode() {
 }
 
 // 生成Secret
+//
+// 存放位置从世界可写的os.TempDir()（/tmp/edge-admin-secret.tmp，0666）移到了
+// 管理端自己的配置目录下（0600），避免本机任意用户读取/篡改这个用来签发CSRF
+// 密钥等用途的secret（见FIX-16/审计ADMIN-06）。随机数来源也从math/rand换成了
+// crypto/rand（utils.RandomString）。
 func (this *AdminNode) genSecret() string {
-	tmpFile := os.TempDir() + "/edge-admin-secret.tmp"
-	data, err := os.ReadFile(tmpFile)
+	secretFile := Tea.ConfigFile(secretFileName)
+	data, err := os.ReadFile(secretFile)
 	if err == nil && len(data) == 32 {
 		return string(data)
 	}
-	secret := rands.String(32)
-	_ = os.WriteFile(tmpFile, []byte(secret), 0666)
+	secret := utils.RandomString(32)
+	_ = os.WriteFile(secretFile, []byte(secret), 0600)
 	return secret
 }
 

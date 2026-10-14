@@ -3,8 +3,8 @@
 package access
 
 import (
+	"github.com/TeaOSLab/EdgeAdmin/internal/utils"
 	"github.com/TeaOSLab/EdgeAdmin/internal/web/actions/actionutils"
-	"github.com/iwind/TeaGo/rands"
 )
 
 type RandomAction struct {
@@ -12,7 +12,7 @@ type RandomAction struct {
 }
 
 func (this *RandomAction) RunPost(params struct{}) {
-	this.Data["random"] = rands.HexString(32)
+	this.Data["random"] = utils.RandomHexString(32)
 
 	this.Success()
 }

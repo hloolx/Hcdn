@@ -19,7 +19,6 @@ import (
 	"github.com/TeaOSLab/EdgeCommon/pkg/rpc/pb"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
-	"github.com/iwind/TeaGo/rands"
 	stringutil "github.com/iwind/TeaGo/utils/string"
 	"github.com/xlzd/gotp"
 	"time"
@@ -133,7 +132,7 @@ func (this *OtpAction) RunPost(params struct {
 	}
 
 	// 写入SESSION
-	var localSid = rands.HexString(32)
+	var localSid = utils.RandomHexString(32)
 	this.Data["localSid"] = localSid
 	this.Data["ip"] = loginutils.RemoteIP(&this.ActionObject)
 	params.Auth.StoreAdmin(adminId, params.Remember, localSid)

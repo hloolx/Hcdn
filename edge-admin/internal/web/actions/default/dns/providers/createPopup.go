@@ -5,12 +5,12 @@
 package providers
 
 import (
+	"github.com/TeaOSLab/EdgeAdmin/internal/utils"
 	"github.com/TeaOSLab/EdgeAdmin/internal/web/actions/actionutils"
 	"github.com/TeaOSLab/EdgeCommon/pkg/langs/codes"
 	"github.com/TeaOSLab/EdgeCommon/pkg/rpc/pb"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/maps"
-	"github.com/iwind/TeaGo/rands"
 )
 
 type CreatePopupAction struct {
@@ -39,7 +39,7 @@ func (this *CreatePopupAction) RunGet(params struct{}) {
 	this.Data["types"] = typeMaps
 
 	// 自动生成CustomHTTP私钥
-	this.Data["paramCustomHTTPSecret"] = rands.HexString(32)
+	this.Data["paramCustomHTTPSecret"] = utils.RandomHexString(32)
 
 	// EdgeDNS集群列表
 	this.Data["nsClusters"] = []maps.Map{}

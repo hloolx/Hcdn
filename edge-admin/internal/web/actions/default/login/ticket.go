@@ -3,11 +3,11 @@
 package login
 
 import (
+	"github.com/TeaOSLab/EdgeAdmin/internal/utils"
 	"github.com/TeaOSLab/EdgeAdmin/internal/web/actions/actionutils"
 	"github.com/TeaOSLab/EdgeAdmin/internal/web/actions/default/index/loginutils"
 	"github.com/TeaOSLab/EdgeAdmin/internal/web/helpers"
 	"github.com/TeaOSLab/EdgeCommon/pkg/rpc/pb"
-	"github.com/iwind/TeaGo/rands"
 )
 
 type TicketAction struct {
@@ -60,7 +60,7 @@ func (this *TicketAction) RunGet(params struct {
 		return
 	}
 
-	var localSid = rands.HexString(32)
+	var localSid = utils.RandomHexString(32)
 	this.Data["localSid"] = localSid
 	this.Data["ip"] = currentIP
 

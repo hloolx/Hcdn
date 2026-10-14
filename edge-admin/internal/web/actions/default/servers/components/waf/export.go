@@ -3,12 +3,12 @@ package waf
 import (
 	"encoding/json"
 	"github.com/TeaOSLab/EdgeAdmin/internal/ttlcache"
+	"github.com/TeaOSLab/EdgeAdmin/internal/utils"
 	"github.com/TeaOSLab/EdgeAdmin/internal/web/actions/actionutils"
 	"github.com/TeaOSLab/EdgeCommon/pkg/langs/codes"
 	"github.com/TeaOSLab/EdgeCommon/pkg/rpc/dao"
 	"github.com/TeaOSLab/EdgeCommon/pkg/serverconfigs/firewallconfigs"
 	"github.com/iwind/TeaGo/actions"
-	"github.com/iwind/TeaGo/rands"
 	"time"
 )
 
@@ -125,7 +125,7 @@ func (this *ExportAction) RunPost(params struct {
 		return
 	}
 
-	key := "waf." + rands.HexString(32)
+	key := "waf." + utils.RandomHexString(32)
 	ttlcache.DefaultCache.Write(key, configJSON, time.Now().Unix()+600)
 
 	this.Data["key"] = key

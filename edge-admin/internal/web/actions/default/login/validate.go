@@ -3,10 +3,10 @@
 package login
 
 import (
+	"github.com/TeaOSLab/EdgeAdmin/internal/utils"
 	"github.com/TeaOSLab/EdgeAdmin/internal/web/actions/actionutils"
 	"github.com/TeaOSLab/EdgeAdmin/internal/web/actions/default/index/loginutils"
 	"github.com/iwind/TeaGo/actions"
-	"github.com/iwind/TeaGo/rands"
 	"net"
 )
 
@@ -61,7 +61,7 @@ func (this *ValidateAction) RunPost(params struct {
 
 		// renew ip and local sid
 		var newIP = loginutils.RemoteIP(&this.ActionObject)
-		var newLocalSid = rands.HexString(32)
+		var newLocalSid = utils.RandomHexString(32)
 
 		this.Session().Write("@ip", newIP)
 		this.Session().Write("@localSid", newLocalSid)

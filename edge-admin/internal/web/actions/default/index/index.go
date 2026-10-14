@@ -21,7 +21,6 @@ import (
 	"github.com/TeaOSLab/EdgeCommon/pkg/systemconfigs"
 	"github.com/iwind/TeaGo/actions"
 	"github.com/iwind/TeaGo/lists"
-	"github.com/iwind/TeaGo/rands"
 	"github.com/iwind/TeaGo/types"
 	stringutil "github.com/iwind/TeaGo/utils/string"
 	"net"
@@ -36,8 +35,8 @@ type IndexAction struct {
 
 // 首页（登录页）
 
-// TokenKey 加密用的密钥
-var TokenKey = stringutil.Rand(32)
+// TokenKey 加密用的密钥（crypto/rand生成，见FIX-16）
+var TokenKey = utils.RandomString(32)
 
 func (this *IndexAction) RunGet(params struct {
 	From string
@@ -234,7 +233,7 @@ func (this *IndexAction) RunPost(params struct {
 
 	// 写入SESSION
 	var currentIP = loginutils.RemoteIP(&this.ActionObject)
-	var localSid = rands.HexString(32)
+	var localSid = utils.RandomHexString(32)
 	this.Data["localSid"] = localSid
 	this.Data["ip"] = currentIP
 	params.Auth.StoreAdmin(adminId, params.Remember, localSid)
