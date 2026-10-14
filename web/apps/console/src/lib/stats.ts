@@ -27,6 +27,8 @@ export function timeLabel(step: number, locale: string) {
   return (t: number) => {
     const d = new Date(t * 1000);
     if (step >= 86400) return d.toLocaleDateString(locale, { month: "2-digit", day: "2-digit" });
+    // Multi-day ranges with sub-day buckets: the date matters more than the hour.
+    if (step >= 3 * 3600) return `${d.toLocaleDateString(locale, { month: "2-digit", day: "2-digit" })} ${String(d.getHours()).padStart(2, "0")}:00`;
     return d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit", hour12: false });
   };
 }

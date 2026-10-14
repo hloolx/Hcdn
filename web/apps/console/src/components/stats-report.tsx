@@ -134,7 +134,7 @@ export function TrafficChartCard({ report, loading, className }: { report?: Stat
         ]
       : [{ key: "bandwidthBps", label: t("平均带宽"), color: ENTITY_COLORS.total }];
   const fmt = metric === "bytes" ? (v: number) => formatBytes(v) : (v: number) => formatBits(v);
-  const fmtAxis = metric === "bytes" ? (v: number) => nb(formatBytes(v, 0)) : (v: number) => nb(formatBits(v, 0));
+  const fmtAxis = metric === "bytes" ? (v: number) => nb(formatBytes(v, 1).replace(".0 ", " ")) : (v: number) => nb(formatBits(v, 1).replace(".0 ", " "));
   return (
     <ChartCard
       className={className}
@@ -256,7 +256,7 @@ export function HitRatioChartCard({ report, loading, className, height = 240 }: 
   const { t } = useTranslation();
   const locale = currentLocale();
   const step = report?.step ?? 3600;
-  const data = React.useMemo(() => (report?.series ?? []).map((p) => ({ t: p.t, ratio: p.requests ? p.cachedRequests / p.requests : 0 })), [report]);
+  const data = React.useMemo(() => (report?.series ?? []).map((p) => ({ t: p.t, ratio: p.requests ? (p.cachedRequests / p.requests) * 100 : 0 })), [report]);
   const ratio = hitRatio(report?.totals);
   return (
     <ChartCard
@@ -279,8 +279,8 @@ export function HitRatioChartCard({ report, loading, className, height = 240 }: 
           height={height}
           data={data}
           series={[{ key: "ratio", label: t("缓存命中率"), color: ENTITY_COLORS.cached }]}
-          formatValue={(v) => formatPercent(v)}
-          formatAxisValue={(v) => formatPercent(v, 0)}
+          formatValue={(v) => `${v.toFixed(1)}%`}
+          formatAxisValue={(v) => `${Math.round(v)}%`}
           formatTime={timeLabel(step, locale)}
           formatTooltipTime={tooltipTimeLabel(step, locale)}
         />
@@ -299,11 +299,14 @@ function ListSkeleton({ rows }: { rows: number }) {
   );
 }
 
-export function StatusCodesCard({ report, loading, className, showRatio = true }: { report?: StatsReport; loading: boolean; className?: string; showRatio?: boolean }) {
+export function StatusCodesCard({ report, loading, className, footer = "ratio" }: { report?: StatsReport; loading: boolean; className?: string; footer?: "ratio" | "errors" }) {
   const { t } = useTranslation();
   const locale = currentLocale();
   const ratio = hitRatio(report?.totals);
   const total = (report?.statusCodes ?? []).reduce((a, s) => a + s.count, 0);
+  const errors = (report?.statusCodes ?? []).filter((s) => s.code === "4xx" || s.code === "5xx").reduce((a, s) => a + s.count, 0);
+  const errorRate = total ? errors / total : null;
+  const serverErrors = report?.statusCodes.find((s) => s.code === "5xx")?.count ?? 0;
   return (
     <Card className={className}>
       <CardHeader>
@@ -331,7 +334,23 @@ export function StatusCodesCard({ report, loading, className, showRatio = true }
             emptyText={t("暂无数据")}
           />
         )}
-        {showRatio ? (
+        {footer === "errors" ? (
+          <div className="rounded-lg border bg-subtle p-3">
+            <Meter
+              value={errorRate ?? 0}
+              tone={errorRate != null && errorRate > 0.1 ? "danger" : "warning"}
+              label={
+                <>
+                  <span>{t("错误率（4xx + 5xx）")}</span>
+                  <span className="font-medium text-foreground tabular">{errorRate == null ? "—" : formatPercent(errorRate, 2)}</span>
+                </>
+              }
+            />
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+              {total && serverErrors / total > 0.01 ? t("5xx 偏高，通常意味着源站响应慢或不可用，请检查源站。") : t("4xx 多为访客请求了不存在的页面或被安全规则拦截。")}
+            </p>
+          </div>
+        ) : (
           <div className="rounded-lg border bg-subtle p-3">
             <Meter
               value={ratio ?? 0}
@@ -347,7 +366,7 @@ export function StatusCodesCard({ report, loading, className, showRatio = true }
               {ratio != null && ratio < 0.5 ? t("命中率偏低，可为静态资源配置更长的缓存时间。") : t("命中的请求直接由边缘节点响应，不再回源。")}
             </p>
           </div>
-        ) : null}
+        )}
       </CardContent>
     </Card>
   );
