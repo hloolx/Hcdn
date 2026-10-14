@@ -594,7 +594,17 @@ func (this *NodeConfig) Save() error {
 		return err
 	}
 
-	return os.WriteFile(Tea.ConfigFile("node.json"), append(headerData, encodedData...), 0777)
+	// node.json contains the node secret and the full server configs (including TLS private
+	// keys), so it must not be world/group readable. Use 0600 and, since os.WriteFile() does not
+	// change the mode of a pre-existing file, explicitly chmod it in case it was created by an
+	// older build that used 0777.
+	var configPath = Tea.ConfigFile("node.json")
+	err = os.WriteFile(configPath, append(headerData, encodedData...), 0600)
+	if err != nil {
+		return err
+	}
+	_ = os.Chmod(configPath, 0600)
+	return nil
 }
 
 // PaddedId 获取填充后的ID

@@ -84,6 +84,14 @@ func (this *APIConfig) WriteFile(path string) error {
 	if err != nil {
 		return err
 	}
-	err = os.WriteFile(path, data, 0666)
-	return err
+
+	// This file contains the node's RPC auth secret, so it must not be world/group readable.
+	// os.WriteFile() does not change the mode of a pre-existing file, so also chmod it
+	// explicitly in case it was created by an older build that used 0666.
+	err = os.WriteFile(path, data, 0600)
+	if err != nil {
+		return err
+	}
+	_ = os.Chmod(path, 0600)
+	return nil
 }
