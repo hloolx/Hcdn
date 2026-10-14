@@ -1,0 +1,20 @@
+{
+  "name": "hcdn-web",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.34.5",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev:site": "pnpm --filter @hcdn/site dev",
+    "dev:console": "pnpm --filter @hcdn/console dev",
+    "dev:admin": "pnpm --filter @hcdn/admin dev",
+    "build": "pnpm --filter \"./apps/*\" build",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "playwright-core": "1.64.1",
+    "typescript": "5.9.3"
+  }
+}
