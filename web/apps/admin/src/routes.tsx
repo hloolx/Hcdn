@@ -27,6 +27,8 @@ export const router = createBrowserRouter([
       { path: "sites", lazy: () => import("@/pages/sites").then((m) => ({ Component: m.SitesPage })) },
       { path: "certs", lazy: () => import("@/pages/certs").then((m) => ({ Component: m.CertsPage })) },
       { path: "dns", lazy: () => import("@/pages/dns").then((m) => ({ Component: m.DnsPage })) },
+      { path: "settings", lazy: () => import("@/pages/settings").then((m) => ({ Component: m.SettingsPage })) },
+      { path: "audit-logs", lazy: () => import("@/pages/audit-logs").then((m) => ({ Component: m.AuditLogsPage })) },
       { path: "*", element: <NotFoundPage /> },
     ],
   },
