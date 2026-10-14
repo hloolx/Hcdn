@@ -1204,6 +1204,15 @@ func (this *HTTPRequest) addVarMapping(varMapping map[string]string) {
 }
 
 // 获取请求的客户端地址
+//
+// 安全说明（FIX-07）：默认情况下，本方法只信任TCP连接的对端地址（RawReq.RemoteAddr），
+// 不会采信 X-Forwarded-For / X-Real-IP 等请求头 —— 这些请求头可以被任何直连客户端
+// 任意伪造，如果被当作真实IP用于WAF名单匹配、限流、封禁、访问日志等场景，会被绕过。
+// 只有站点在"获取客户端IP方式"（web.RemoteAddr）中显式开启(IsOn)并指定了Header或
+// 变量来源时，才会从对应Header/变量中读取客户端地址 —— 这是管理员的显式信任声明，
+// 通常用于节点前面还有受信任的反向代理/负载均衡的场景。
+// 如果请求是经由我们自己的四层转发节点接入的，真实客户端地址会通过PROXY Protocol
+// 在TCP层传递并写入 lnRemoteAddr，优先级最高，不受上述限制影响。
 func (this *HTTPRequest) requestRemoteAddr(supportVar bool) string {
 	if len(this.lnRemoteAddr) > 0 {
 		return this.lnRemoteAddr
@@ -1233,7 +1242,7 @@ func (this *HTTPRequest) requestRemoteAddr(supportVar bool) string {
 			}
 		}
 
-		// 如果是从Header中读取，则直接返回原始IP
+		// 如果是从Header中读取，但是没有解析出合法IP，则直接返回原始TCP地址
 		if this.web.RemoteAddr.Type == serverconfigs.HTTPRemoteAddrTypeRequestHeader {
 			var remoteAddr = this.RawReq.RemoteAddr
 			host, _, err := net.SplitHostPort(remoteAddr)
@@ -1246,48 +1255,7 @@ func (this *HTTPRequest) requestRemoteAddr(supportVar bool) string {
 		}
 	}
 
-	// X-Forwarded-For
-	var forwardedFor = this.RawReq.Header.Get("X-Forwarded-For")
-	if len(forwardedFor) > 0 {
-		commaIndex := strings.Index(forwardedFor, ",")
-		if commaIndex > 0 {
-			forwardedFor = forwardedFor[:commaIndex]
-		}
-		if net.ParseIP(forwardedFor) != nil {
-			if supportVar {
-				this.remoteAddr = forwardedFor
-			}
-			return forwardedFor
-		}
-	}
-
-	// Real-IP
-	{
-		realIP, ok := this.RawReq.Header["X-Real-IP"]
-		if ok && len(realIP) > 0 {
-			if net.ParseIP(realIP[0]) != nil {
-				if supportVar {
-					this.remoteAddr = realIP[0]
-				}
-				return realIP[0]
-			}
-		}
-	}
-
-	// Real-Ip
-	{
-		realIP, ok := this.RawReq.Header["X-Real-Ip"]
-		if ok && len(realIP) > 0 {
-			if net.ParseIP(realIP[0]) != nil {
-				if supportVar {
-					this.remoteAddr = realIP[0]
-				}
-				return realIP[0]
-			}
-		}
-	}
-
-	// Remote-Addr
+	// 默认：使用TCP对端地址，不再隐式信任 X-Forwarded-For / X-Real-IP 等请求头。
 	var remoteAddr = this.RawReq.RemoteAddr
 	host, _, err := net.SplitHostPort(remoteAddr)
 	if err == nil {
@@ -1300,36 +1268,43 @@ func (this *HTTPRequest) requestRemoteAddr(supportVar bool) string {
 	}
 }
 
-// 获取请求的客户端地址列表
+// 获取请求的客户端地址列表（用于IP黑白名单等需要多候选地址匹配的场景）
+//
+// 安全说明（FIX-07）：列表中始终包含TCP对端地址；只有当站点显式配置了RemoteAddr
+// 来源（web.RemoteAddr.IsOn）时，才会额外加入 X-Forwarded-For / X-Real-IP 等请求头
+// 中的地址作为候选 —— 否则客户端可以通过伪造这些请求头，让自己的IP被误判为一个
+// 处于白名单中的地址，从而绕过WAF检查。
 func (this *HTTPRequest) requestRemoteAddrs() (result []string) {
 	result = append(result, this.requestRemoteAddr(true))
 
-	// X-Forwarded-For
-	var forwardedFor = this.RawReq.Header.Get("X-Forwarded-For")
-	if len(forwardedFor) > 0 {
-		commaIndex := strings.Index(forwardedFor, ",")
-		if commaIndex > 0 && !lists.ContainsString(result, forwardedFor[:commaIndex]) {
-			result = append(result, forwardedFor[:commaIndex])
+	if this.web.RemoteAddr != nil && this.web.RemoteAddr.IsOn && !this.web.RemoteAddr.IsEmpty() {
+		// X-Forwarded-For
+		var forwardedFor = this.RawReq.Header.Get("X-Forwarded-For")
+		if len(forwardedFor) > 0 {
+			commaIndex := strings.Index(forwardedFor, ",")
+			if commaIndex > 0 && !lists.ContainsString(result, forwardedFor[:commaIndex]) {
+				result = append(result, forwardedFor[:commaIndex])
+			}
+		}
+
+		// Real-IP
+		{
+			realIP, ok := this.RawReq.Header["X-Real-IP"]
+			if ok && len(realIP) > 0 && !lists.ContainsString(result, realIP[0]) {
+				result = append(result, realIP[0])
+			}
+		}
+
+		// Real-Ip
+		{
+			realIP, ok := this.RawReq.Header["X-Real-Ip"]
+			if ok && len(realIP) > 0 && !lists.ContainsString(result, realIP[0]) {
+				result = append(result, realIP[0])
+			}
 		}
 	}
 
-	// Real-IP
-	{
-		realIP, ok := this.RawReq.Header["X-Real-IP"]
-		if ok && len(realIP) > 0 && !lists.ContainsString(result, realIP[0]) {
-			result = append(result, realIP[0])
-		}
-	}
-
-	// Real-Ip
-	{
-		realIP, ok := this.RawReq.Header["X-Real-Ip"]
-		if ok && len(realIP) > 0 && !lists.ContainsString(result, realIP[0]) {
-			result = append(result, realIP[0])
-		}
-	}
-
-	// Remote-Addr
+	// Remote-Addr：始终包含TCP对端地址，确保即使在信任请求头的情况下也不会漏掉真实连接地址
 	{
 		var remoteAddr = this.RawReq.RemoteAddr
 		host, _, err := net.SplitHostPort(remoteAddr)
@@ -1337,7 +1312,7 @@ func (this *HTTPRequest) requestRemoteAddrs() (result []string) {
 			if !lists.ContainsString(result, host) {
 				result = append(result, host)
 			}
-		} else {
+		} else if !lists.ContainsString(result, remoteAddr) {
 			result = append(result, remoteAddr)
 		}
 	}
