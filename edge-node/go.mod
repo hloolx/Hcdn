@@ -2,6 +2,8 @@ module github.com/TeaOSLab/EdgeNode
 
 go 1.21
 
+toolchain go1.26.4
+
 replace (
 	github.com/TeaOSLab/EdgeCommon => ../edge-common
 	github.com/dchest/captcha => github.com/iwind/captcha v0.0.0-20231130092438-ae985686ed84

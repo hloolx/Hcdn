@@ -2,6 +2,8 @@ module github.com/TeaOSLab/EdgeAPI
 
 go 1.21
 
+toolchain go1.26.4
+
 replace github.com/TeaOSLab/EdgeCommon => ../edge-common
 
 require (

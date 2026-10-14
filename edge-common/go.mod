@@ -2,6 +2,8 @@ module github.com/TeaOSLab/EdgeCommon
 
 go 1.21
 
+toolchain go1.26.4
+
 require (
 	github.com/iwind/TeaGo v0.0.0-20230623080147-cd1e53b4915f
 	golang.org/x/net v0.24.0
