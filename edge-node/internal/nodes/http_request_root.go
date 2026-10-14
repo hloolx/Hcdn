@@ -2,7 +2,8 @@ package nodes
 
 import (
 	"fmt"
-	rangeutils "github.com/TeaOSLab/EdgeNode/internal/utils/ranges"
+	"github.com/TeaOSLab/EdgeNode/internal/utils/ranges"
+	"github.com/TeaOSLab/EdgeNode/internal/utils/safepath"
 	"github.com/TeaOSLab/EdgeNode/internal/utils/zero"
 	"github.com/cespare/xxhash/v2"
 	"github.com/iwind/TeaGo/Tea"
@@ -79,9 +80,6 @@ func (this *HTTPRequest) doRoot() (isBreak bool) {
 		return true
 	}
 
-	// 去掉其中的奇怪的路径
-	requestPath = strings.Replace(requestPath, "..\\", "", -1)
-
 	// 进行URL Decode
 	if this.web.Root.DecodePath {
 		p, err := url.QueryUnescape(requestPath)
@@ -113,6 +111,14 @@ func (this *HTTPRequest) doRoot() (isBreak bool) {
 		filePath = rootDir + filename
 	} else {
 		filePath = rootDir + Tea.DS + filename
+	}
+
+	// 防止路径穿越：无论请求路径中含有多少 "../"、是否解码、使用何种路径分隔符，
+	// 拼接后的最终路径都必须仍然位于 rootDir 之内，否则一律按404处理。
+	filePath = filepath.Clean(filePath)
+	if !safepath.Contains(rootDir, filePath) {
+		this.write404()
+		return true
 	}
 
 	this.filePath = filePath // 用来记录日志
