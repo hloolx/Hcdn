@@ -1,4 +1,6 @@
 import * as React from "react";
+
+const ConsolePreview = React.lazy(() => import("@/components/console-preview").then((m) => ({ default: m.ConsolePreview })));
 import { Link } from "react-router";
 import {
   ArrowRight,
@@ -24,7 +26,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@h
 import { StatusDot } from "@hcdn/ui/blocks/status";
 import { Meter } from "@hcdn/ui/charts/bar-list";
 import { cn } from "@hcdn/ui/lib/cn";
-import { ConsolePreview } from "@/components/console-preview";
 import { ARCS, FAQS, NODES, PLANS } from "@/lib/site-data";
 import { REGISTER_URL } from "@/lib/links";
 
@@ -302,7 +303,9 @@ function Showcase() {
         <SectionTitle eyebrow="控制台" title="看得见的每一个字节" desc="清晰的数据面板让你随时掌握流量、缓存与安全状况。亮色与暗色主题，桌面与手机都好用。" />
         <div className="relative mt-14">
           <div className="pointer-events-none absolute -inset-x-10 -top-10 bottom-0 bg-[radial-gradient(50%_40%_at_50%_0%,oklch(0.62_0.2_265/0.16),transparent)]" />
-          <ConsolePreview />
+          <React.Suspense fallback={<div className="h-[440px] rounded-2xl border bg-card" />}>
+            <ConsolePreview />
+          </React.Suspense>
         </div>
       </div>
     </section>
