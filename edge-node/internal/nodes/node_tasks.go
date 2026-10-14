@@ -16,7 +16,6 @@ import (
 	"github.com/TeaOSLab/EdgeNode/internal/remotelogs"
 	"github.com/TeaOSLab/EdgeNode/internal/rpc"
 	"github.com/TeaOSLab/EdgeNode/internal/utils"
-	"github.com/TeaOSLab/EdgeNode/internal/utils/goman"
 	"github.com/TeaOSLab/EdgeNode/internal/utils/trackers"
 	"github.com/TeaOSLab/EdgeNode/internal/waf"
 	"github.com/iwind/TeaGo/Tea"
@@ -24,6 +23,7 @@ import (
 	"github.com/iwind/TeaGo/types"
 	"os"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -139,13 +139,15 @@ func (this *Node) execConfigChangedTask(task *pb.NodeTask) error {
 	return this.syncConfig(task.Version)
 }
 
+var nodeVersionChangedLogOnce sync.Once
+
 // 节点程序版本号变更
+// Remote self-upgrade is not supported: node binaries are deployed out of band,
+// so the task is ignored (logged once per process to avoid flooding the logs).
 func (this *Node) execNodeVersionChangedTask() error {
-	if !sharedUpgradeManager.IsInstalling() {
-		goman.New(func() {
-			sharedUpgradeManager.Start()
-		})
-	}
+	nodeVersionChangedLogOnce.Do(func() {
+		remotelogs.Println("NODE", "ignore 'nodeVersionChanged' task: remote upgrade is disabled, please upgrade the node through the deployment pipeline")
+	})
 	return nil
 }
 
