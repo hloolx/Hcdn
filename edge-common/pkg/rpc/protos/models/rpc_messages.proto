@@ -1,0 +1,19 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+// 操作成功
+message RPCSuccess {
+
+}
+
+// 返回数量
+message RPCCountResponse {
+	int64 count = 1;
+}
+
+// 是否存在
+message RPCExists {
+	bool exists = 1;
+}

@@ -1,0 +1,181 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/model_server_group.proto";
+import "models/rpc_messages.proto";
+
+// 服务分组服务
+service ServerGroupService {
+	// 创建分组
+	rpc createServerGroup (CreateServerGroupRequest) returns (CreateServerGroupResponse);
+
+	// 修改分组
+	rpc updateServerGroup (UpdateServerGroupRequest) returns (RPCSuccess);
+
+	// 删除分组
+	rpc deleteServerGroup (DeleteServerGroupRequest) returns (RPCSuccess);
+
+	// 查询所有分组
+	rpc findAllEnabledServerGroups (FindAllEnabledServerGroupsRequest) returns (FindAllEnabledServerGroupsResponse);
+
+	// 修改分组排序
+	rpc updateServerGroupOrders (UpdateServerGroupOrdersRequest) returns (RPCSuccess);
+
+	// 查找单个分组信息
+	rpc findEnabledServerGroup (FindEnabledServerGroupRequest) returns (FindEnabledServerGroupResponse);
+
+	// 查找HTTP反向代理设置
+	rpc findAndInitServerGroupHTTPReverseProxyConfig (FindAndInitServerGroupHTTPReverseProxyConfigRequest) returns (FindAndInitServerGroupHTTPReverseProxyConfigResponse);
+
+	// 查找TCP反向代理设置
+	rpc findAndInitServerGroupTCPReverseProxyConfig (FindAndInitServerGroupTCPReverseProxyConfigRequest) returns (FindAndInitServerGroupTCPReverseProxyConfigResponse);
+
+	// 查找UDP反向代理设置
+	rpc findAndInitServerGroupUDPReverseProxyConfig (FindAndInitServerGroupUDPReverseProxyConfigRequest) returns (FindAndInitServerGroupUDPReverseProxyConfigResponse);
+
+	// 修改分组的HTTP反向代理设置
+	rpc updateServerGroupHTTPReverseProxy (UpdateServerGroupHTTPReverseProxyRequest) returns (RPCSuccess);
+
+	// 修改分组的TCP反向代理设置
+	rpc updateServerGroupTCPReverseProxy (UpdateServerGroupTCPReverseProxyRequest) returns (RPCSuccess);
+
+	// 修改分组的UDP反向代理设置
+	rpc updateServerGroupUDPReverseProxy (UpdateServerGroupUDPReverseProxyRequest) returns (RPCSuccess);
+
+	// 取得分组的配置概要信息
+	rpc findEnabledServerGroupConfigInfo (FindEnabledServerGroupConfigInfoRequest) returns (FindEnabledServerGroupConfigInfoResponse);
+
+	// 初始化Web设置
+	rpc findAndInitServerGroupWebConfig (FindAndInitServerGroupWebConfigRequest) returns (FindAndInitServerGroupWebConfigResponse);
+}
+
+// 创建分组
+message CreateServerGroupRequest {
+	string name = 1;
+}
+
+message CreateServerGroupResponse {
+	int64 serverGroupId = 1;
+}
+
+// 修改分组
+message UpdateServerGroupRequest {
+	int64 serverGroupId = 1;
+	string name = 2;
+}
+
+// 删除分组
+message DeleteServerGroupRequest {
+	int64 serverGroupId = 1;
+}
+
+// 查询所有分组
+message FindAllEnabledServerGroupsRequest {
+	int64 userId = 1; // 可选项，用户ID，只有管理员才可以指定用户ID
+}
+
+message FindAllEnabledServerGroupsResponse {
+	repeated ServerGroup serverGroups = 1; // 分组列表
+}
+
+// 修改分组排序
+message UpdateServerGroupOrdersRequest {
+	repeated int64 serverGroupIds = 1;
+}
+
+// 查找单个分组信息
+message FindEnabledServerGroupRequest {
+	int64 serverGroupId = 1;
+}
+
+message FindEnabledServerGroupResponse {
+	ServerGroup serverGroup = 1;
+}
+
+// 查找HTTP反向代理设置
+message FindAndInitServerGroupHTTPReverseProxyConfigRequest {
+	int64 serverGroupId = 1;
+}
+
+message FindAndInitServerGroupHTTPReverseProxyConfigResponse {
+	bytes reverseProxyJSON = 1;
+	bytes reverseProxyRefJSON = 2;
+}
+
+// 查找TCP反向代理设置
+message FindAndInitServerGroupTCPReverseProxyConfigRequest {
+	int64 serverGroupId = 1;
+}
+
+message FindAndInitServerGroupTCPReverseProxyConfigResponse {
+	bytes reverseProxyJSON = 1;
+	bytes reverseProxyRefJSON = 2;
+}
+
+// 查找UDP反向代理设置
+message FindAndInitServerGroupUDPReverseProxyConfigRequest {
+	int64 serverGroupId = 1;
+}
+
+message FindAndInitServerGroupUDPReverseProxyConfigResponse {
+	bytes reverseProxyJSON = 1;
+	bytes reverseProxyRefJSON = 2;
+}
+
+// 修改分组的HTTP反向代理设置
+message UpdateServerGroupHTTPReverseProxyRequest {
+	int64 serverGroupId = 1;
+	bytes reverseProxyJSON = 2;
+}
+
+// 修改分组的TCP反向代理设置
+message UpdateServerGroupTCPReverseProxyRequest {
+	int64 serverGroupId = 1;
+	bytes reverseProxyJSON = 2;
+}
+
+// 修改分组的UDP反向代理设置
+message UpdateServerGroupUDPReverseProxyRequest {
+	int64 serverGroupId = 1;
+	bytes reverseProxyJSON = 2;
+}
+
+// 取得分组的配置概要信息
+message FindEnabledServerGroupConfigInfoRequest {
+	int64 serverGroupId = 1;
+	int64 serverId = 2;
+}
+
+message FindEnabledServerGroupConfigInfoResponse {
+	bool hasHTTPReverseProxy = 1;
+	bool hasTCPReverseProxy = 2;
+	bool hasUDPReverseProxy = 3;
+	int64 serverGroupId = 4;
+	bool hasRootConfig = 5;
+	bool hasWAFConfig = 6;
+	bool hasCacheConfig = 7;
+	bool hasCharsetConfig = 8;
+	bool hasStatConfig = 9;
+	bool hasCompressionConfig = 10;
+	bool hasOptimizationConfig = 20;
+	bool hasRequestHeadersConfig = 11;
+	bool hasResponseHeadersConfig = 12;
+	bool hasWebsocketConfig = 13;
+	bool hasWebPConfig = 14;
+	bool hasAccessLogConfig = 15;
+	bool hasRemoteAddrConfig = 16;
+	bool hasPagesConfig = 17;
+	bool hasRequestLimitConfig = 18;
+	bool hasRequestScriptsConfig = 19;
+}
+
+// 初始化Web设置
+message FindAndInitServerGroupWebConfigRequest {
+	int64 serverGroupId = 1;
+}
+
+message FindAndInitServerGroupWebConfigResponse {
+	bytes webJSON = 1;
+}

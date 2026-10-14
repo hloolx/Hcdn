@@ -1,0 +1,72 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/model_node_group.proto";
+import "models/rpc_messages.proto";
+
+// 节点分组服务
+service NodeGroupService {
+	// 创建分组
+	rpc createNodeGroup (CreateNodeGroupRequest) returns (CreateNodeGroupResponse);
+
+	// 修改分组
+	rpc updateNodeGroup (UpdateNodeGroupRequest) returns (RPCSuccess);
+
+	// 删除分组
+	rpc deleteNodeGroup (DeleteNodeGroupRequest) returns (RPCSuccess);
+
+	// 查询所有分组
+	rpc findAllEnabledNodeGroupsWithNodeClusterId (FindAllEnabledNodeGroupsWithNodeClusterIdRequest) returns (FindAllEnabledNodeGroupsWithNodeClusterIdResponse);
+
+	// 修改分组排序
+	rpc updateNodeGroupOrders (UpdateNodeGroupOrdersRequest) returns (RPCSuccess);
+
+	// 查找单个分组信息
+	rpc findEnabledNodeGroup (FindEnabledNodeGroupRequest) returns (FindEnabledNodeGroupResponse);
+}
+
+// 创建分组
+message CreateNodeGroupRequest {
+	int64 nodeClusterId = 1;
+	string name = 2;
+}
+
+message CreateNodeGroupResponse {
+	int64 nodeGroupId = 1;
+}
+
+// 修改分组
+message UpdateNodeGroupRequest {
+	int64 nodeGroupId = 1;
+	string name = 2;
+}
+
+// 删除分组
+message DeleteNodeGroupRequest {
+	int64 nodeGroupId = 1;
+}
+
+// 查询所有分组
+message FindAllEnabledNodeGroupsWithNodeClusterIdRequest {
+	int64 nodeClusterId = 1;
+}
+
+message FindAllEnabledNodeGroupsWithNodeClusterIdResponse {
+	repeated NodeGroup nodeGroups = 1;
+}
+
+// 修改分组排序
+message UpdateNodeGroupOrdersRequest {
+	repeated int64 nodeGroupIds = 1;
+}
+
+// 查找单个分组信息
+message FindEnabledNodeGroupRequest {
+	int64 nodeGroupId = 1;
+}
+
+message FindEnabledNodeGroupResponse {
+	NodeGroup nodeGroup = 1;
+}

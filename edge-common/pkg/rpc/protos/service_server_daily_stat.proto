@@ -1,0 +1,191 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/model_server_daily_stat.proto";
+import "models/rpc_messages.proto";
+
+// 服务统计相关服务
+service ServerDailyStatService {
+	// 上传统计
+	rpc uploadServerDailyStats (UploadServerDailyStatsRequest) returns (RPCSuccess);
+
+	// 按小时读取统计数据
+	rpc findLatestServerHourlyStats (FindLatestServerHourlyStatsRequest) returns (FindLatestServerHourlyStatsResponse);
+
+	// 按分钟读取统计数据，并返回秒级平均流量
+	rpc findLatestServerMinutelyStats (FindLatestServerMinutelyStatsRequest) returns (FindLatestServerMinutelyStatsResponse);
+
+	// 读取某天的5分钟间隔流量
+	rpc findServer5MinutelyStatsWithDay(FindServer5MinutelyStatsWithDayRequest) returns (FindServer5MinutelyStatsWithDayResponse);
+
+	// 读取最近N日的统计数据
+	rpc findLatestServerDailyStats (FindLatestServerDailyStatsRequest) returns (FindLatestServerDailyStatsResponse);
+
+	// 读取日期段内的流量数据
+	rpc findServerDailyStatsBetweenDays (FindServerDailyStatsBetweenDaysRequest) returns (FindServerDailyStatsBetweenDaysResponse);
+
+	// 查找单个服务当前时刻（N分钟内）统计数据
+	rpc sumCurrentServerDailyStats(SumCurrentServerDailyStatsRequest) returns (SumCurrentServerDailyStatsResponse);
+
+	// 计算单个服务的日统计
+	rpc sumServerDailyStats(SumServerDailyStatsRequest) returns (SumServerDailyStatsResponse);
+
+	// 计算单个服务的月统计
+	rpc sumServerMonthlyStats(SumServerMonthlyStatsRequest) returns (SumServerMonthlyStatsResponse);
+}
+
+// 上传统计
+message UploadServerDailyStatsRequest {
+	repeated ServerDailyStat stats = 1;
+	repeated DomainStat domainStats = 2;
+
+	message DomainStat {
+		int64 serverId = 1;
+		string domain = 2;
+		int64 bytes = 3;
+		int64 cachedBytes = 4;
+		int64 countRequests = 5;
+		int64 countCachedRequests = 6;
+		int64 countAttackRequests = 8;
+		int64 attackBytes = 9;
+		int64 createdAt = 7;
+	}
+}
+
+// 按小时读取统计数据
+message FindLatestServerHourlyStatsRequest {
+	int64 serverId = 1;
+	int32 hours = 2; // 小时数
+}
+
+message FindLatestServerHourlyStatsResponse {
+	repeated HourlyStat stats = 1;
+
+	message HourlyStat {
+		string hour = 1;
+		int64 bytes = 2;
+		int64 cachedBytes = 3;
+		int64 countRequests = 4;
+		int64 countCachedRequests = 5;
+	}
+}
+
+// 按分钟读取统计数据
+message FindLatestServerMinutelyStatsRequest {
+	int64 serverId = 1;
+	int32 minutes = 2; // 分钟数
+}
+
+message FindLatestServerMinutelyStatsResponse {
+	repeated MinutelyStat stats = 1;
+
+	message MinutelyStat {
+		string minute = 1;
+		int64 bytes = 2;
+		int64 cachedBytes = 3;
+		int64 countRequests = 4;
+		int64 countCachedRequests = 5;
+	}
+}
+
+// 读取某天的5分钟间隔流量
+message FindServer5MinutelyStatsWithDayRequest {
+	int64 serverId = 1;
+	string day = 2; // 必需，格式：YYYYMMDD
+	string timeFrom = 3; // 可选，开始时间，格式：HHIISS，比如 130000
+	string timeTo = 4; // 可选，结束时间，格式：HHIISS，比如 130459
+}
+
+message FindServer5MinutelyStatsWithDayResponse {
+	repeated Stat stats = 1;
+
+	message Stat {
+		string day = 1;
+		string timeFrom = 2;
+		string timeTo = 3;
+		int64 bytes = 4;
+		int64 cachedBytes = 5;
+		int64 countRequests = 6;
+		int64 countCachedRequests = 7;
+	}
+}
+
+// 读取最近N日的统计数据
+message FindLatestServerDailyStatsRequest {
+	int64 serverId = 1;
+	int64 nodeRegionId = 3; // 区域ID，可选
+	int32 days = 2; // 天数
+}
+
+message FindLatestServerDailyStatsResponse {
+	repeated DailyStat stats = 1;
+
+	message DailyStat {
+		string day = 1;
+		int64 bytes = 2;
+		int64 cachedBytes = 3;
+		int64 countRequests = 4;
+		int64 countCachedRequests = 5;
+	}
+}
+
+// 读取日期段内的流量数据
+message FindServerDailyStatsBetweenDaysRequest {
+	int64 userId = 1; // 用户ID，和服务ID二选一
+	int64 serverId = 2; // 服务ID，和用户ID二选一
+	string dayFrom = 3; // 开始日期 YYYYMMDD
+	string dayTo = 4; // 结束日期 YYYYMMDD
+	int64 nodeRegionId = 5; // 区域ID
+}
+
+message FindServerDailyStatsBetweenDaysResponse {
+	repeated Stat stats = 1;
+
+	message Stat {
+		string day = 1;
+		string timeFrom = 2;
+		string timeTo = 3;
+		string timeAt = 4;
+		int64 bytes = 5;
+		int64 cachedBytes = 6;
+		int64 countRequests = 7;
+		int64 countCachedRequests = 8;
+	}
+}
+
+// 查找单个服务当前时刻（N分钟内）统计数据
+message SumCurrentServerDailyStatsRequest {
+	int64 serverId = 1;
+}
+
+message SumCurrentServerDailyStatsResponse {
+	ServerDailyStat serverDailyStat = 1;
+}
+
+// 计算单个服务的日统计
+message SumServerDailyStatsRequest {
+	int64 userId = 3;
+	int64 serverId = 1;
+	int64 nodeRegionId = 6;
+
+	string day = 2; // YYYYMMDD
+
+	string dayFrom = 4; // day 和 dayFrom+dayTo 二选一， YYYYMMDD
+	string dayTo = 5; // day 和 dayFrom+dayTo 二选一，YYYYMMDD
+}
+
+message SumServerDailyStatsResponse {
+	ServerDailyStat serverDailyStat = 1;
+}
+
+// 计算单个服务的月统计
+message SumServerMonthlyStatsRequest {
+	int64 serverId = 1;
+	string month = 2; // YYYYMM
+}
+
+message SumServerMonthlyStatsResponse {
+	ServerDailyStat serverMonthlyStat = 1;
+}

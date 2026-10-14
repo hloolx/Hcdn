@@ -1,0 +1,19 @@
+{
+  "menu_setting_basic": "基础设置",
+  "menu_setting_dns": "DNS设置",
+  "menu_setting_health_check": "健康检查",
+  "menu_setting_cache_policy": "缓存策略",
+  "menu_setting_waf_policy": "WAF策略",
+  "menu_setting_webp": "WebP",
+  "menu_setting_webp_policy": "WebP策略",
+  "menu_setting_metrics": "统计指标",
+  "menu_setting_ddos_protection": "DDoS防护",
+  "menu_setting_security_policy": "网络安全",
+  "menu_setting_cache": "缓存设置",
+
+  "system": "系统",
+  "canceled": "已取消",
+
+  "server_error": "服务器出了点小问题，请联系技术人员处理。",
+  "log_system_error": "系统发生错误：%s"
+}

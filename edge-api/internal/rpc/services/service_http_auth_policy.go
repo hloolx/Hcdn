@@ -1,0 +1,87 @@
+// Copyright 2021 GoEdge CDN goedge.cdn@gmail.com. All rights reserved.
+
+package services
+
+import (
+	"context"
+	"github.com/TeaOSLab/EdgeAPI/internal/db/models"
+	"github.com/TeaOSLab/EdgeCommon/pkg/rpc/pb"
+)
+
+// HTTPAuthPolicyService 服务认证策略服务
+type HTTPAuthPolicyService struct {
+	BaseService
+}
+
+// CreateHTTPAuthPolicy 创建策略
+func (this *HTTPAuthPolicyService) CreateHTTPAuthPolicy(ctx context.Context, req *pb.CreateHTTPAuthPolicyRequest) (*pb.CreateHTTPAuthPolicyResponse, error) {
+	_, userId, err := this.ValidateAdminAndUser(ctx, false)
+	if err != nil {
+		return nil, err
+	}
+
+	var tx = this.NullTx()
+	policyId, err := models.SharedHTTPAuthPolicyDAO.CreateHTTPAuthPolicy(tx, userId, req.Name, req.Type, req.ParamsJSON)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.CreateHTTPAuthPolicyResponse{HttpAuthPolicyId: policyId}, nil
+}
+
+// UpdateHTTPAuthPolicy 修改策略
+func (this *HTTPAuthPolicyService) UpdateHTTPAuthPolicy(ctx context.Context, req *pb.UpdateHTTPAuthPolicyRequest) (*pb.RPCSuccess, error) {
+	_, userId, err := this.ValidateAdminAndUser(ctx, false)
+	if err != nil {
+		return nil, err
+	}
+
+	var tx = this.NullTx()
+
+	// 检查用户权限
+	if userId > 0 {
+		err = models.SharedHTTPAuthPolicyDAO.CheckUserPolicy(tx, userId, req.HttpAuthPolicyId)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err = models.SharedHTTPAuthPolicyDAO.UpdateHTTPAuthPolicy(tx, req.HttpAuthPolicyId, req.Name, req.ParamsJSON, req.IsOn)
+	if err != nil {
+		return nil, err
+	}
+	return this.Success()
+}
+
+// FindEnabledHTTPAuthPolicy 查找策略信息
+func (this *HTTPAuthPolicyService) FindEnabledHTTPAuthPolicy(ctx context.Context, req *pb.FindEnabledHTTPAuthPolicyRequest) (*pb.FindEnabledHTTPAuthPolicyResponse, error) {
+	_, userId, err := this.ValidateAdminAndUser(ctx, false)
+	if err != nil {
+		return nil, err
+	}
+
+	var tx = this.NullTx()
+
+	// 检查用户权限
+	if userId > 0 {
+		err = models.SharedHTTPAuthPolicyDAO.CheckUserPolicy(tx, userId, req.HttpAuthPolicyId)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	policy, err := models.SharedHTTPAuthPolicyDAO.FindEnabledHTTPAuthPolicy(tx, req.HttpAuthPolicyId)
+	if err != nil {
+		return nil, err
+	}
+	if policy == nil {
+		return &pb.FindEnabledHTTPAuthPolicyResponse{HttpAuthPolicy: nil}, nil
+	}
+
+	return &pb.FindEnabledHTTPAuthPolicyResponse{HttpAuthPolicy: &pb.HTTPAuthPolicy{
+		Id:         int64(policy.Id),
+		IsOn:       policy.IsOn,
+		Name:       policy.Name,
+		Type:       policy.Type,
+		ParamsJSON: policy.Params,
+	}}, nil
+}

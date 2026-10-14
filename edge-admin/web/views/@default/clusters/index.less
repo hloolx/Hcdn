@@ -1,0 +1,37 @@
+.cluster-name-td {
+	position: relative;
+
+	.icon.pin {
+		display: none;
+		position: absolute;
+		right: 1em;
+		top: 50%;
+		margin-top: -0.7em;
+		opacity: 0.6;
+	}
+
+	.icon.visible {
+		display: inline;
+	}
+
+	.icon.opacity {
+		opacity: 0.3;
+	}
+
+	.icon.setting {
+		display: none;
+		position: absolute;
+		right: 3em;
+		top: 50%;
+		margin-top: -0.7em;
+	}
+}
+
+.cluster-name-td:hover {
+	.icon.pin {
+		display: inline;
+	}
+	.icon.setting {
+		display: inline;
+	}
+}

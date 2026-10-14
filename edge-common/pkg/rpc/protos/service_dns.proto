@@ -1,0 +1,22 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/model_dns_issue.proto";
+
+// 域名解析服务
+service DNSService {
+	// 查找问题
+	rpc findAllDNSIssues (FindAllDNSIssuesRequest) returns (FindAllDNSIssuesResponse);
+}
+
+// 查找问题
+message FindAllDNSIssuesRequest {
+	int64 nodeClusterId = 1;
+}
+
+message FindAllDNSIssuesResponse {
+	repeated DNSIssue issues = 1;
+}
+

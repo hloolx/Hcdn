@@ -1,0 +1,30 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+message Plan {
+	int64 id = 1; // 套餐ID
+	bool isOn = 2; // 是否启用
+	string name = 3; // 套餐名称
+	string description = 21; // 套餐简介
+	int64 clusterId = 4;  // 集群ID
+	bytes trafficLimitJSON = 5; // 流量限制
+	bytes bandwidthLimitPerNodeJSON = 22; // 单节点带宽限制
+	bool hasFullFeatures = 20; // 是否有所有权限
+	bytes featuresJSON = 6; // 权限列表，[code1, code2, ...]
+	string priceType = 7; // 价格类型：traffic, bandwidth, period
+	bytes trafficPriceJSON = 8; // 流量价格配置
+	bytes bandwidthPriceJSON = 12; // 带宽价格配置
+	double monthlyPrice = 9; // 月度价格
+	double seasonallyPrice = 10;  // 季度价格
+	double yearlyPrice = 11;  // 年度价格
+	int32 totalServers = 13; // 可以添加的网站数
+	int32 totalServerNamesPerServer = 14; // 每个网站可以添加的域名数
+	int32 totalServerNames = 15; // 可以添加的域名总数
+	int64 dailyRequests = 16; // 每日访问量额度
+	int64 monthlyRequests = 17; // 每月访问量额度
+	int64 dailyWebsocketConnections = 18; // 每日Websocket连接数额度
+	int64 monthlyWebsocketConnections = 19; // 每月Websocket连接数额度
+	bytes maxUploadSizeJSON = 23; // 文件最大上传尺寸 @link json:size_capacity
+}

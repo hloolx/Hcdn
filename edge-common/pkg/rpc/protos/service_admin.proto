@@ -1,0 +1,316 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/model_admin.proto";
+import "models/model_admin_list.proto";
+import "models/rpc_messages.proto";
+import "service_server_stat_board.proto";
+
+// 管理员服务
+service AdminService {
+	// 登录
+	rpc loginAdmin (LoginAdminRequest) returns (LoginAdminResponse);
+
+	// 检查管理员是否存在
+	rpc checkAdminExists (CheckAdminExistsRequest) returns (CheckAdminExistsResponse);
+
+	// 检查管理员用户名是否存在
+	rpc checkAdminUsername (CheckAdminUsernameRequest) returns (CheckAdminUsernameResponse);
+
+	// 使用用管理员户名查找管理员信息
+	rpc findAdminWithUsername(FindAdminWithUsernameRequest) returns (FindAdminWithUsernameResponse);
+
+	// 获取管理员名称
+	rpc findAdminFullname (FindAdminFullnameRequest) returns (FindAdminFullnameResponse);
+
+	// 获取管理员信息
+	rpc findEnabledAdmin (FindEnabledAdminRequest) returns (FindEnabledAdminResponse);
+
+	// 创建或修改管理员
+	rpc createOrUpdateAdmin (CreateOrUpdateAdminRequest) returns (CreateOrUpdateAdminResponse);
+
+	// 修改管理员信息
+	rpc updateAdminInfo (UpdateAdminInfoRequest) returns (RPCSuccess);
+
+	// 修改管理员登录信息
+	rpc updateAdminLogin (UpdateAdminLoginRequest) returns (RPCSuccess);
+
+	// 获取所有管理员的权限列表
+	rpc findAllAdminModules (FindAllAdminModulesRequest) returns (FindAllAdminModulesResponse);
+
+	// 创建管理员
+	rpc createAdmin (CreateAdminRequest) returns (CreateAdminResponse);
+
+	// 修改管理员
+	rpc updateAdmin (UpdateAdminRequest) returns (RPCSuccess);
+
+	// 计算管理员数量
+	rpc countAllEnabledAdmins (CountAllEnabledAdminsRequest) returns (RPCCountResponse);
+
+	// 列出单页的管理员
+	rpc listEnabledAdmins (ListEnabledAdminsRequest) returns (ListEnabledAdminsResponse);
+
+	// 删除管理员
+	rpc deleteAdmin (DeleteAdminRequest) returns (RPCSuccess);
+
+	// 根据用户名检查是否需要输入OTP
+	rpc checkAdminOTPWithUsername (CheckAdminOTPWithUsernameRequest) returns (CheckAdminOTPWithUsernameResponse);
+
+	// 取得管理员Dashboard数据
+	rpc composeAdminDashboard (ComposeAdminDashboardRequest) returns (ComposeAdminDashboardResponse);
+
+	// 修改管理员使用的界面风格
+	rpc updateAdminTheme (UpdateAdminThemeRequest) returns (RPCSuccess);
+
+	// 修改管理员使用的语言
+	rpc updateAdminLang(UpdateAdminLangRequest) returns (RPCSuccess);
+}
+
+// 登录
+message LoginAdminRequest {
+	string username = 1;
+	string password = 2;
+}
+
+message LoginAdminResponse {
+	int64 adminId = 1;
+	bool isOk = 2;
+	string message = 3;
+}
+
+// 检查管理员是否存在
+message CheckAdminExistsRequest {
+	int64 adminId = 1;
+}
+
+message CheckAdminExistsResponse {
+	bool isOk = 1;
+	string message = 2;
+}
+
+// 检查管理员用户名是否存在
+message CheckAdminUsernameRequest {
+	int64 adminId = 1;
+	string username = 2;
+}
+
+message CheckAdminUsernameResponse {
+	bool exists = 1;
+}
+
+// 使用用管理员户名查找管理员信息
+message FindAdminWithUsernameRequest {
+	string username = 1; // 管理员用户名
+}
+
+message FindAdminWithUsernameResponse {
+	Admin admin = 1; // 管理员信息
+}
+
+// 获取管理员名称
+message FindAdminFullnameRequest {
+	int64 adminId = 1;
+}
+
+message FindAdminFullnameResponse {
+	string fullname = 1;
+}
+
+// 获取管理员信息
+message FindEnabledAdminRequest {
+	int64 adminId = 1;
+}
+
+message FindEnabledAdminResponse {
+	Admin admin = 1;
+}
+
+// 创建或修改管理员
+message CreateOrUpdateAdminRequest {
+	string username = 1;
+	string password = 2;
+}
+
+message CreateOrUpdateAdminResponse {
+	int64 adminId = 1;
+}
+
+// 修改管理员信息
+message UpdateAdminInfoRequest {
+	int64 adminId = 1;
+	string fullname = 2;
+}
+
+// 修改管理员登录信息
+message UpdateAdminLoginRequest {
+	int64 adminId = 1;
+	string username = 2;
+	string password = 3;
+}
+
+// 获取管理所有权限列表
+message FindAllAdminModulesRequest {
+
+}
+
+message FindAllAdminModulesResponse {
+	repeated AdminModuleList adminModules = 1;
+}
+
+// 创建管理员
+message CreateAdminRequest {
+	string username = 1;
+	string password = 2;
+	string fullname = 3;
+	bytes modulesJSON = 4;
+	bool isSuper = 5;
+	bool canLogin = 6;
+}
+
+message CreateAdminResponse {
+	int64 adminId = 1;
+}
+
+// 修改管理员
+message UpdateAdminRequest {
+	int64 adminId = 1;
+	string username = 2;
+	string password = 3;
+	string fullname = 4;
+	bytes modulesJSON = 5;
+	bool isSuper = 6;
+	bool isOn = 7;
+	bool canLogin = 8;
+}
+
+// 计算管理员数量
+message CountAllEnabledAdminsRequest {
+	string keyword = 1; // 可选项，查询关键词
+	bool hasWeakPassword = 2; // 可选项，筛选有弱密码的管理员，只有超级管理员才能查询
+}
+
+// 列出单页的管理员
+message ListEnabledAdminsRequest {
+	string keyword = 3; // 可选项，查询关键词
+	bool hasWeakPassword = 4; // 可选项，筛选有弱密码的管理员，只有超级管理员才能查询
+	int64 offset = 1; // 读取位置，从0开始
+	int64 size = 2; // 读取数量
+}
+
+message ListEnabledAdminsResponse {
+	repeated Admin admins = 1;
+}
+
+// 删除管理员
+message DeleteAdminRequest {
+	int64 adminId = 1;
+}
+
+// 根据用户名检查是否需要输入OTP
+message CheckAdminOTPWithUsernameRequest {
+	string username = 1;
+}
+
+message CheckAdminOTPWithUsernameResponse {
+	bool requireOTP = 1;
+}
+
+// 取得管理员Dashboard数据
+message ComposeAdminDashboardRequest {
+	string apiVersion = 1; // 当前API版本号
+}
+
+message ComposeAdminDashboardResponse {
+	int64 countNodeClusters = 1;
+	int64 countNodes = 2;
+	int64 countOfflineNodes = 9;
+	int64 countServers = 3;
+	int64 countAuditingServers = 13;
+	int64 countUsers = 4;
+	int64 countAPINodes = 5;
+	int64 countOfflineAPINodes = 10;
+	int64 countDBNodes = 6;
+	int64 countOfflineDBNodes = 11;
+	int64 countUserNodes = 7;
+	int64 countOfflineUserNodes = 12;
+	int64 defaultNodeClusterId = 8;
+
+	repeated DailyTrafficStat dailyTrafficStats = 30;
+	repeated HourlyTrafficStat hourlyTrafficStats = 31;
+
+	UpgradeInfo nodeUpgradeInfo = 32;
+	UpgradeInfo apiNodeUpgradeInfo = 33;
+	UpgradeInfo userNodeUpgradeInfo = 35;
+	UpgradeInfo authorityNodeUpgradeInfo = 36;
+	UpgradeInfo nsNodeUpgradeInfo = 37;
+	UpgradeInfo reportNodeUpgradeInfo = 41;
+
+	repeated NodeStat topNodeStats = 38;
+	repeated DomainStat topDomainStats = 39;
+	repeated CountryStat topCountryStats = 42;
+
+	repeated MetricDataChart metricDataCharts = 40;
+
+	message DailyTrafficStat {
+		string day = 1; // 日期 YYYYMMDD
+		int64 bytes = 2;
+		int64 cachedBytes = 3;
+		int64 countRequests = 4;
+		int64 countCachedRequests = 5;
+		int64 countAttackRequests = 6;
+		int64 attackBytes = 7; // 攻击流量（字节）
+		int64 countIPs = 8; // 独立IP数量
+	}
+
+	message HourlyTrafficStat {
+		string hour = 1;
+		int64 bytes = 2;
+		int64 cachedBytes = 3;
+		int64 countRequests = 4;
+		int64 countCachedRequests = 5;
+		int64 countAttackRequests = 6;
+		int64 attackBytes = 7;
+	}
+
+	message NodeStat {
+		int64 nodeId = 1;
+		string nodeName = 2;
+		int64 countRequests = 3;
+		int64 bytes = 4;
+	}
+
+	message DomainStat {
+		int64 serverId = 1;
+		string domain = 2;
+		int64 countRequests = 3;
+		int64 bytes = 4;
+	}
+
+	message CountryStat {
+		string countryName = 1;
+		int64 bytes = 2;
+		int64 countRequests = 3;
+		float percent = 4; // 流量占比
+		int64 countAttackRequests = 6;
+		int64 attackBytes = 7;
+	}
+
+	// 节点升级信息
+	message UpgradeInfo {
+		int64 countNodes = 1; // 节点数
+		string newVersion = 2; // 新版本
+	}
+}
+
+// 修改管理员使用的界面风格
+message UpdateAdminThemeRequest {
+	int64 adminId = 1;
+	string theme = 2; // 风格代号
+}
+
+// 修改管理员使用的语言
+message UpdateAdminLangRequest {
+	string langCode = 1; // 语言代号：en-us, zh-cn, ...，如果为空表示默认
+}

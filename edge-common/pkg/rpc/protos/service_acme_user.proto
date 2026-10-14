@@ -1,0 +1,94 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/rpc_messages.proto";
+import "models/model_acme_user.proto";
+
+// ACME用户相关服务
+service ACMEUserService {
+	// 创建用户
+	rpc createACMEUser (CreateACMEUserRequest) returns (CreateACMEUserResponse);
+
+	// 修改用户
+	rpc updateACMEUser (UpdateACMEUserRequest) returns (RPCSuccess);
+
+	// 删除用户
+	rpc deleteACMEUser (DeleteACMEUserRequest) returns (RPCSuccess);
+
+	// 计算用户数量
+	rpc countACMEUsers (CountAcmeUsersRequest) returns (RPCCountResponse);
+
+	// 列出单页用户
+	rpc listACMEUsers (ListACMEUsersRequest) returns (ListACMEUsersResponse);
+
+	// 查找单个用户
+	rpc findEnabledACMEUser (FindEnabledACMEUserRequest) returns (FindEnabledACMEUserResponse);
+
+	// 查找所有用户
+	rpc findAllACMEUsers (FindAllACMEUsersRequest) returns (FindAllACMEUsersResponse);
+}
+
+// 创建用户
+message CreateACMEUserRequest {
+	int64 userId = 5; // 所属用户，只有管理员才有权限指定
+	string email = 1; // 用户邮箱
+	string description = 2; // 用户描述
+	string acmeProviderCode = 3; // 服务商代号
+	int64 acmeProviderAccountId = 4; // 服务商帐号
+}
+
+message CreateACMEUserResponse {
+	int64 acmeUserId = 1;
+}
+
+// 修改用户
+message UpdateACMEUserRequest {
+	int64 acmeUserId = 1;
+	string description = 2;
+}
+
+// 删除用户
+message DeleteACMEUserRequest {
+	int64 acmeUserId = 1;
+}
+
+// 计算用户数量
+message CountAcmeUsersRequest {
+	int64 adminId = 1;
+	int64 userId = 2;
+	int64 acmeProviderAccountId = 3;
+}
+
+// 列出单页用户
+message ListACMEUsersRequest {
+	int64 adminId = 1;
+	int64 userId = 2;
+	int64 offset = 3;
+	int64 size = 4;
+}
+
+message ListACMEUsersResponse {
+	repeated ACMEUser acmeUsers = 1;
+}
+
+// 查找单个用户
+message FindEnabledACMEUserRequest {
+	int64 acmeUserId = 1;
+}
+
+message FindEnabledACMEUserResponse {
+	ACMEUser acmeUser = 1;
+}
+
+// 查找所有用户
+message FindAllACMEUsersRequest {
+	int64 adminId = 1;
+	int64 userId = 2;
+	string acmeProviderCode = 3;
+}
+
+message FindAllACMEUsersResponse {
+	repeated ACMEUser acmeUsers = 1;
+}

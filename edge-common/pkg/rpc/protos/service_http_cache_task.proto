@@ -1,0 +1,82 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/rpc_messages.proto";
+import "models/model_http_cache_task.proto";
+
+// 缓存任务管理
+service HTTPCacheTaskService {
+	// 创建任务
+	rpc createHTTPCacheTask(CreateHTTPCacheTaskRequest) returns (CreateHTTPCacheTaskResponse);
+
+	// 计算任务总数量
+	rpc countHTTPCacheTasks(CountHTTPCacheTasksRequest) returns (RPCCountResponse);
+
+	// 计算正在执行的任务数量
+	rpc countDoingHTTPCacheTasks(CountDoingHTTPCacheTasksRequest) returns (RPCCountResponse);
+
+	// 列出单页任务
+	rpc listHTTPCacheTasks(ListHTTPCacheTasksRequest) returns (ListHTTPCacheTasksResponse);
+
+	// 查找单个任务
+	rpc findEnabledHTTPCacheTask(FindEnabledHTTPCacheTaskRequest) returns (FindEnabledHTTPCacheTaskResponse);
+
+	// 删除任务
+	rpc deleteHTTPCacheTask(DeleteHTTPCacheTaskRequest) returns (RPCSuccess);
+
+	// 重置任务状态
+	rpc resetHTTPCacheTask(ResetHTTPCacheTaskRequest) returns (RPCSuccess);
+}
+
+// 创建任务
+message CreateHTTPCacheTaskRequest {
+	string type = 1; // 任务类型，值为 purge 或者 fetch；purge：删除缓存，fetch：预热缓存
+	string keyType = 2; // Key类型，值为 key 或者 prefix；如果是 key 表示处理的是URL，如果是 prefix 表示处理的是目录；预热的时候只能为 key
+	repeated string keys = 3; // 要清理的Key，根据Key类型（keyType）来输入不同的内容
+}
+
+message CreateHTTPCacheTaskResponse {
+	int64 httpCacheTaskId = 1; // 生成的任务ID
+	int64 countKeys = 2; // 任务中包含的Key
+}
+
+// 计算任务总数量
+message CountHTTPCacheTasksRequest {
+
+}
+
+// 计算正在执行的任务数量
+message CountDoingHTTPCacheTasksRequest {
+
+}
+
+// 查找单个任务
+message FindEnabledHTTPCacheTaskRequest {
+	int64 httpCacheTaskId = 1; // 任务ID
+}
+
+message FindEnabledHTTPCacheTaskResponse {
+	HTTPCacheTask httpCacheTask = 1; // 任务信息
+}
+
+// 列出单页任务
+message ListHTTPCacheTasksRequest {
+	int64 offset = 1; // 查询起始位置
+	int64 size = 2; // 查询条数
+}
+
+message ListHTTPCacheTasksResponse {
+	repeated HTTPCacheTask httpCacheTasks = 1; // 一组任务信息
+}
+
+// 删除任务
+message DeleteHTTPCacheTaskRequest {
+	int64 httpCacheTaskId = 1; // 任务ID
+}
+
+// 重置任务状态
+message ResetHTTPCacheTaskRequest {
+	int64 httpCacheTaskId = 1; // 任务ID
+}

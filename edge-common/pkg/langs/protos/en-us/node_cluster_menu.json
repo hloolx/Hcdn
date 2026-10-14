@@ -1,0 +1,27 @@
+{
+  "setting_basic": "${lang.admin_common@menu_setting_basic}",
+  "setting_dns": "${lang.admin_common@menu_setting_dns}",
+  "setting_health_check": "${lang.admin_common@menu_setting_health_check}",
+  "setting_service_global": "Site Settings",
+  "setting_cache_policy": "${lang.admin_common@menu_setting_cache_policy}",
+  "setting_waf_policy": "${lang.admin_common@menu_setting_waf_policy}",
+  "setting_waf_actions": "WAF Actions",
+  "setting_webp": "${lang.admin_common@menu_setting_webp_policy}",
+  "setting_metrics": "${lang.admin_common@menu_setting_metrics}",
+  "setting_ddos_protection": "${lang.admin_common@menu_setting_ddos_protection}",
+  "setting_security_policy": "${lang.admin_common@menu_setting_security_policy}",
+  "setting_uam": "UAM Policy",
+  "setting_cc": "CC Policy",
+  "setting_pages": "Pages",
+  "setting_http3": "HTTP/3",
+  "setting_schedule": "Scheduling",
+  "setting_thresholds": "Thresholds",
+  "setting_notification": "Notifications",
+  "setting_system_service": "System Service",
+  "setting_toa": "TOA",
+
+  "tab_cluster_dashboard": "Dashboard",
+  "tab_cluster_nodes": "Nodes",
+  "tab_cluster_settings": "Settings",
+  "tab_cluster_delete": "Delete"
+}

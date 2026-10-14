@@ -1,0 +1,627 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/model_node_cluster.proto";
+import "models/model_api_node.proto";
+import "models/model_node.proto";
+import "models/rpc_messages.proto";
+import "models/model_dns_domain.proto";
+import "models/model_dns_provider.proto";
+
+// 边缘节点集群管理服务
+service NodeClusterService {
+	// 创建集群
+	rpc createNodeCluster (CreateNodeClusterRequest) returns (CreateNodeClusterResponse);
+
+	// 修改集群
+	rpc updateNodeCluster (UpdateNodeClusterRequest) returns (RPCSuccess);
+
+	// 删除集群
+	rpc deleteNodeCluster (DeleteNodeClusterRequest) returns (RPCSuccess);
+
+	// 查找单个集群信息
+	rpc findEnabledNodeCluster (FindEnabledNodeClusterRequest) returns (FindEnabledNodeClusterResponse);
+
+	// 查找集群的API节点信息
+	rpc findAPINodesWithNodeCluster (FindAPINodesWithNodeClusterRequest) returns (FindAPINodesWithNodeClusterResponse);
+
+	// 获取所有可用集群
+	rpc findAllEnabledNodeClusters (FindAllEnabledNodeClustersRequest) returns (FindAllEnabledNodeClustersResponse);
+
+	// 计算所有集群数量
+	rpc countAllEnabledNodeClusters (CountAllEnabledNodeClustersRequest) returns (RPCCountResponse);
+
+	// 列出单页集群
+	rpc listEnabledNodeClusters (ListEnabledNodeClustersRequest) returns (ListEnabledNodeClustersResponse);
+
+	// 查找集群的健康检查配置
+	rpc findNodeClusterHealthCheckConfig (FindNodeClusterHealthCheckConfigRequest) returns (FindNodeClusterHealthCheckConfigResponse);
+
+	// 修改集群健康检查设置
+	rpc updateNodeClusterHealthCheck (UpdateNodeClusterHealthCheckRequest) returns (RPCSuccess);
+
+	// 执行健康检查
+	rpc executeNodeClusterHealthCheck (ExecuteNodeClusterHealthCheckRequest) returns (ExecuteNodeClusterHealthCheckResponse);
+
+	// 计算使用某个认证的集群数量
+	rpc countAllEnabledNodeClustersWithNodeGrantId (CountAllEnabledNodeClustersWithNodeGrantIdRequest) returns (RPCCountResponse);
+
+	// 查找使用某个认证的所有集群
+	rpc findAllEnabledNodeClustersWithNodeGrantId (FindAllEnabledNodeClustersWithNodeGrantIdRequest) returns (FindAllEnabledNodeClustersWithNodeGrantIdResponse);
+
+	// 查找集群的DNS配置
+	rpc findEnabledNodeClusterDNS (FindEnabledNodeClusterDNSRequest) returns (FindEnabledNodeClusterDNSResponse);
+
+	// 计算使用某个DNS服务商的集群数量
+	rpc countAllEnabledNodeClustersWithDNSProviderId (CountAllEnabledNodeClustersWithDNSProviderIdRequest) returns (RPCCountResponse);
+
+	// 计算使用某个DNS域名的集群数量
+	rpc countAllEnabledNodeClustersWithDNSDomainId (CountAllEnabledNodeClustersWithDNSDomainIdRequest) returns (RPCCountResponse);
+
+	// 查找使用某个域名的所有集群
+	rpc findAllEnabledNodeClustersWithDNSDomainId (FindAllEnabledNodeClustersWithDNSDomainIdRequest) returns (FindAllEnabledNodeClustersWithDNSDomainIdResponse);
+
+	// 检查集群域名是否已经被使用
+	rpc checkNodeClusterDNSName (CheckNodeClusterDNSNameRequest) returns (CheckNodeClusterDNSNameResponse);
+
+	// 修改集群的域名设置
+	rpc updateNodeClusterDNS (UpdateNodeClusterDNSRequest) returns (RPCSuccess);
+
+	// 检查集群的DNS是否有变化
+	rpc checkNodeClusterDNSChanges (CheckNodeClusterDNSChangesRequest) returns (CheckNodeClusterDNSChangesResponse);
+
+	// 查找集群的TOA配置
+	rpc findEnabledNodeClusterTOA (FindEnabledNodeClusterTOARequest) returns (FindEnabledNodeClusterTOAResponse);
+
+	// 修改集群的TOA设置
+	rpc updateNodeClusterTOA (UpdateNodeClusterTOARequest) returns (RPCSuccess);
+
+	// 计算使用某个缓存策略的集群数量
+	rpc countAllEnabledNodeClustersWithHTTPCachePolicyId (CountAllEnabledNodeClustersWithHTTPCachePolicyIdRequest) returns (RPCCountResponse);
+
+	// 查找使用缓存策略的所有集群
+	rpc findAllEnabledNodeClustersWithHTTPCachePolicyId (FindAllEnabledNodeClustersWithHTTPCachePolicyIdRequest) returns (FindAllEnabledNodeClustersWithHTTPCachePolicyIdResponse);
+
+	// 计算使用某个WAF策略的集群数量
+	rpc countAllEnabledNodeClustersWithHTTPFirewallPolicyId (CountAllEnabledNodeClustersWithHTTPFirewallPolicyIdRequest) returns (RPCCountResponse);
+
+	// 查找使用某个WAF策略的所有集群
+	rpc findAllEnabledNodeClustersWithHTTPFirewallPolicyId (FindAllEnabledNodeClustersWithHTTPFirewallPolicyIdRequest) returns (FindAllEnabledNodeClustersWithHTTPFirewallPolicyIdResponse);
+
+	// 修改集群的缓存策略
+	rpc updateNodeClusterHTTPCachePolicyId (UpdateNodeClusterHTTPCachePolicyIdRequest) returns (RPCSuccess);
+
+	// 修改集群的WAF策略
+	rpc updateNodeClusterHTTPFirewallPolicyId (UpdateNodeClusterHTTPFirewallPolicyIdRequest) returns (RPCSuccess);
+
+	// 修改集群的系统服务设置
+	rpc updateNodeClusterSystemService (UpdateNodeClusterSystemServiceRequest) returns (RPCSuccess);
+
+	// 查找集群的系统服务设置
+	rpc findNodeClusterSystemService (FindNodeClusterSystemServiceRequest) returns (FindNodeClusterSystemServiceResponse);
+
+	// 获取集群中可以使用的端口
+	rpc findFreePortInNodeCluster (FindFreePortInNodeClusterRequest) returns (FindFreePortInNodeClusterResponse);
+
+	// 检查端口是否已经被使用
+	rpc checkPortIsUsingInNodeCluster (CheckPortIsUsingInNodeClusterRequest) returns (CheckPortIsUsingInNodeClusterResponse);
+
+	// 查找最近访问的集群
+	rpc findLatestNodeClusters (FindLatestNodeClustersRequest) returns (FindLatestNodeClustersResponse);
+
+	// 取得集群的配置概要信息
+	rpc findEnabledNodeClusterConfigInfo (FindEnabledNodeClusterConfigInfoRequest) returns (FindEnabledNodeClusterConfigInfoResponse);
+
+	// 设置集群是否置顶
+	rpc updateNodeClusterPinned(UpdateNodeClusterPinnedRequest) returns (RPCSuccess);
+
+	// 读取集群WebP策略
+	rpc findEnabledNodeClusterWebPPolicy(FindEnabledNodeClusterWebPPolicyRequest) returns (FindEnabledNodeClusterWebPPolicyResponse);
+
+	// 设置集群WebP策略
+	rpc updateNodeClusterWebPPolicy(UpdateNodeClusterWebPPolicyRequest) returns (RPCSuccess);
+
+	// 读取集群的UAM策略
+	rpc findEnabledNodeClusterUAMPolicy(FindEnabledNodeClusterUAMPolicyRequest) returns (FindEnabledNodeClusterUAMPolicyResponse);
+
+	// 设置集群的UAM策略
+	rpc updateNodeClusterUAMPolicy(UpdateNodeClusterUAMPolicyRequest) returns (RPCSuccess);
+
+	// 读取集群的HTTP CC策略
+	rpc findEnabledNodeClusterHTTPCCPolicy(FindEnabledNodeClusterHTTPCCPolicyRequest) returns (FindEnabledNodeClusterHTTPCCPolicyResponse);
+
+	// 设置集群的HTTP CC策略
+	rpc updateNodeClusterHTTPCCPolicy(UpdateNodeClusterHTTPCCPolicyRequest) returns (RPCSuccess);
+
+	// 获取集群的DDoS设置
+	rpc findNodeClusterDDoSProtection(FindNodeClusterDDoSProtectionRequest) returns (FindNodeClusterDDoSProtectionResponse);
+
+	// 修改集群的DDoS设置
+	rpc updateNodeClusterDDoSProtection(UpdateNodeClusterDDoSProtectionRequest) returns (RPCSuccess);
+
+	// 获取集群的全局服务设置
+	rpc findNodeClusterGlobalServerConfig(FindNodeClusterGlobalServerConfigRequest) returns (FindNodeClusterGlobalServerConfigResponse);
+
+	// 修改集群的全局服务设置
+	rpc updateNodeClusterGlobalServerConfig(UpdateNodeClusterGlobalServerConfigRequest) returns (RPCSuccess);
+
+	// 获取集群的自定义页面设置
+	rpc findNodeClusterHTTPPagesPolicy(FindNodeClusterHTTPPagesPolicyRequest) returns (FindNodeClusterHTTPPagesPolicyResponse);
+
+	// 修改集群的自定义页面设置
+	rpc updateNodeClusterHTTPPagesPolicy(UpdateNodeClusterHTTPPagesPolicyRequest) returns (RPCSuccess);
+
+	// 获取集群的HTTP3设置
+	rpc findNodeClusterHTTP3Policy(FindNodeClusterHTTP3PolicyRequest) returns (FindNodeClusterHTTP3PolicyResponse);
+
+	// 修改集群的HTTP3设置
+	rpc updateNodeClusterHTTP3Policy(UpdateNodeClusterHTTP3PolicyRequest) returns (RPCSuccess);
+
+	// 获取集群的网络安全策略
+	rpc findNodeClusterNetworkSecurityPolicy(FindNodeClusterNetworkSecurityPolicyRequest) returns (FindNodeClusterNetworkSecurityPolicyResponse);
+
+	// 修改集群的网络安全策略
+	rpc updateNodeClusterNetworkSecurityPolicy(UpdateNodeClusterNetworkSecurityPolicyRequest) returns (RPCSuccess);
+}
+
+// 获取所有集群的信息
+message FindAllEnabledNodeClustersRequest {
+
+}
+
+message FindAllEnabledNodeClustersResponse {
+	repeated NodeCluster nodeClusters = 1;
+}
+
+// 创建集群
+message CreateNodeClusterRequest {
+	string name = 1;
+	int64 nodeGrantId = 2;
+	string installDir = 3;
+	int64 dnsDomainId = 4;
+	string dnsName = 5;
+	int32 dnsTTL = 9;
+	int64 httpCachePolicyId = 6;
+	int64 httpFirewallPolicyId = 7;
+	bytes systemServicesJSON = 8; // 系统服务设置
+	bytes globalServerConfigJSON = 10; // 服务全局设置
+	bool autoInstallNftables = 11; // 自动安装nftables
+	bool autoSystemTuning = 12; // 是否自动调节系统参数
+	bool autoTrimDisks = 13; // 是否自动TRIM硬盘
+	int32 maxConcurrentReads = 15; // 最大并发读
+	int32 maxConcurrentWrites = 16; // 最大并发写
+}
+
+message CreateNodeClusterResponse {
+	int64 nodeClusterId = 1;
+}
+
+// 修改集群
+message UpdateNodeClusterRequest {
+	int64 nodeClusterId = 1;
+	string name = 2;
+	int64 nodeGrantId = 3;
+	string installDir = 4;
+	string timeZone = 5;
+	int32 nodeMaxThreads = 6;
+	bool autoOpenPorts = 8;
+	bytes clockJSON = 9;
+	bool autoRemoteStart = 10;
+	bool autoInstallNftables = 11;
+	bytes sshParamsJSON = 12;
+	bool autoSystemTuning = 13; // 是否自动调节系统参数
+	bool autoTrimDisks = 14; // 是否自动TRIM硬盘
+	int32 maxConcurrentReads = 15; // 最大并发读
+	int32 maxConcurrentWrites = 16; // 最大并发写
+}
+
+// 删除集群
+message DeleteNodeClusterRequest {
+	int64 nodeClusterId = 1;
+}
+
+// 查找单个集群信息
+message FindEnabledNodeClusterRequest {
+	int64 nodeClusterId = 1;
+}
+
+message FindEnabledNodeClusterResponse {
+	NodeCluster nodeCluster = 1;
+}
+
+// 查找集群的API节点信息
+message FindAPINodesWithNodeClusterRequest {
+	int64 nodeClusterId = 1;
+}
+
+message FindAPINodesWithNodeClusterResponse {
+	bool useAllAPINodes = 1;
+	repeated APINode apiNodes = 2;
+}
+
+// 计算所有集群数量
+message CountAllEnabledNodeClustersRequest {
+	string keyword = 1;
+}
+
+// 列出单页集群
+message ListEnabledNodeClustersRequest {
+	int64 offset = 1;
+	int64 size = 2;
+	string keyword = 3; // 可选项，搜索关键词
+	bool idDesc = 4; // 可选项，是否按照ID倒序排列
+	bool idAsc = 5; // 可选项，是否按照ID正序排列
+}
+
+message ListEnabledNodeClustersResponse {
+	repeated NodeCluster nodeClusters = 1;
+}
+
+// 查找集群的健康检查配置
+message FindNodeClusterHealthCheckConfigRequest {
+	int64 nodeClusterId = 1;
+}
+
+message FindNodeClusterHealthCheckConfigResponse {
+	bytes healthCheckJSON = 1;
+}
+
+// 修改集群健康检查设置
+message UpdateNodeClusterHealthCheckRequest {
+	int64 nodeClusterId = 1;
+	bytes healthCheckJSON = 2;
+}
+
+// 执行健康检查
+message ExecuteNodeClusterHealthCheckRequest {
+	int64 nodeClusterId = 1;
+}
+
+message ExecuteNodeClusterHealthCheckResponse {
+	repeated Result results = 1;
+
+	message Result {
+		Node node = 1;
+		string nodeAddr = 2;
+		bool isOk = 3;
+		string error = 4;
+		float costMs = 5;
+	}
+}
+
+// 计算使用某个认证的集群数量
+message CountAllEnabledNodeClustersWithNodeGrantIdRequest {
+	int64 nodeGrantId = 1;
+}
+
+// 查找使用某个认证的所有集群
+message FindAllEnabledNodeClustersWithNodeGrantIdRequest {
+	int64 nodeGrantId = 1;
+}
+
+message FindAllEnabledNodeClustersWithNodeGrantIdResponse {
+	repeated NodeCluster nodeClusters = 1;
+}
+
+// 查找集群的DNS配置
+message FindEnabledNodeClusterDNSRequest {
+	int64 nodeClusterId = 1;
+}
+
+message FindEnabledNodeClusterDNSResponse {
+	string name = 1;
+	DNSDomain domain = 2;
+	DNSProvider provider = 3;
+	string defaultRoute = 6;
+	bool nodesAutoSync = 4;
+	bool serversAutoSync = 5;
+	repeated string cnameRecords = 7;
+	int32 ttl = 8;
+	bool cnameAsDomain = 9;
+	bool includingLnNodes = 10;
+}
+
+// 计算使用某个DNS服务商的集群数量
+message CountAllEnabledNodeClustersWithDNSProviderIdRequest {
+	int64 dnsProviderId = 1;
+}
+
+// 计算使用某个DNS域名的集群数量
+message CountAllEnabledNodeClustersWithDNSDomainIdRequest {
+	int64 dnsDomainId = 1;
+}
+
+// 查找使用某个域名的所有集群
+message FindAllEnabledNodeClustersWithDNSDomainIdRequest {
+	int64 dnsDomainId = 1;
+}
+
+message FindAllEnabledNodeClustersWithDNSDomainIdResponse {
+	repeated NodeCluster nodeClusters = 1;
+}
+
+// 检查集群域名是否已经被使用
+message CheckNodeClusterDNSNameRequest {
+	int64 nodeClusterId = 1;
+	string dnsName = 2;
+}
+
+message CheckNodeClusterDNSNameResponse {
+	bool isUsed = 1;
+}
+
+// 修改集群的域名设置
+message UpdateNodeClusterDNSRequest {
+	int64 nodeClusterId = 1;
+	string dnsName = 2;
+	int64 dnsDomainId = 3;
+	bool nodesAutoSync = 4;
+	bool serversAutoSync = 5;
+	repeated string cnameRecords = 6;
+	int32 ttl = 7;
+	bool cnameAsDomain = 8;
+	bool includingLnNodes = 9;
+}
+
+// 检查集群的DNS是否有变化
+message CheckNodeClusterDNSChangesRequest {
+	int64 nodeClusterId = 1;
+}
+
+message CheckNodeClusterDNSChangesResponse {
+	bool isChanged = 1;
+}
+
+// 查找集群的TOA配置
+message FindEnabledNodeClusterTOARequest {
+	int64 nodeClusterId = 1;
+}
+
+message FindEnabledNodeClusterTOAResponse {
+	bytes toaJSON = 1;
+}
+
+// 修改集群的TOA设置
+message UpdateNodeClusterTOARequest {
+	int64 nodeClusterId = 1;
+	bytes toaJSON = 2;
+}
+
+// 计算使用某个缓存策略的集群数量
+message CountAllEnabledNodeClustersWithHTTPCachePolicyIdRequest {
+	int64 httpCachePolicyId = 1;
+}
+
+// 查找使用缓存策略的所有集群
+message FindAllEnabledNodeClustersWithHTTPCachePolicyIdRequest {
+	int64 httpCachePolicyId = 1;
+}
+
+message FindAllEnabledNodeClustersWithHTTPCachePolicyIdResponse {
+	repeated NodeCluster nodeClusters = 1;
+}
+
+// 计算使用某个WAF策略的集群数量
+message CountAllEnabledNodeClustersWithHTTPFirewallPolicyIdRequest {
+	int64 httpFirewallPolicyId = 1;
+}
+
+// 查找使用某个WAF策略的所有集群
+message FindAllEnabledNodeClustersWithHTTPFirewallPolicyIdRequest {
+	int64 httpFirewallPolicyId = 1;
+}
+
+message FindAllEnabledNodeClustersWithHTTPFirewallPolicyIdResponse {
+	repeated NodeCluster nodeClusters = 1;
+}
+
+// 修改集群的缓存策略
+message UpdateNodeClusterHTTPCachePolicyIdRequest {
+	int64 nodeClusterId = 1;
+	int64 httpCachePolicyId = 2;
+}
+
+// 修改集群的WAF策略
+message UpdateNodeClusterHTTPFirewallPolicyIdRequest {
+	int64 nodeClusterId = 1;
+	int64 httpFirewallPolicyId = 2;
+}
+
+// 修改集群的系统服务设置
+message UpdateNodeClusterSystemServiceRequest {
+	int64 nodeClusterId = 1;
+	string type = 2;
+	bytes paramsJSON = 3;
+}
+
+// 查找集群的系统服务设置
+message FindNodeClusterSystemServiceRequest {
+	int64 nodeClusterId = 1;
+	string type = 2;
+}
+
+message FindNodeClusterSystemServiceResponse {
+	bytes paramsJSON = 1;
+}
+
+// 获取集群中可以使用的端口
+message FindFreePortInNodeClusterRequest {
+	int64 nodeClusterId = 1;
+	string protocolFamily = 2;
+}
+
+message FindFreePortInNodeClusterResponse {
+	int32 port = 1;
+}
+
+// 检查端口是否已经被使用
+message CheckPortIsUsingInNodeClusterRequest {
+	int32 port = 1;
+	int64 nodeClusterId = 2;
+	int64 excludeServerId = 3;
+	string excludeProtocol = 4;
+	string protocolFamily = 5;
+}
+
+message CheckPortIsUsingInNodeClusterResponse {
+	bool isUsing = 1;
+}
+
+// 查找最近访问的集群
+message FindLatestNodeClustersRequest {
+	int64 size = 1;
+}
+
+message FindLatestNodeClustersResponse {
+	repeated NodeCluster nodeClusters = 1;
+}
+
+// 取得集群的配置概要信息
+message FindEnabledNodeClusterConfigInfoRequest {
+	int64 nodeClusterId = 1;
+}
+
+message FindEnabledNodeClusterConfigInfoResponse {
+	bool healthCheckIsOn = 1; // 启用了健康检查
+	bool hasFirewallActions = 2; // 有防火墙动作设置
+	bool hasThresholds = 3; // 有节点阈值设置
+	bool hasMessageReceivers = 4; // 已设置消息通知接收人
+	bool isTOAEnabled = 5; // 启用了TOA
+	bool hasMetricItems = 6; // 有指标统计设置
+	bool webPIsOn = 7; // 是否定义了WebP策略
+	bool uamIsOn = 10; // 是否定义了UAM策略
+	bool httpCCIsOn = 12; // 是否定义了CC策略
+	bool hasSystemServices = 8; // 启用了系统服务
+	bool hasDDoSProtection = 9; // 启用了DDoS防护
+	bool hasHTTPPagesPolicy = 11; // 是否设置了自定义页面策略
+	bool http3IsOn = 13; // 是否启用HTTP3
+	bool hasNetworkSecurityPolicy = 14; // 设置了网络安全策略
+}
+
+// 设置集群是否置顶
+message UpdateNodeClusterPinnedRequest {
+	int64 nodeClusterId = 1;
+	bool isPinned = 2;
+}
+
+// 读取集群WebP策略
+message FindEnabledNodeClusterWebPPolicyRequest {
+	int64 nodeClusterId = 1;
+}
+
+message FindEnabledNodeClusterWebPPolicyResponse {
+	bytes webpPolicyJSON = 1;
+}
+
+// 设置集群WebP策略
+message UpdateNodeClusterWebPPolicyRequest {
+	int64 nodeClusterId = 1;
+	bytes webPPolicyJSON = 2;
+}
+
+// 读取集群的UAM策略
+message FindEnabledNodeClusterUAMPolicyRequest {
+	int64 nodeClusterId = 1;
+}
+
+message FindEnabledNodeClusterUAMPolicyResponse {
+	bytes uamPolicyJSON = 1;
+}
+
+// 设置集群的UAM策略
+message UpdateNodeClusterUAMPolicyRequest {
+	int64 nodeClusterId = 1;
+	bytes uamPolicyJSON = 2;
+}
+
+// 读取集群的HTTP CC策略
+message FindEnabledNodeClusterHTTPCCPolicyRequest {
+	int64 nodeClusterId = 1;
+}
+
+message FindEnabledNodeClusterHTTPCCPolicyResponse {
+	bytes httpCCPolicyJSON = 1;
+}
+
+// 设置集群的HTTP CC策略
+message UpdateNodeClusterHTTPCCPolicyRequest {
+	int64 nodeClusterId = 1;
+	bytes httpCCPolicyJSON = 2;
+}
+
+// 获取集群的DDoS设置
+message FindNodeClusterDDoSProtectionRequest {
+	int64 nodeClusterId = 1;
+}
+
+message FindNodeClusterDDoSProtectionResponse {
+	bytes ddosProtectionJSON = 1;
+}
+
+// 修改集群的DDoS设置
+message UpdateNodeClusterDDoSProtectionRequest {
+	int64 nodeClusterId = 1;
+	bytes ddosProtectionJSON = 2;
+}
+
+// 获取集群的全局服务设置
+message FindNodeClusterGlobalServerConfigRequest {
+	int64 nodeClusterId = 1;
+}
+
+message FindNodeClusterGlobalServerConfigResponse {
+	bytes globalServerConfigJSON = 1;
+}
+
+// 修改集群的全局服务设置
+message UpdateNodeClusterGlobalServerConfigRequest {
+	int64 nodeClusterId = 1; // 集群ID
+	bytes globalServerConfigJSON = 2; // 网站全局配置
+}
+
+// 获取集群的自定义页面设置
+message FindNodeClusterHTTPPagesPolicyRequest {
+	int64 nodeClusterId = 1; // 集群ID
+}
+
+message FindNodeClusterHTTPPagesPolicyResponse {
+	bytes httpPagesPolicyJSON = 1; // HTTP自定义页面策略配置
+}
+
+// 修改集群的自定义页面设置
+message UpdateNodeClusterHTTPPagesPolicyRequest {
+	int64 nodeClusterId = 1; // 集群ID
+	bytes httpPagesPolicyJSON = 2; // HTTP自定义页面策略配置
+}
+
+// 获取集群的HTTP3设置
+message FindNodeClusterHTTP3PolicyRequest {
+	int64 nodeClusterId = 1; // 集群ID
+}
+
+message FindNodeClusterHTTP3PolicyResponse {
+	bytes http3PolicyJSON = 1; // HTTP3策略配置
+}
+
+// 修改集群的HTTP3设置
+message UpdateNodeClusterHTTP3PolicyRequest {
+	int64 nodeClusterId = 1; // 集群ID
+	bytes http3PolicyJSON = 2; // HTTP3策略配置
+}
+
+// 获取集群的网络安全策略
+message FindNodeClusterNetworkSecurityPolicyRequest {
+	int64 nodeClusterId = 1; // 集群ID
+}
+
+message FindNodeClusterNetworkSecurityPolicyResponse {
+	bytes networkSecurityPolicyJSON = 1; // 网络安全策略配置
+}
+
+// 修改集群的网络安全策略
+message UpdateNodeClusterNetworkSecurityPolicyRequest {
+	int64 nodeClusterId = 1; // 集群ID
+	bytes networkSecurityPolicyJSON = 2; // 网络安全策略配置
+}

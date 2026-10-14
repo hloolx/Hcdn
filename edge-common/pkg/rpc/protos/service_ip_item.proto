@@ -1,0 +1,276 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/rpc_messages.proto";
+import "models/model_ip_item.proto";
+import "models/model_ip_list.proto";
+import "models/model_server.proto";
+import "models/model_http_firewall_policy.proto";
+
+// IP条目管理
+service IPItemService {
+	// 创建IP
+	rpc createIPItem (CreateIPItemRequest) returns (CreateIPItemResponse);
+
+	// 创建一组IP
+	rpc createIPItems(CreateIPItemsRequest) returns (CreateIPItemsResponse);
+
+	// 修改IP
+	rpc updateIPItem (UpdateIPItemRequest) returns (RPCSuccess);
+
+	// 删除IP
+	rpc deleteIPItem (DeleteIPItemRequest) returns (RPCSuccess);
+
+	// 批量删除IP
+	rpc deleteIPItems(DeleteIPItemsRequest) returns (RPCSuccess);
+
+	// 计算IP数量
+	rpc countIPItemsWithListId (CountIPItemsWithListIdRequest) returns (RPCCountResponse);
+
+	// 列出单页的IP
+	rpc listIPItemsWithListId (ListIPItemsWithListIdRequest) returns (ListIPItemsWithListIdResponse);
+
+	// 查找单个IP
+	rpc findEnabledIPItem (FindEnabledIPItemRequest) returns (FindEnabledIPItemResponse);
+
+	// 根据版本列出一组IP
+	rpc listIPItemsAfterVersion (ListIPItemsAfterVersionRequest) returns (ListIPItemsAfterVersionResponse);
+
+	// 检查IP状态
+	rpc checkIPItemStatus (CheckIPItemStatusRequest) returns (CheckIPItemStatusResponse);
+
+	// 检查IP是否存在
+	rpc existsEnabledIPItem (ExistsEnabledIPItemRequest) returns (ExistsEnabledIPItemResponse);
+
+	// 计算所有IP数量
+	rpc countAllEnabledIPItems(CountAllEnabledIPItemsRequest) returns (RPCCountResponse);
+
+	// 列出所有名单中的IP
+	rpc listAllEnabledIPItems(ListAllEnabledIPItemsRequest) returns (ListAllEnabledIPItemsResponse);
+
+	// 列出所有名单中的IP ID
+	rpc listAllIPItemIds(ListAllIPItemIdsRequest) returns (ListAllIPItemIdsResponse);
+
+	// 设置所有为已读
+	rpc updateIPItemsRead(UpdateIPItemsReadRequest) returns (RPCSuccess);
+
+	// 查找IP对应的名单所属网站ID
+	rpc findServerIdWithIPItemId(FindServerIdWithIPItemIdRequest) returns (FindServerIdWithIPItemIdResponse);
+}
+
+// 创建IP
+message CreateIPItemRequest {
+	int64 ipListId = 1; // 所属IP列表ID
+	string value = 15; // IP原始值，比如单个IP、IP范围或者CIDR，指定了原始值后，无需设置ipFrom和ipTo两个参数
+	string ipFrom = 2; // 开始IP
+	string ipTo = 3; // 结束IP（可选）
+	int64 expiredAt = 4; // 过期时间戳（可选）
+	string reason = 5; // 加入理由（可选）
+	string type = 6; // IP类型，值为ipv4或ipv6
+	string eventLevel = 7; // 级别：debug, notice, warning, error, critical, fatal
+
+	int64 nodeId = 8; // 可选项，所属节点ID
+	int64 serverId = 9; // 可选项，所属网站ID
+
+	int64 sourceNodeId = 10; // 可选项，来源节点
+	int64 sourceServerId = 11;  // 可选项，来源网站ID
+	int64 sourceHTTPFirewallPolicyId = 12; // 可选项，来源WAF策略ID
+	int64 sourceHTTPFirewallRuleGroupId = 13; // 可选项，来源WAF规则分组ID
+	int64 sourceHTTPFirewallRuleSetId = 14; // 可选项，来源WAF规则集ID
+}
+
+message CreateIPItemResponse {
+	int64 ipItemId = 1;
+}
+
+// 创建一组IP
+message CreateIPItemsRequest {
+	repeated IPItem ipItems = 1; // 要创建的IP列表
+
+	message IPItem {
+		int64 ipListId = 1; // IP列表ID
+		string value = 15; // IP原始值，比如单个IP、IP范围或者CIDR，指定了原始值后，无需设置ipFrom和ipTo两个参数
+		string ipFrom = 2; // 开始IP
+		string ipTo = 3; // 结束IP（可选）
+		int64 expiredAt = 4; // 过期时间戳（可选）
+		string reason = 5; // 加入理由（可选）
+		string type = 6; // 类型
+		string eventLevel = 7; // 级别
+
+		int64 nodeId = 8; // 所属节点ID
+		int64 serverId = 9; // 所属服务ID
+
+		int64 sourceNodeId = 10;
+		int64 sourceServerId = 11;
+		int64 sourceHTTPFirewallPolicyId = 12;
+		int64 sourceHTTPFirewallRuleGroupId = 13;
+		int64 sourceHTTPFirewallRuleSetId = 14;
+	}
+}
+
+message CreateIPItemsResponse {
+	repeated int64 ipItemIds = 1; // 创建后的IP ID列表
+}
+
+// 修改IP
+message UpdateIPItemRequest {
+	int64 ipItemId = 1;
+	string value = 8; // IP原始值，比如单个IP、IP范围或者CIDR，指定了原始值后，无需设置ipFrom和ipTo两个参数
+	string ipFrom = 2; // 开始IP
+	string ipTo = 3; // 结束IP（可选）
+	int64 expiredAt = 4;
+	string reason = 5;
+	string type = 6; // 类型
+	string eventLevel = 7; // 级别
+}
+
+// 删除IP
+// 可以使用 ipItemId 删除，也可以使用 ipFrom+ipTo+ipListId 删除，如果只是单个IP，则不需要指定ipTo
+message DeleteIPItemRequest {
+	int64 ipItemId = 1; // IP条目的ID
+
+	string value = 5; // IP原始值，比如单个IP、IP范围或者CIDR，指定了原始值后，无需设置ipFrom和ipTo两个参数
+	string ipFrom = 2; // v0.4.8新增，开始IP，和ipItemId二选一
+	string ipTo = 3; // v0.4.8新增，结束IP，和ipItemId二选一
+	int64 ipListId = 4; // v0.4.8新增，IP列表，IP所在的IP列表，如果不指定，则会删除所有IP列表中的相关IP信息
+}
+
+// 批量删除IP
+message DeleteIPItemsRequest {
+	repeated int64 ipItemIds = 1;
+}
+
+// 计算IP数量
+message CountIPItemsWithListIdRequest {
+	int64 ipListId = 1;
+	string keyword = 2;
+	string ipFrom = 3;
+	string ipTo = 4;
+	string eventLevel = 5;
+}
+
+// 列出单页的IP
+message ListIPItemsWithListIdRequest {
+	int64 ipListId = 1;
+	string keyword = 4;
+	string ipFrom = 5;
+	string ipTo = 6;
+	string eventLevel = 7;
+	int64 offset = 2;
+	int64 size = 3;
+}
+
+message ListIPItemsWithListIdResponse {
+	repeated IPItem ipItems = 1;
+}
+
+// 查找单个IP
+message FindEnabledIPItemRequest {
+	int64 ipItemId = 1;
+}
+
+message FindEnabledIPItemResponse {
+	IPItem ipItem = 1;
+}
+
+// 根据版本列出一组IP
+message ListIPItemsAfterVersionRequest {
+	int64 version = 1; // 版本号
+	int64 size = 2; // 数量
+}
+
+message ListIPItemsAfterVersionResponse {
+	repeated IPItem ipItems = 1;
+	int64 version = 2; // 新的版本号
+}
+
+// 检查IP状态
+message CheckIPItemStatusRequest {
+	int64 ipListId = 1;
+	string ip = 2;
+}
+
+message CheckIPItemStatusResponse {
+	bool isOk = 1; // 是否查询成功
+	string error = 2;
+	bool isFound = 3; // 是否找到
+	bool isAllowed = 4; // 是否允许
+	IPItem ipItem = 5; // 匹配的IPItem
+}
+
+// 检查IP是否存在
+message ExistsEnabledIPItemRequest {
+	int64 ipItemId = 1;
+}
+
+message ExistsEnabledIPItemResponse {
+	bool exists = 1;
+}
+
+// 计算所有IP数量
+message CountAllEnabledIPItemsRequest {
+	string keyword = 6; // 关键词
+	string ip = 1; // 单个IP，搜索单个IP时需要
+	bool globalOnly = 2; // 是否为自动添加的IP
+	bool unread = 3; // 是否未读
+	string eventLevel = 4; // 事件级别
+	string listType = 5; // 列表类型：black|white
+	int64 userId = 7; // 用户ID，只有管理员才有权限指定用户ID
+}
+
+// 列出所有名单中的IP
+message ListAllEnabledIPItemsRequest {
+	string keyword = 8; // 关键词
+	string ip = 1; // 单个IP，搜索单个IP时需要
+	bool globalOnly = 2;  // 是否为自动添加的IP
+	bool unread = 5; // 是否未读
+	string eventLevel = 6; // 事件级别
+	string listType = 7; // 列表类型：black|white
+	int64 userId = 9; // 用户ID，只有管理员才有权限指定用户ID
+	int64 offset = 3; // 读取位置，从0开始
+	int64 size = 4; // 每次读取数量
+}
+
+message ListAllEnabledIPItemsResponse {
+	repeated Result results = 1;
+
+	message Result {
+		IPList ipList = 1; // 所属名单
+		IPItem ipItem = 2; // IP信息
+		Server server = 3; // 所属服务
+		HTTPFirewallPolicy httpFirewallPolicy = 4; // 所属WAF策略
+	}
+}
+
+// 列出所有名单中的IP ID
+message ListAllIPItemIdsRequest {
+	string keyword = 8; // 关键词
+	string ip = 1; // 单个IP，搜索单个IP时需要
+	bool globalOnly = 2;  // 是否为自动添加的IP
+	bool unread = 5; // 是否未读
+	string eventLevel = 6; // 事件级别
+	string listType = 7; // 列表类型：black|white
+	int64 userId = 9; // 用户ID，只有管理员才有权限指定用户ID
+	int64 offset = 3; // 读取位置，从0开始
+	int64 size = 4; // 每次读取数量
+}
+
+message ListAllIPItemIdsResponse {
+	repeated int64 ipItemIds = 1; // IP ID列表
+}
+
+// 设置所有为已读
+message UpdateIPItemsReadRequest {
+
+}
+
+// 查找IP对应的名单所属网站ID
+message FindServerIdWithIPItemIdRequest {
+	int64 ipItemId = 1; // IP ID
+}
+
+message FindServerIdWithIPItemIdResponse {
+	int64 serverId = 1; // 网站ID
+}

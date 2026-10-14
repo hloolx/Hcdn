@@ -1,0 +1,32 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+message NodeCluster {
+	int64 id = 1;
+	string name = 2;
+	int64 createdAt = 3;
+	int64 nodeGrantId = 4;
+	string installDir = 5;
+	string uniqueId = 6;
+	string secret = 7;
+	string dnsName = 8;
+	int64 dnsDomainId = 9;
+	string dnsDefaultRoute = 22; // DNS默认线路
+	int64 httpCachePolicyId = 10;
+	int64 httpFirewallPolicyId = 11;
+	bool isOn = 12;
+	string timeZone = 13;
+	int32 nodeMaxThreads = 14;
+	bool autoOpenPorts = 16;
+	bool isPinned = 17;
+	bytes clockJSON = 18;
+	bool autoRemoteStart = 19;
+	bool autoInstallNftables = 20;
+	bytes sshParamsJSON = 21;
+	bool autoSystemTuning = 23; // 是否自动调节系统参数
+	bool autoTrimDisks = 24; // 是否自动TRIM硬盘
+	int32 maxConcurrentReads = 25; // 最大并发读
+	int32 maxConcurrentWrites = 26; // 最大并发写
+}

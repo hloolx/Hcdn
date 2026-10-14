@@ -1,0 +1,24 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+// 域名服务集群
+message NSCluster {
+	int64 id = 1;
+	bool isOn = 2;
+	string name = 3;
+	string installDir = 4;
+	bytes tcpJSON = 5; // TCP设置
+	bytes tlsJSON = 6; // TLS设置
+	bytes udpJSON = 7; // UDP设置
+	bytes dohJSON = 16; // DoH设置
+	repeated string hosts = 8;
+	bytes soaJSON = 12;
+	string email = 13;
+	bool autoRemoteStart = 9;
+	string timeZone = 10;
+	bytes answerJSON = 11;
+	bool detectAgents = 14;
+	bool checkingPorts = 15; // 检查端口连通性
+}

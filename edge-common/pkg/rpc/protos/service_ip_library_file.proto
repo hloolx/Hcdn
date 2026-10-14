@@ -1,0 +1,187 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/rpc_messages.proto";
+import "models/model_ip_library_file.proto";
+import "models/model_region_country.proto";
+import "models/model_region_province.proto";
+import "models/model_region_city.proto";
+import "models/model_region_town.proto";
+import "models/model_region_provider.proto";
+
+// IP库文件管理
+service IPLibraryFileService {
+	// 查找所有已完成的IP库文件
+	rpc findAllFinishedIPLibraryFiles(FindAllFinishedIPLibraryFilesRequest) returns (FindAllFinishedIPLibraryFilesResponse);
+
+	// 查找所有未完成的IP库文件
+	rpc findAllUnfinishedIPLibraryFiles(FindAllUnfinishedIPLibraryFilesRequest) returns (FindAllUnfinishedIPLibraryFilesResponse);
+
+	// 查找单个IP库文件
+	rpc findIPLibraryFile(FindIPLibraryFileRequest) returns (FindIPLibraryFileResponse);
+
+	// 创建IP库文件
+	rpc createIPLibraryFile(CreateIPLibraryFileRequest) returns (CreateIPLibraryFileResponse);
+
+	// 检查国家/地区
+	rpc checkCountriesWithIPLibraryFileId(CheckCountriesWithIPLibraryFileIdRequest) returns (CheckCountriesWithIPLibraryFileIdResponse);
+
+	// 检查省份/州
+	rpc checkProvincesWithIPLibraryFileId(CheckProvincesWithIPLibraryFileIdRequest) returns (CheckProvincesWithIPLibraryFileIdResponse);
+
+	// 检查城市/市
+	rpc checkCitiesWithIPLibraryFileId(CheckCitiesWithIPLibraryFileIdRequest) returns (CheckCitiesWithIPLibraryFileIdResponse);
+
+	// 检查区县
+	rpc checkTownsWithIPLibraryFileId(CheckTownsWithIPLibraryFileIdRequest) returns (CheckTownsWithIPLibraryFileIdResponse);
+
+	// 检查ISP运营商
+	rpc checkProvidersWithIPLibraryFileId(CheckProvidersWithIPLibraryFileIdRequest) returns (CheckProvidersWithIPLibraryFileIdResponse);
+
+	// 生成IP库文件
+	rpc generateIPLibraryFile(GenerateIPLibraryFileRequest) returns (RPCSuccess);
+
+	// 设置某个IP库为已完成
+	rpc updateIPLibraryFileFinished(UpdateIPLibraryFileFinishedRequest) returns (RPCSuccess);
+
+	// 删除IP库文件
+	rpc deleteIPLibraryFile(DeleteIPLibraryFileRequest) returns (RPCSuccess);
+}
+
+// 查找所有已完成的IP库文件
+message FindAllFinishedIPLibraryFilesRequest {
+
+}
+
+message FindAllFinishedIPLibraryFilesResponse {
+	repeated IPLibraryFile ipLibraryFiles = 1;
+}
+
+// 查找所有未完成的IP库文件
+message FindAllUnfinishedIPLibraryFilesRequest {
+
+}
+
+message FindAllUnfinishedIPLibraryFilesResponse {
+	repeated IPLibraryFile ipLibraryFiles = 1;
+}
+
+// 查找单个IP库文件
+message FindIPLibraryFileRequest {
+	int64 ipLibraryFileId = 1;
+}
+
+message FindIPLibraryFileResponse {
+	IPLibraryFile ipLibraryFile = 1;
+}
+
+// 创建IP库文件
+message CreateIPLibraryFileRequest {
+	string name = 1;
+	string template = 2;
+	repeated string emptyValues = 3;
+	int64 fileId = 4;
+	bytes countriesJSON = 5;
+	bytes provincesJSON = 6;
+	bytes citiesJSON = 7;
+	bytes townsJSON = 8;
+	bytes providersJSON = 9;
+	string password = 10; // 密码
+}
+
+message CreateIPLibraryFileResponse {
+	int64 ipLibraryFileId = 1;
+}
+
+// 检查国家/地区
+message CheckCountriesWithIPLibraryFileIdRequest {
+	int64 ipLibraryFileId = 1;
+}
+
+message CheckCountriesWithIPLibraryFileIdResponse {
+	repeated MissingCountry missingCountries = 1;
+
+	message MissingCountry {
+		string countryName = 1;
+		repeated RegionCountry similarCountries = 2;
+	}
+}
+
+// 检查省份/州
+message CheckProvincesWithIPLibraryFileIdRequest{
+	int64 ipLibraryFileId = 1;
+}
+
+message CheckProvincesWithIPLibraryFileIdResponse {
+	repeated MissingProvince missingProvinces = 1;
+
+	message MissingProvince {
+		string countryName = 1;
+		string provinceName = 2;
+		repeated RegionProvince similarProvinces = 3;
+	}
+}
+
+// 检查城市/市
+message CheckCitiesWithIPLibraryFileIdRequest{
+	int64 ipLibraryFileId = 1;
+}
+
+message CheckCitiesWithIPLibraryFileIdResponse {
+	repeated MissingCity missingCities = 1;
+
+	message MissingCity {
+		string countryName = 1;
+		string provinceName = 2;
+		string cityName = 3;
+		repeated RegionCity similarCities = 4;
+	}
+}
+
+// 检查区县
+message CheckTownsWithIPLibraryFileIdRequest {
+	int64 ipLibraryFileId = 1;
+}
+
+message CheckTownsWithIPLibraryFileIdResponse {
+	repeated MissingTown missingTowns = 1;
+
+	message MissingTown {
+		string countryName = 1;
+		string provinceName = 2;
+		string cityName = 3;
+		string townName = 4;
+		repeated RegionTown similarTowns = 5;
+	}
+}
+
+// 检查ISP运营商
+message CheckProvidersWithIPLibraryFileIdRequest{
+	int64 ipLibraryFileId = 1;
+}
+
+message CheckProvidersWithIPLibraryFileIdResponse {
+	repeated MissingProvider missingProviders = 1;
+
+	message MissingProvider {
+		string providerName = 1;
+		repeated RegionProvider similarProviders = 2;
+	}
+}
+
+// 生成IP库文件
+message GenerateIPLibraryFileRequest {
+	int64 ipLibraryFileId = 1;
+}
+
+// 设置某个IP库为已完成
+message UpdateIPLibraryFileFinishedRequest {
+	int64 ipLibraryFileId = 1;
+}
+
+// 删除IP库文件
+message DeleteIPLibraryFileRequest {
+	int64 ipLibraryFileId = 1;
+}

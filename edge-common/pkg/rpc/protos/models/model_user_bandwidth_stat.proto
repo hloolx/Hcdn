@@ -1,0 +1,13 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+// 带宽统计数据
+message UserBandwidthStat {
+	int64 id = 1;
+	int64 userId = 2;
+	string day = 3;
+	string timeAt = 4;
+	int64 bytes = 5; // 峰值带宽字节
+}

@@ -1,0 +1,88 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/rpc_messages.proto";
+import "models/model_http_firewall_rule_group.proto";
+
+// WAF分组服务
+service HTTPFirewallRuleGroupService {
+	// 设置是否启用分组
+	rpc updateHTTPFirewallRuleGroupIsOn (UpdateHTTPFirewallRuleGroupIsOnRequest) returns (RPCSuccess);
+
+	// 创建分组
+	rpc createHTTPFirewallRuleGroup (CreateHTTPFirewallRuleGroupRequest) returns (CreateHTTPFirewallRuleGroupResponse);
+
+	// 修改分组
+	rpc updateHTTPFirewallRuleGroup (UpdateHTTPFirewallRuleGroupRequest) returns (RPCSuccess);
+
+	// 获取分组配置
+	rpc findEnabledHTTPFirewallRuleGroupConfig (FindEnabledHTTPFirewallRuleGroupConfigRequest) returns (FindEnabledHTTPFirewallRuleGroupConfigResponse);
+
+	// 获取分组信息
+	rpc findEnabledHTTPFirewallRuleGroup (FindEnabledHTTPFirewallRuleGroupRequest) returns (FindEnabledHTTPFirewallRuleGroupResponse);
+
+	// 修改分组的规则集
+	rpc updateHTTPFirewallRuleGroupSets (UpdateHTTPFirewallRuleGroupSetsRequest) returns (RPCSuccess);
+
+	// 添加规则集
+	rpc addHTTPFirewallRuleGroupSet(AddHTTPFirewallRuleGroupSetRequest) returns (RPCSuccess);
+}
+
+// 设置是否启用分组
+message UpdateHTTPFirewallRuleGroupIsOnRequest {
+	int64 firewallRuleGroupId = 1;
+	bool isOn = 2;
+}
+
+// 创建分组
+message CreateHTTPFirewallRuleGroupRequest {
+	bool isOn = 1;
+	string name = 2;
+	string code = 4;
+	string description = 3;
+}
+
+message CreateHTTPFirewallRuleGroupResponse {
+	int64 firewallRuleGroupId = 1;
+}
+
+// 修改分组
+message UpdateHTTPFirewallRuleGroupRequest {
+	int64 firewallRuleGroupId = 1;
+	bool isOn = 2;
+	string name = 3;
+	string description = 4;
+	string code = 5;
+}
+
+// 获取分组配置
+message FindEnabledHTTPFirewallRuleGroupConfigRequest {
+	int64 firewallRuleGroupId = 1;
+}
+
+message FindEnabledHTTPFirewallRuleGroupConfigResponse {
+	bytes firewallRuleGroupJSON = 1;
+}
+
+// 获取分组信息
+message FindEnabledHTTPFirewallRuleGroupRequest {
+	int64 firewallRuleGroupId = 1;
+}
+
+message FindEnabledHTTPFirewallRuleGroupResponse {
+	HTTPFirewallRuleGroup firewallRuleGroup = 1;
+}
+
+// 修改分组的规则集
+message UpdateHTTPFirewallRuleGroupSetsRequest {
+	int64 firewallRuleGroupId = 1;
+	bytes firewallRuleSetsJSON = 2;
+}
+
+// 添加规则集
+message AddHTTPFirewallRuleGroupSetRequest {
+	int64 firewallRuleGroupId = 1;
+	bytes firewallRuleSetConfigJSON = 2;
+}

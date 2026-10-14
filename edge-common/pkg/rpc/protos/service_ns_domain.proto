@@ -1,0 +1,257 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/model_ns_domain.proto";
+import "models/rpc_messages.proto";
+
+// 域名相关服务
+service NSDomainService {
+	// 创建单个域名
+	rpc createNSDomain (CreateNSDomainRequest) returns (CreateNSDomainResponse);
+
+	// 批量创建域名
+	rpc createNSDomains(CreateNSDomainsRequest) returns (CreateNSDomainsResponse);
+
+	// 修改域名
+	rpc updateNSDomain (UpdateNSDomainRequest) returns (RPCSuccess);
+
+	// 修改域名状态
+	rpc updateNSDomainStatus(UpdateNSDomainStatusRequest) returns (RPCSuccess);
+
+	// 删除域名
+	rpc deleteNSDomain (DeleteNSDomainRequest) returns (RPCSuccess);
+
+	// 批量删除域名
+	rpc deleteNSDomains(DeleteNSDomainsRequest) returns (RPCSuccess);
+
+	// 查找单个域名
+	rpc findNSDomain (FindNSDomainRequest) returns (FindNSDomainResponse);
+
+	// 根据域名名称查找域名
+	rpc findNSDomainWithName(FindNSDomainWithNameRequest) returns (FindNSDomainWithNameResponse);
+
+	// 根据域名名称查找集群中的已验证域名
+	rpc findVerifiedNSDomainOnCluster(FindVerifiedNSDomainOnClusterRequest) returns (FindVerifiedNSDomainOnClusterResponse);
+
+	// 计算域名数量
+	rpc countAllNSDomains (CountAllNSDomainsRequest) returns (RPCCountResponse);
+
+	// 列出单页域名
+	rpc listNSDomains (ListNSDomainsRequest) returns (ListNSDomainsResponse);
+
+	// 根据版本列出一组域名
+	rpc listNSDomainsAfterVersion (ListNSDomainsAfterVersionRequest) returns (ListNSDomainsAfterVersionResponse);
+
+	// 查找TSIG配置
+	rpc findNSDomainTSIG (FindNSDomainTSIGRequest) returns (FindNSDomainTSIGResponse);
+
+	// 修改TSIG配置
+	rpc updateNSDomainTSIG (UpdateNSDomainTSIGRequest) returns (RPCSuccess);
+
+	// 检查一组域名是否在用户账户中存在
+	rpc existNSDomains(ExistNSDomainsRequest) returns (ExistNSDomainsResponse);
+
+	// 检查一组域名是否已通过验证
+	rpc existVerifiedNSDomains(ExistVerifiedNSDomainsRequest) returns (ExistVerifiedNSDomainsResponse);
+
+	// 获取域名验证信息
+	rpc findNSDomainVerifyingInfo(FindNSDomainVerifyingInfoRequest) returns (FindNSDomainVerifyingInfoResponse);
+
+	// 验证域名信息
+	rpc verifyNSDomain(VerifyNSDomainRequest) returns (VerifyNSDomainResponse);
+
+	// 查询记录健康检查全局设置
+	rpc findNSDomainRecordsHealthCheck(FindNSDomainRecordsHealthCheckRequest) returns (FindNSDomainRecordsHealthCheckResponse);
+
+	// 修改记录健康检查全局设置
+	rpc updateNSDomainRecordsHealthCheck(UpdateNSDomainRecordsHealthCheckRequest) returns (RPCSuccess);
+}
+
+// 创建单个域名
+message CreateNSDomainRequest {
+	int64 nsClusterId = 1; // 所属集群
+	int64 userId = 2; // 所属用户
+	string name = 3; // 域名
+	repeated int64 nsDomainGroupIds = 4; // 域名分组ID
+}
+
+message CreateNSDomainResponse {
+	int64 nsDomainId = 1;
+}
+
+// 批量创建域名
+message CreateNSDomainsRequest {
+	int64 nsClusterId = 1; // 所属集群
+	int64 userId = 2; // 所属用户
+	repeated string names = 3; // 一组域名
+	repeated int64 nsDomainGroupIds = 4; // 域名分组ID
+}
+
+message CreateNSDomainsResponse {
+	repeated int64 nsDomainIds = 1;
+}
+
+// 修改域名
+// 注意：名称不允许修改
+message UpdateNSDomainRequest {
+	int64 nsDomainId = 1;
+	int64 nsClusterId = 2;
+	int64 userId = 3;
+	repeated int64 nsDomainGroupIds = 5; // 域名分组ID
+	bool isOn = 4;
+}
+
+// 修改域名状态
+message UpdateNSDomainStatusRequest {
+	int64 nsDomainId = 1;
+	string status = 2;
+}
+
+// 删除域名
+message DeleteNSDomainRequest {
+	int64 nsDomainId = 1;
+}
+
+// 批量删除域名
+message DeleteNSDomainsRequest {
+	repeated string names = 1;
+	int64 userId = 2; // 域名所属用户ID
+}
+
+// 查找单个域名
+message FindNSDomainRequest {
+	int64 nsDomainId = 1; // 域名ID
+}
+
+message FindNSDomainResponse {
+	NSDomain nsDomain = 1;
+}
+
+// 根据域名名称查找域名
+message FindNSDomainWithNameRequest {
+	int64 userId = 2; // 用户ID，只有管理员才能指定用户
+	string name = 1; // 域名
+}
+
+message FindNSDomainWithNameResponse {
+	NSDomain nsDomain = 1;
+}
+
+// 根据域名名称查找集群中的已验证域名
+message FindVerifiedNSDomainOnClusterRequest {
+	int64 nsClusterId = 1; // 集群ID
+	string name = 2; // 域名
+}
+
+message FindVerifiedNSDomainOnClusterResponse {
+	NSDomain nsDomain = 1;
+}
+
+// 计算域名数量
+message CountAllNSDomainsRequest {
+	int64 userId = 1;
+	int64 nsClusterId = 2;
+	string keyword = 3;
+	int64 nsDomainGroupId = 4;
+	string status = 5;
+}
+
+// 列出单页域名
+message ListNSDomainsRequest {
+	int64 userId = 1;
+	int64 nsClusterId = 2;
+	string keyword = 3;
+	int64 nsDomainGroupId = 6;
+	int64 offset = 4;
+	int64 size = 5;
+}
+
+message ListNSDomainsResponse {
+	repeated NSDomain nsDomains = 1;
+}
+
+// 根据版本列出一组域名
+message ListNSDomainsAfterVersionRequest {
+	int64 version = 1;
+	int64 size = 2;
+}
+
+message ListNSDomainsAfterVersionResponse {
+	repeated NSDomain nsDomains = 1;
+}
+
+// 查找TSIG配置
+message FindNSDomainTSIGRequest {
+	int64 nsDomainId = 1;
+}
+
+message FindNSDomainTSIGResponse {
+	bytes tsigJSON = 1;
+}
+
+// 修改TSIG配置
+message UpdateNSDomainTSIGRequest {
+	int64 nsDomainId = 1;
+	bytes tsigJSON = 2;
+}
+
+// 检查一组域名是否在用户账户中存在
+message ExistNSDomainsRequest {
+	repeated string names = 1;
+	int64 userId = 2;
+}
+
+message ExistNSDomainsResponse {
+	repeated string existingNames = 1;
+}
+
+// 检查一组域名是否已通过验证
+message ExistVerifiedNSDomainsRequest {
+	repeated string names = 1;
+}
+
+message ExistVerifiedNSDomainsResponse {
+	repeated string existingNames = 1;
+}
+
+// 获取域名验证信息
+message FindNSDomainVerifyingInfoRequest {
+	int64 nsDomainId = 1; // 要验证的域名ID
+}
+
+message FindNSDomainVerifyingInfoResponse {
+	bool requireTXT = 4; // 是否需要TXT验证，如果不需要（值false），则表示用户不需要手动设置TXT，此时 txt 字段内容可能为空
+	string txt = 1; // TXT记录
+	int64 expiresAt = 2; // TXT过期时间
+	string status = 3; // 当前状态
+}
+
+// 验证域名信息
+message VerifyNSDomainRequest {
+	int64 nsDomainId = 1;
+}
+
+message VerifyNSDomainResponse {
+	bool isOk = 1; // 是否成功
+	string errorCode = 2; // 错误代码
+	string errorMessage = 3; // 错误消息
+	repeated string currentTXTValues = 4; // 当前的TXT值
+	repeated string currentNSValues = 5; // 当前的NS记录值
+}
+
+// 查询记录健康检查全局设置
+message FindNSDomainRecordsHealthCheckRequest {
+	int64 nsDomainId = 1; // 域名ID
+}
+
+message FindNSDomainRecordsHealthCheckResponse {
+	bytes nsDomainRecordsHealthCheckJSON = 1; // 健康检查设置
+}
+
+// 修改记录健康检查全局设置
+message UpdateNSDomainRecordsHealthCheckRequest {
+	int64 nsDomainId = 1; // 域名ID
+	bytes nsDomainRecordsHealthCheckJSON = 2; // 健康检查设置
+}

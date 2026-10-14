@@ -1,0 +1,402 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/rpc_messages.proto";
+import "models/model_user.proto";
+import "models/model_user_feature.proto";
+import "models/model_node_value.proto";
+
+// 用户相关服务
+service UserService {
+	// 创建用户
+	rpc createUser (CreateUserRequest) returns (CreateUserResponse);
+
+	// 注册用户
+	rpc registerUser(RegisterUserRequest) returns (RegisterUserResponse);
+
+	// 审核用户
+	rpc verifyUser(VerifyUserRequest) returns (RPCSuccess);
+
+	// 修改用户
+	rpc updateUser (UpdateUserRequest) returns (RPCSuccess);
+
+	// 删除用户
+	rpc deleteUser (DeleteUserRequest) returns (RPCSuccess);
+
+	// 计算用户数量
+	rpc countAllEnabledUsers (CountAllEnabledUsersRequest) returns (RPCCountResponse);
+
+	// 列出单页用户
+	rpc listEnabledUsers (ListEnabledUsersRequest) returns (ListEnabledUsersResponse);
+
+	// 查询单个用户信息
+	rpc findEnabledUser (FindEnabledUserRequest) returns (FindEnabledUserResponse);
+
+	// 检查用户名是否存在
+	rpc checkUserUsername (CheckUserUsernameRequest) returns (CheckUserUsernameResponse);
+
+	// 登录
+	rpc loginUser (LoginUserRequest) returns (LoginUserResponse);
+
+	// 修改用户基本信息
+	rpc updateUserInfo (UpdateUserInfoRequest) returns (RPCSuccess);
+
+	// 修改用户登录信息
+	rpc updateUserLogin (UpdateUserLoginRequest) returns (RPCSuccess);
+
+	// 取得用户Dashboard数据
+	rpc composeUserDashboard (ComposeUserDashboardRequest) returns (ComposeUserDashboardResponse);
+
+	// 获取用户所在的集群ID
+	rpc findUserNodeClusterId (FindUserNodeClusterIdRequest) returns (FindUserNodeClusterIdResponse);
+
+	// 设置单个用户能使用的功能
+	rpc updateUserFeatures (UpdateUserFeaturesRequest) returns (RPCSuccess);
+
+	// 设置所有用户能使用的功能
+	rpc updateAllUsersFeatures(UpdateAllUsersFeaturesRequest) returns (RPCSuccess);
+
+	// 获取用户所有的功能列表
+	rpc findUserFeatures (FindUserFeaturesRequest) returns (FindUserFeaturesResponse);
+
+	// 获取所有的功能定义
+	rpc findAllUserFeatureDefinitions (FindAllUserFeatureDefinitionsRequest) returns (FindAllUserFeatureDefinitionsResponse);
+
+	// 组合全局的看板数据
+	rpc composeUserGlobalBoard (ComposeUserGlobalBoardRequest) returns (ComposeUserGlobalBoardResponse);
+
+	// 根据用户名检查是否需要输入OTP
+	rpc checkUserOTPWithUsername (CheckUserOTPWithUsernameRequest) returns (CheckUserOTPWithUsernameResponse);
+
+	// 读取用户计费信息
+	rpc findUserPriceInfo(FindUserPriceInfoRequest) returns (FindUserPriceInfoResponse);
+
+	// 修改用户计费方式
+	rpc updateUserPriceType(UpdateUserPriceTypeRequest) returns (RPCSuccess);
+
+	// 修改用户计费周期
+	rpc updateUserPricePeriod(UpdateUserPricePeriodRequest) returns (RPCSuccess);
+
+	// 检查用户服务可用状态
+	rpc checkUserServersState(CheckUserServersStateRequest) returns (CheckUserServersStateResponse);
+
+	// 更新用户服务可用状态
+	rpc renewUserServersState(RenewUserServersStateRequest) returns (RenewUserServersStateResponse);
+
+	// 检查邮箱是否已被使用
+	rpc checkUserEmail(CheckUserEmailRequest) returns (CheckUserEmailResponse);
+
+	// 检查手机号码是否已被使用
+	rpc checkUserMobile(CheckUserMobileRequest) returns (CheckUserMobileResponse);
+
+	// 根据用户名查询用户绑定的邮箱
+	rpc findUserVerifiedEmailWithUsername(FindUserVerifiedEmailWithUsernameRequest) returns (FindUserVerifiedEmailWithUsernameResponse);
+}
+
+// 创建用户
+message CreateUserRequest {
+	string username = 1;
+	string password = 2;
+	string fullname = 3;
+	string mobile = 4;
+	string tel = 5;
+	string email = 6;
+	string remark = 7;
+	string source = 8;
+	int64 nodeClusterId = 9;
+}
+
+message CreateUserResponse {
+	int64 userId = 1;
+}
+
+// 注册用户
+message RegisterUserRequest {
+	string username = 1;
+	string password = 2;
+	string mobile = 3;
+	string email = 4;
+	string fullname = 5;
+	string ip = 6;
+	string source = 7;
+}
+
+message RegisterUserResponse {
+	int64 userId = 1;
+	bool requireEmailVerification = 2; // 是否需要激活邮件
+}
+
+// 审核用户
+message VerifyUserRequest {
+	int64 userId = 1;
+	bool isRejected = 2;
+	string rejectReason = 3;
+}
+
+// 修改用户
+message UpdateUserRequest {
+	int64 userId = 1;
+	string username = 2;
+	string password = 3;
+	string fullname = 4;
+	string mobile = 5;
+	string tel = 6;
+	string email = 7;
+	string remark = 8;
+	bool isOn = 9;
+	int64 nodeClusterId = 10;
+	string bandwidthAlgo = 11;
+}
+
+// 删除用户
+message DeleteUserRequest {
+	int64 userId = 1;
+}
+
+// 计算用户数量
+message CountAllEnabledUsersRequest {
+	string keyword = 1;
+	bool isVerifying = 2;
+	int32 mobileIsVerified = 3; // 手机号是否已验证，1表示已验证，0表示未验证，-1表示所有状态
+}
+
+// 列出单页用户
+message ListEnabledUsersRequest {
+	string keyword = 1;
+	bool isVerifying = 4;
+	int32 mobileIsVerified = 5; // 手机号是否已验证，1表示已验证，0表示未验证，-1表示所有状态
+	int64 offset = 2;
+	int64 size = 3;
+}
+
+message ListEnabledUsersResponse {
+	repeated User users = 1;
+}
+
+// 查询单个用户信息
+message FindEnabledUserRequest {
+	int64 userId = 1;
+}
+
+message FindEnabledUserResponse {
+	User user = 1;
+}
+
+// 检查用户名是否存在
+message CheckUserUsernameRequest {
+	int64 userId = 1;
+	string username = 2;
+}
+
+message CheckUserUsernameResponse {
+	bool exists = 1;
+}
+
+// 登录
+message LoginUserRequest {
+	string username = 1;
+	string password = 2;
+}
+
+message LoginUserResponse {
+	int64 userId = 1;
+	bool isOk = 2;
+	string message = 3;
+}
+
+// 修改用户基本信息
+message UpdateUserInfoRequest {
+	int64 userId = 1;
+	string fullname = 2;
+	string mobile = 3;
+	string email = 4;
+}
+
+// 修改用户登录信息
+message UpdateUserLoginRequest {
+	int64 userId = 1;
+	string username = 2;
+	string password = 3;
+}
+
+// 取得用户Dashboard数据
+message ComposeUserDashboardRequest {
+	int64 userId = 1;
+}
+
+message ComposeUserDashboardResponse {
+	int64 countServers = 1;
+	int64 monthlyTrafficBytes = 2;
+	int64 monthlyPeekBandwidthBytes = 3;
+	int64 dailyTrafficBytes = 4;
+	int64 dailyPeekBandwidthBytes = 5;
+	repeated DailyTrafficStat dailyTrafficStats = 6;
+	repeated DailyPeekBandwidthStat dailyPeekBandwidthStats = 7;
+	int32 bandwidthPercentile = 8; // 带宽百分位
+	int64 bandwidthPercentileBits = 9; // 带宽百分位上的比特数
+
+	message DailyTrafficStat {
+		string day = 1;
+		int64 bytes = 2;
+		int64 cachedBytes = 3;
+		int64 attackBytes = 4;
+		int64 countRequests = 5;
+		int64 countCachedRequests = 6;
+		int64 countAttackRequests = 7;
+	}
+
+	message DailyPeekBandwidthStat {
+		string day = 1;
+		int64 bytes = 2;
+	}
+}
+
+// 获取用户所在的集群ID
+message FindUserNodeClusterIdRequest {
+	int64 userId = 1;
+}
+
+message FindUserNodeClusterIdResponse {
+	int64 nodeClusterId = 1;
+}
+
+// 设置单个用户能使用的功能
+message UpdateUserFeaturesRequest {
+	int64 userId = 1;
+	repeated string featureCodes = 2;
+}
+
+// 设置所有用户能使用的功能
+message UpdateAllUsersFeaturesRequest {
+	repeated string featureCodes = 1;
+	bool overwrite = 2;
+}
+
+// 获取用户所有的功能列表
+message FindUserFeaturesRequest {
+	int64 userId = 1;
+}
+
+message FindUserFeaturesResponse {
+	repeated UserFeature features = 1;
+}
+
+// 获取所有的功能定义
+message FindAllUserFeatureDefinitionsRequest {
+
+}
+
+message FindAllUserFeatureDefinitionsResponse {
+	repeated UserFeature features = 1;
+}
+
+// 组合看板数据
+message ComposeUserGlobalBoardRequest {
+
+}
+
+message ComposeUserGlobalBoardResponse {
+	int64 totalUsers = 1;
+	int64 countTodayUsers = 2;
+	int64 countWeeklyUsers = 3;
+	int64 countUserNodes = 4;
+	int64 countOfflineUserNodes = 5;
+	int64 countVerifyingUsers = 6;
+
+	repeated DailyStat dailyStats = 30;
+	repeated NodeValue cpuNodeValues = 31;
+	repeated NodeValue memoryNodeValues = 32;
+	repeated NodeValue loadNodeValues = 33;
+	repeated TrafficStat topTrafficStats = 34;
+
+	message DailyStat {
+		string day = 1;
+		int64 count = 2;
+	}
+
+	message TrafficStat {
+		int64 userId = 1;
+		string userName = 2;
+		int64 countRequests = 3;
+		int64 bytes = 4;
+	}
+}
+
+
+// 根据用户名检查是否需要输入OTP
+message CheckUserOTPWithUsernameRequest {
+	string username = 1;
+}
+
+message CheckUserOTPWithUsernameResponse {
+	bool requireOTP = 1;
+}
+
+// 读取用户计费信息
+message FindUserPriceInfoRequest {
+	int64 userId = 1;
+}
+
+message FindUserPriceInfoResponse {
+	string priceType = 1;
+	string pricePeriod = 2;
+}
+
+// 修改用户计费方式
+message UpdateUserPriceTypeRequest {
+	int64 userId = 1;
+	string priceType = 2;
+}
+
+// 修改用户计费周期
+message UpdateUserPricePeriodRequest {
+	int64 userId = 1;
+	string pricePeriod = 2;
+}
+
+// 检查用户服务可用状态
+message CheckUserServersStateRequest {
+	int64 userId = 1;
+}
+
+message CheckUserServersStateResponse {
+	bool isEnabled = 1;
+}
+
+// 更新用户服务可用状态
+message RenewUserServersStateRequest {
+	int64 userId = 1;
+}
+
+message RenewUserServersStateResponse {
+	bool isEnabled = 1;
+}
+
+// 检查邮箱是否已被验证
+message CheckUserEmailRequest {
+	string email = 1; // 邮箱地址
+}
+
+message CheckUserEmailResponse {
+	bool exists = 1; // 是否已被使用
+}
+
+// 检查手机号码是否已被验证
+message CheckUserMobileRequest {
+	string mobile = 1; // 手机号码
+}
+
+message CheckUserMobileResponse {
+	bool exists = 1; // 是否已被使用
+}
+
+// 根据用户名查询用户绑定的邮箱
+message FindUserVerifiedEmailWithUsernameRequest {
+	string username = 1; // 用户名
+}
+
+message FindUserVerifiedEmailWithUsernameResponse {
+	string email = 1; // 已绑定邮箱地址
+}

@@ -1,0 +1,78 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/model_message_receiver.proto";
+import "models/rpc_messages.proto";
+
+// 消息对象接收者设置
+service MessageReceiverService {
+	// 修改接收者
+	rpc updateMessageReceivers (UpdateMessageReceiversRequest) returns (RPCSuccess);
+
+	// 查找接收者
+	rpc findAllEnabledMessageReceivers (FindAllEnabledMessageReceiversRequest) returns (FindAllEnabledMessageReceiversResponse);
+
+	// 根据接收人查找关联的接收者
+	rpc findAllEnabledMessageReceiversWithMessageRecipientId (FindAllEnabledMessageReceiversWithMessageRecipientIdRequest) returns (FindAllEnabledMessageReceiversWithMessageRecipientIdResponse);
+
+	// 删除接收者
+	rpc deleteMessageReceiver (DeleteMessageReceiverRequest) returns (RPCSuccess);
+
+	// 计算接收者数量
+	rpc countAllEnabledMessageReceivers (CountAllEnabledMessageReceiversRequest) returns (RPCCountResponse);
+}
+
+// 修改接收者
+message UpdateMessageReceiversRequest {
+	string role = 7;
+	int64 nodeClusterId = 1;
+	int64 nodeId = 2;
+	int64 serverId = 3;
+	bytes paramsJSON = 5;
+	map<string, RecipientOptions> recipientOptions = 6; // type => options，type为recipient或者group
+
+	message RecipientOption {
+		int64 messageRecipientId = 1;
+		int64 messageRecipientGroupId = 2;
+	}
+
+	message RecipientOptions {
+		repeated RecipientOption recipientOptions = 1;
+	}
+}
+
+// 查找接收者
+message FindAllEnabledMessageReceiversRequest {
+	string role = 4; // 集群角色：node 或 dns
+	int64 nodeClusterId = 1; // 集群ID
+	int64 nodeId = 2; // 节点ID
+	int64 serverId = 3; // 网站ID
+}
+
+message FindAllEnabledMessageReceiversResponse {
+	repeated MessageReceiver messageReceivers = 1;
+}
+
+// 根据接收人查找关联的接收者
+message FindAllEnabledMessageReceiversWithMessageRecipientIdRequest {
+	int64 messageRecipientId = 1; // 关联的接收人ID
+}
+
+message FindAllEnabledMessageReceiversWithMessageRecipientIdResponse {
+	repeated MessageReceiver messageReceivers = 1;
+}
+
+// 删除接收者
+message DeleteMessageReceiverRequest {
+	int64 messageReceiverId = 1; // 接收者ID
+}
+
+// 计算接收者数量
+message CountAllEnabledMessageReceiversRequest {
+	string role = 4; // 集群角色：node 或 dns
+	int64 nodeClusterId = 1; // 集群ID
+	int64 nodeId = 2; // 节点ID
+	int64 serverId = 3;  // 网站ID
+}

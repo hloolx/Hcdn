@@ -1,0 +1,82 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/rpc_messages.proto";
+import "models/model_user_bill.proto";
+
+// 账单相关服务
+service UserBillService {
+	// 手工生成账单
+	rpc generateAllUserBills (GenerateAllUserBillsRequest) returns (RPCSuccess);
+
+	// 计算所有账单数量
+	rpc countAllUserBills (CountAllUserBillsRequest) returns (RPCCountResponse);
+
+	// 列出单页账单
+	rpc listUserBills (ListUserBillsRequest) returns (ListUserBillsResponse);
+
+	// 查找账单信息
+	rpc findUserBill(FindUserBillRequest) returns (FindUserBillResponse);
+
+	// 支付账单
+	rpc payUserBill(PayUserBillRequest) returns (RPCSuccess);
+
+	// 计算用户所有未支付账单总额
+	rpc sumUserUnpaidBills(SumUserUnpaidBillsRequest) returns (SumUserUnpaidBillsResponse);
+}
+
+// 手工生成账单
+message GenerateAllUserBillsRequest {
+	string month = 1;
+	string day = 2;
+}
+
+// 计算所有账单数量
+message CountAllUserBillsRequest {
+	int32 paidFlag = 1; // 可选，0|1|-1
+	int64 userId = 2; // 可选，用户ID
+	string month = 3; // 可选，月份
+	bool trafficRelated = 4; // 可选，是否为流量带宽相关
+	int32 minDailyBillDays = 5; // 可选，按日计费账单生成最小天数
+	int32 minMonthlyBillDays = 6; // 可选，按月计费账单生成最小天数
+}
+
+// 列出单页账单
+message ListUserBillsRequest {
+	int32 paidFlag = 1;
+	int64 userId = 2;
+	string month = 5;
+
+	int64 offset = 3;
+	int64 size = 4;
+}
+
+message ListUserBillsResponse {
+	repeated UserBill userBills = 1;
+}
+
+// 查找账单信息
+message FindUserBillRequest {
+	int64 userBillId = 1; // ID，和单号二选一
+	string code = 2; // 单号
+}
+
+message FindUserBillResponse {
+	UserBill userBill = 1;
+}
+
+// 支付账单
+message PayUserBillRequest {
+	int64 userBillId = 1;
+}
+
+// 计算用户所有未支付账单总额
+message SumUserUnpaidBillsRequest {
+	int64 userId = 1;
+}
+
+message SumUserUnpaidBillsResponse {
+	double amount = 1;
+}

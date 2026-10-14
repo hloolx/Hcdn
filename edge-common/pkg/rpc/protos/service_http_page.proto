@@ -1,0 +1,54 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/rpc_messages.proto";
+
+// 自定义页面服务
+service HTTPPageService {
+	// 创建Page
+	rpc createHTTPPage (CreateHTTPPageRequest) returns (CreateHTTPPageResponse);
+
+	// 修改Page
+	rpc updateHTTPPage (UpdateHTTPPageRequest) returns (RPCSuccess);
+
+	// 查找单个Page配置
+	rpc findEnabledHTTPPageConfig (FindEnabledHTTPPageConfigRequest) returns (FindEnabledHTTPPageConfigResponse);
+}
+
+// 创建Page
+message CreateHTTPPageRequest {
+	repeated string statusList = 1; // 状态码列表
+	string bodyType = 5; // 页面类型：html|url|redirectURL
+	string url = 2; // 读取或者跳转的URL
+	string body = 4; // HTML内容
+	int32 newStatus = 3; // 新的状态码
+	bytes exceptURLPatternsJSON = 6; // 例外URL列表
+	bytes onlyURLPatternsJSON = 7; // 限制URL列表
+}
+
+message CreateHTTPPageResponse {
+	int64 httpPageId = 1;
+}
+
+// 修改Page
+message UpdateHTTPPageRequest {
+	int64 httpPageId = 1;
+	repeated string statusList = 2;
+	string bodyType = 6; // 页面类型：html|url|redirectURL
+	string url = 3;
+	string body = 5;
+	int32 newStatus = 4;
+	bytes exceptURLPatternsJSON = 7; // 例外URL列表
+	bytes onlyURLPatternsJSON = 8; // 限制URL列表
+}
+
+// 查找单个Page配置
+message FindEnabledHTTPPageConfigRequest {
+	int64 httpPageId = 1;
+}
+
+message FindEnabledHTTPPageConfigResponse {
+	bytes pageJSON = 1;
+}

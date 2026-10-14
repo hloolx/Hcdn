@@ -1,0 +1,316 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/model_ns_record.proto";
+import "models/rpc_messages.proto";
+
+// 域名记录相关服务
+service NSRecordService {
+	// 创建记录
+	rpc createNSRecord (CreateNSRecordRequest) returns (CreateNSRecordResponse);
+
+	// 批量创建记录
+	rpc createNSRecords(CreateNSRecordsRequest) returns (CreateNSRecordsResponse);
+
+	// 为一组域名批量创建记录
+	rpc createNSRecordsWithDomainNames(CreateNSRecordsWithDomainNamesRequest) returns (RPCSuccess);
+
+	// 批量修改一组域名的一组记录
+	rpc updateNSRecordsWithDomainNames(UpdateNSRecordsWithDomainNamesRequest) returns (RPCSuccess);
+
+	// 批量删除一组域名的一组记录
+	rpc deleteNSRecordsWithDomainNames(DeleteNSRecordsWithDomainNamesRequest) returns (RPCSuccess);
+
+	// 批量一组域名的一组记录启用状态
+	rpc updateNSRecordsIsOnWithDomainNames(UpdateNSRecordsIsOnWithDomainNamesRequest) returns (RPCSuccess);
+
+	// 导入域名解析
+	rpc importNSRecords(ImportNSRecordsRequest) returns (RPCSuccess);
+
+	// 修改记录
+	rpc updateNSRecord (UpdateNSRecordRequest) returns (RPCSuccess);
+
+	// 删除记录
+	rpc deleteNSRecord (DeleteNSRecordRequest) returns (RPCSuccess);
+
+	// 计算记录数量
+	rpc countAllNSRecords (CountAllNSRecordsRequest) returns (RPCCountResponse);
+
+	// 查询相同记录名的记录数
+	rpc countAllNSRecordsWithName (CountAllNSRecordsWithNameRequest) returns (RPCCountResponse);
+
+	// 读取单页记录
+	rpc listNSRecords (ListNSRecordsRequest) returns (ListNSRecordsResponse);
+
+	// 查询单个记录信息
+	rpc findNSRecord (FindNSRecordRequest) returns (FindNSRecordResponse);
+
+	// 使用名称和类型查询单个记录信息
+	rpc findNSRecordWithNameAndType(FindNSRecordWithNameAndTypeRequest) returns (FindNSRecordWithNameAndTypeResponse);
+
+	// 使用名称和类型查询多个记录信息
+	rpc findNSRecordsWithNameAndType(FindNSRecordsWithNameAndTypeRequest) returns (FindNSRecordsWithNameAndTypeResponse);
+
+	// 根据版本列出一组记录
+	rpc listNSRecordsAfterVersion (ListNSRecordsAfterVersionRequest) returns (ListNSRecordsAfterVersionResponse);
+
+	// 查询记录健康检查设置
+	rpc findNSRecordHealthCheck(FindNSRecordHealthCheckRequest) returns (FindNSRecordHealthCheckResponse);
+
+	// 修改记录健康检查设置
+	rpc updateNSRecordHealthCheck(UpdateNSRecordHealthCheckRequest) returns (RPCSuccess);
+
+	// 手动修改记录在线状态
+	rpc updateNSRecordIsUp(UpdateNSRecordIsUpRequest) returns (RPCSuccess);
+}
+
+// 创建记录
+message CreateNSRecordRequest {
+	int64 nsDomainId = 1;
+	string description = 2;
+	string name = 3;
+	string type = 4;
+	string value = 5;
+	int32 ttl = 6;
+	repeated int64 nsRouteIds = 7 [deprecated = true];
+	repeated string nsRouteCodes = 8; // 路线代号
+	int32 weight = 15; // 权重
+
+	int32 mxPriority = 9; // mx优先级
+
+	int32 srvPriority = 10; // SRV优先级
+	int32 srvWeight = 11; // SRV权重
+	int32 srvPort = 12; // SRV端口
+
+	int32 caaFlag = 13; // CAA Flag
+	string caaTag = 14; // CAA TAG
+}
+
+message CreateNSRecordResponse {
+	int64 nsRecordId = 1;
+}
+
+// 批量创建记录
+message CreateNSRecordsRequest {
+	int64 nsDomainId = 1;
+	string description = 2;
+	repeated string names = 3;
+	string type = 4;
+	string value = 5;
+	int32 ttl = 6;
+	repeated string nsRouteCodes = 7; // 路线代号
+	int32 weight = 14; // 权重
+
+	int32 mxPriority = 8; // mx优先级
+
+	int32 srvPriority = 9; // SRV优先级
+	int32 srvWeight = 10; // SRV权重
+	int32 srvPort = 11; // SRV端口
+
+	int32 caaFlag = 12; // CAA Flag
+	string caaTag = 13; // CAA TAG
+}
+
+message CreateNSRecordsResponse {
+	repeated int64 nsRecordIds = 1;
+}
+
+// 为一组域名批量创建记录
+message CreateNSRecordsWithDomainNamesRequest {
+	repeated string nsDomainNames = 1;
+	bytes recordsJSON = 2;
+	bool removeOld = 3;
+	bool removeAll = 4;
+	int64 userId = 5;
+}
+
+// 批量修改一组域名的一组记录
+message UpdateNSRecordsWithDomainNamesRequest {
+	repeated string nsDomainNames = 1;
+	string searchName = 2;
+	string searchValue = 3;
+	string searchType = 4;
+	repeated string searchNSRouteCodes = 5;
+	string newName = 6;
+	string newValue = 7;
+	string newType = 8;
+	repeated string newNSRouteCodes = 9;
+	int64 userId = 10;
+}
+
+// 批量删除一组域名的一组记录
+message DeleteNSRecordsWithDomainNamesRequest {
+	repeated string nsDomainNames = 1;
+	string searchName = 2;
+	string searchValue = 3;
+	string searchType = 4;
+	repeated string searchNSRouteCodes = 5;
+	int64 userId = 6;
+}
+
+// 批量一组域名的一组记录启用状态
+message UpdateNSRecordsIsOnWithDomainNamesRequest {
+	repeated string nsDomainNames = 1;
+	string searchName = 2;
+	string searchValue = 3;
+	string searchType = 4;
+	repeated string searchNSRouteCodes = 5;
+	bool isOn = 6;
+	int64 userId = 7;
+}
+
+// 导入域名解析
+message ImportNSRecordsRequest {
+	repeated Record nsRecords = 1;
+	int64 userId = 2;
+
+	message Record {
+		string nsDomainName = 1;
+		string name = 2;
+		string type = 3;
+		string value = 4;
+		int32 ttl = 5;
+		int32 mxPriority = 6; // MX优先级
+		int32 weight = 12; // 权重
+
+		int32 srvPriority = 7; // SRV优先级
+		int32 srvWeight = 8; // SRV权重
+		int32 srvPort = 9; // SRV端口
+
+		int32 caaFlag = 10; // CAA Flag
+		string caaTag = 11; // CAA TAG
+	}
+}
+
+// 修改记录
+message UpdateNSRecordRequest {
+	int64 nsRecordId = 1;
+	string description = 2;
+	string name = 3;
+	string type = 4;
+	string value = 5;
+	int32 ttl = 6;
+	repeated int64 nsRouteIds = 7 [deprecated = true];
+	bool isOn = 8;
+	repeated string nsRouteCodes = 9; // 路线代号
+	int32 weight = 16; // 权重
+
+	int32 mxPriority = 10; // mx优先级
+
+	int32 srvPriority = 11; // SRV优先级
+	int32 srvWeight = 12; // SRV权重
+	int32 srvPort = 13; // SRV端口
+
+	int32 caaFlag = 14; // CAA Flag
+	string caaTag = 15; // CAA TAG
+}
+
+// 删除记录
+message DeleteNSRecordRequest {
+	int64 nsRecordId = 1;
+}
+
+// 计算记录数量
+message CountAllNSRecordsRequest {
+	int64 nsDomainId = 1;
+	string type = 2;
+	int64 nsRouteId = 3 [deprecated = true]; // 使用nsRouteCode代替
+	string nsRouteCode = 5;
+	string keyword = 4;
+}
+
+// 查询相同记录名的记录数
+message CountAllNSRecordsWithNameRequest {
+	int64 nsDomainId = 1;
+	string name = 2;
+	string type = 3;
+}
+
+// 读取单页记录
+message ListNSRecordsRequest {
+	int64 nsDomainId = 1;
+	string type = 2;
+	int64 nsRouteId = 3 [deprecated = true]; // 使用nsRouteCode代替
+	string nsRouteCode = 7;
+	string keyword = 4;
+
+	bool nameAsc = 8;
+	bool nameDesc = 9;
+	bool typeAsc = 10;
+	bool typeDesc = 11;
+	bool ttlAsc = 12;
+	bool ttlDesc = 13;
+	bool upAsc = 14;
+	bool upDesc = 15;
+
+	int64 offset = 5;
+	int64 size = 6;
+}
+
+message ListNSRecordsResponse {
+	repeated NSRecord nsRecords = 1;
+}
+
+// 查询单个记录信息
+message FindNSRecordRequest {
+	int64 nsRecordId = 1;
+}
+
+message FindNSRecordResponse {
+	NSRecord nsRecord = 1;
+}
+
+// 使用名称和类型查询单个记录信息
+message FindNSRecordWithNameAndTypeRequest {
+	int64 nsDomainId = 1;
+	string name = 2;
+	string type = 3;
+}
+
+message FindNSRecordWithNameAndTypeResponse {
+	NSRecord nsRecord = 1;
+}
+
+// 使用名称和类型查询多个记录信息
+message FindNSRecordsWithNameAndTypeRequest {
+	int64 nsDomainId = 1;
+	string name = 2;
+	string type = 3;
+}
+
+message FindNSRecordsWithNameAndTypeResponse {
+	repeated NSRecord nsRecords = 1;
+}
+
+// 根据版本列出一组记录
+message ListNSRecordsAfterVersionRequest {
+	int64 version = 1;
+	int64 size = 2;
+}
+
+message ListNSRecordsAfterVersionResponse {
+	repeated NSRecord nsRecords = 1;
+}
+
+// 查询记录健康检查设置
+message FindNSRecordHealthCheckRequest {
+	int64 nsRecordId = 1; // 记录ID
+}
+
+message FindNSRecordHealthCheckResponse {
+	bytes nsRecordHealthCheckJSON = 1; // 记录健康检查配置
+}
+
+// 修改记录健康检查设置
+message UpdateNSRecordHealthCheckRequest {
+	int64 nsRecordId = 1; // 记录ID
+	bytes nsRecordHealthCheckJSON = 2; // 记录健康检查配置
+}
+
+// 手动修改记录在线状态
+message UpdateNSRecordIsUpRequest {
+	int64 nsRecordId = 1; // 记录ID
+	bool isUp = 2;  // 是否在线
+}

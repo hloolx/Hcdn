@@ -1,0 +1,214 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/model_server_stat_board.proto";
+import "models/model_node_value.proto";
+import "models/model_metric_chart.proto";
+import "models/model_metric_stat.proto";
+import "models/model_server_bandwidth_stat.proto";
+
+// 统计看板
+service ServerStatBoardService {
+	// 读取所有看板
+	rpc findAllEnabledServerStatBoards (FindAllEnabledServerStatBoardsRequest) returns (FindAllEnabledServerStatBoardsResponse);
+
+	// 组合集群看板数据
+	rpc composeServerStatNodeClusterBoard (ComposeServerStatNodeClusterBoardRequest) returns (ComposeServerStatNodeClusterBoardResponse);
+
+	// 组合节点看板数据
+	rpc composeServerStatNodeBoard (ComposeServerStatNodeBoardRequest) returns (ComposeServerStatNodeBoardResponse);
+
+	// 组合服务看板数据
+	rpc composeServerStatBoard (ComposeServerStatBoardRequest) returns (ComposeServerStatBoardResponse);
+}
+
+// 读取所有看板
+message FindAllEnabledServerStatBoardsRequest {
+	int64 nodeClusterId = 1;
+}
+
+message FindAllEnabledServerStatBoardsResponse {
+	repeated ServerStatBoard serverStatBoards = 1;
+}
+
+// 组合集群看板数据
+message ComposeServerStatNodeClusterBoardRequest {
+	int64 nodeClusterId = 1;
+}
+
+message ComposeServerStatNodeClusterBoardResponse {
+	int64 countActiveNodes = 1; // 在线节点
+	int64 countInactiveNodes = 2; // 离线节点
+	int64 countServers = 3; // 服务数量
+	int64 countUsers = 4; // 用户数量
+	int64 monthlyTrafficBytes = 5; // 当月流量
+	int64 dailyTrafficBytes = 6; // 当日流量
+	int64 lastDailyTrafficBytes = 7; // 昨日流量
+
+	repeated DailyTrafficStat dailyTrafficStats = 30;
+	repeated HourlyTrafficStat hourlyTrafficStats = 31;
+	repeated NodeStat topNodeStats = 32;
+
+	repeated NodeValue cpuNodeValues = 34;
+	repeated NodeValue memoryNodeValues = 35;
+	repeated NodeValue loadNodeValues = 36;
+
+	repeated MetricDataChart metricDataCharts = 37; // 指标图表
+
+	// 日流量统计
+	message DailyTrafficStat {
+		string day = 1;
+		int64 bytes = 2;
+		int64 cachedBytes = 3;
+		int64 countRequests = 4;
+		int64 countCachedRequests = 5;
+		int64 countAttackRequests = 6;
+		int64 attackBytes = 7;
+	}
+
+	// 小时流量统计
+	message HourlyTrafficStat {
+		string hour = 1;
+		int64 bytes = 2;
+		int64 cachedBytes = 3;
+		int64 countRequests = 4;
+		int64 countCachedRequests = 5;
+		int64 countAttackRequests = 6;
+		int64 attackBytes = 7;
+	}
+
+	// 节点统计
+	message NodeStat {
+		int64 nodeId = 1;
+		string nodeName = 2;
+		int64 countRequests = 3;
+		int64 bytes = 4;
+		int64 countAttackRequests = 6;
+		int64 attackBytes = 7;
+	}
+}
+
+// 组合节点看板数据
+message ComposeServerStatNodeBoardRequest {
+	int64 nodeId = 1; // 节点ID
+}
+
+message ComposeServerStatNodeBoardResponse {
+	bool isActive = 1;
+	int64 trafficInBytes = 2;
+	int64 trafficOutBytes = 3;
+	int64 countRequests = 4;
+	int64 countAttackRequests = 5;
+	int64 countConnections = 6;
+	int64 cacheDiskSize = 7;
+	int64 cacheMemorySize = 8;
+	float cpuUsage = 9;
+	float memoryUsage = 10;
+	int64 memoryTotalSize = 11;
+	float load = 12;
+	int64 monthlyTrafficBytes = 13; // 当月流量
+	int64 dailyTrafficBytes = 14; // 当日流量
+	int64 lastDailyTrafficBytes = 15; // 昨日流量
+
+	repeated DailyTrafficStat dailyTrafficStats = 31;
+	repeated HourlyTrafficStat hourlyTrafficStats = 32;
+
+	repeated NodeValue cpuNodeValues = 34; // CPU数据
+	repeated NodeValue memoryNodeValues = 35; // 内存数据
+	repeated NodeValue loadNodeValues = 36; // 负载数据
+	repeated NodeValue cacheDirsValues = 38; // 缓存目录数据
+	repeated NodeValue networkPacketsValues = 39; // 网络数据包数据
+
+	repeated MetricDataChart metricDataCharts = 37;
+
+	message DailyTrafficStat {
+		string day = 1;
+		int64 bytes = 2;
+		int64 cachedBytes = 3;
+		int64 countRequests = 4;
+		int64 countCachedRequests = 5;
+		int64 countAttackRequests = 6;
+		int64 attackBytes = 7;
+	}
+
+	message HourlyTrafficStat {
+		string hour = 1;
+		int64 bytes = 2;
+		int64 cachedBytes = 3;
+		int64 countRequests = 4;
+		int64 countCachedRequests = 5;
+		int64 countAttackRequests = 6;
+		int64 attackBytes = 7;
+	}
+}
+
+// 组合服务看板数据
+message ComposeServerStatBoardRequest {
+	int64 serverId = 1;
+}
+
+message ComposeServerStatBoardResponse {
+	int64 minutelyPeekBandwidthBytes = 5; // 当前带宽（N分钟峰值）
+	int64 dailyPeekBandwidthBytes = 2; // 当天带宽峰值
+	int64 monthlyPeekBandwidthBytes = 3; // 当月带宽峰值
+	int64 lastMonthlyPeekBandwidthBytes = 4; // 上个月带宽峰值
+	int64 dailyCountIPs = 9; // 当天独立IP
+	int64 dailyTrafficBytes = 10; // 当天流量
+
+	int32 bandwidthPercentile = 7;
+	repeated ServerBandwidthStat minutelyBandwidthStats = 1; // 分钟级的带宽统计
+	ServerBandwidthStat minutelyNthBandwidthStat = 8;
+
+	repeated DailyTrafficStat dailyTrafficStats = 30;
+	repeated HourlyTrafficStat hourlyTrafficStats = 31;
+	repeated NodeStat topNodeStats = 32;
+	repeated CountryStat topCountryStats = 35;
+
+	repeated MetricDataChart metricDataCharts = 34;
+
+	message DailyTrafficStat {
+		string day = 1;
+		int64 bytes = 2;
+		int64 cachedBytes = 3;
+		int64 countRequests = 4;
+		int64 countCachedRequests = 5;
+		int64 countAttackRequests = 6;
+		int64 attackBytes = 7;
+	}
+
+	message HourlyTrafficStat {
+		string hour = 1;
+		int64 bytes = 2;
+		int64 cachedBytes = 3;
+		int64 countRequests = 4;
+		int64 countCachedRequests = 5;
+		int64 countAttackRequests = 6;
+		int64 attackBytes = 7;
+	}
+
+	message NodeStat {
+		int64 nodeId = 1;
+		string nodeName = 2;
+		int64 countRequests = 3;
+		int64 bytes = 4;
+		int64 countAttackRequests = 6;
+		int64 attackBytes = 7;
+	}
+
+	message CountryStat {
+		string countryName = 1;
+		int64 bytes = 2;
+		int64 countRequests = 3;
+		float percent = 4; // 流量占比
+		int64 countAttackRequests = 6;
+		int64 attackBytes = 7;
+	}
+}
+
+// 矩阵数据
+message MetricDataChart {
+	MetricChart metricChart = 1;
+	repeated MetricStat metricStats = 2;
+}

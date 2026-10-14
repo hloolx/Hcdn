@@ -1,0 +1,25 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+// 带宽统计数据
+message ServerBandwidthStat {
+	int64 id = 1; // ID
+	int64 userId = 2; // 用户ID
+	int64 serverId = 3; //服务ID
+	string day = 4; // 日期，格式YYYYMMDD
+	string timeAt = 5; // 时间，格式HHII
+	int64 bytes = 6; // 峰值带宽字节
+	int64 totalBytes = 9; // 总流量
+	int64 bits = 7; // 峰值带宽比特
+	int64 nodeRegionId = 8; // 节点所在区域ID
+	int64 cachedBytes = 10; // 总缓存流量
+	int64 attackBytes = 11; // 总攻击流量
+	int64 countRequests = 12; // 总请求数
+	int64 countCachedRequests = 13; // 总缓存请求数
+	int64 countAttackRequests = 14; // 总攻击请求数
+	int64 userPlanId = 15; // 绑定的用户套餐ID
+	int64 countWebsocketConnections = 16; // Websocket连接数
+	int64 countIPs = 17; // 总IP数
+}

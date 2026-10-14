@@ -1,0 +1,5 @@
+{
+  "log_create_ns_domain_group": "创建域名分组 %d",
+  "log_delete_ns_domain_group": "删除域名分组 %d",
+  "log_update_ns_domain_group": "修改域名分组 %d"
+}

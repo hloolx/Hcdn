@@ -1,0 +1,63 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/rpc_messages.proto";
+import "models/model_metric_item.proto";
+import "models/model_node_cluster.proto";
+
+// 集群指标
+service NodeClusterMetricItemService {
+	// 启用某个指标
+	rpc enableNodeClusterMetricItem (EnableNodeClusterMetricItemRequest) returns (RPCSuccess);
+
+	// 禁用某个指标
+	rpc disableNodeClusterMetricItem (DisableNodeClusterMetricItemRequest) returns (RPCSuccess);
+
+	// 查找集群中所有指标
+	rpc findAllNodeClusterMetricItems (FindAllNodeClusterMetricItemsRequest) returns (FindAllNodeClusterMetricItemsResponse);
+
+	// 检查是否已添加某个指标
+	rpc existsNodeClusterMetricItem (ExistsNodeClusterMetricItemRequest) returns (RPCExists);
+
+	// 查找使用指标的集群
+	rpc findAllNodeClustersWithMetricItemId (FindAllNodeClustersWithMetricItemIdRequest) returns (FindAllNodeClustersWithMetricItemIdResponse);
+}
+
+// 启用某个指标
+message EnableNodeClusterMetricItemRequest {
+	int64 nodeClusterId = 1;
+	int64 metricItemId = 2;
+}
+
+// 禁用某个指标
+message DisableNodeClusterMetricItemRequest {
+	int64 nodeClusterId = 1;
+	int64 metricItemId = 2;
+}
+
+// 查找集群中所有指标
+message FindAllNodeClusterMetricItemsRequest {
+	int64 nodeClusterId = 1;
+	string category = 2;
+}
+
+message FindAllNodeClusterMetricItemsResponse {
+	repeated MetricItem metricItems = 1;
+}
+
+// 检查是否已添加某个指标
+message ExistsNodeClusterMetricItemRequest {
+	int64 nodeClusterId = 1;
+	int64 metricItemId = 2;
+}
+
+// 查找使用指标的集群
+message FindAllNodeClustersWithMetricItemIdRequest {
+	int64 metricItemId = 1;
+}
+
+message FindAllNodeClustersWithMetricItemIdResponse {
+	repeated NodeCluster nodeClusters = 1;
+}

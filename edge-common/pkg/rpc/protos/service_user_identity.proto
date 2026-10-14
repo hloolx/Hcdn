@@ -1,0 +1,116 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/model_user_identity.proto";
+import "models/rpc_messages.proto";
+
+// 用户实名认证服务
+service UserIdentityService {
+	// 创建实名认证信息
+	rpc createUserIdentity(CreateUserIdentityRequest) returns (CreateUserIdentityResponse);
+
+	// 查找单个实名认证信息
+	rpc findEnabledUserIdentity(FindEnabledUserIdentityRequest) returns (FindEnabledUserIdentityResponse);
+
+	// 查看某个类型的实名认证信息
+	rpc findEnabledUserIdentityWithOrgType(FindEnabledUserIdentityWithOrgTypeRequest) returns (FindEnabledUserIdentityWithOrgTypeResponse);
+
+	// 检查是否正在审核中
+	rpc checkUserIdentityIsSubmitted(CheckUserIdentityIsSubmittedRequest) returns (CheckUserIdentityIsSubmittedResponse);
+
+	// 修改实名认证信息
+	rpc updateUserIdentity(UpdateUserIdentityRequest) returns (RPCSuccess);
+
+	// 提交审核实名认证信息
+	rpc submitUserIdentity(SubmitUserIdentityRequest) returns (RPCSuccess);
+
+	// 取消提交实名审核认证信息
+	rpc cancelUserIdentity(CancelUserIdentityRequest) returns (RPCSuccess);
+
+	// 重置用户实名认证信息
+	rpc resetUserIdentity(ResetUserIdentityRequest) returns (RPCSuccess);
+
+	// 拒绝用户实名认证信息
+	rpc rejectUserIdentity(RejectUserIdentityRequest) returns (RPCSuccess);
+
+	// 通过用户实名认证信息
+	rpc verifyUserIdentity(VerifyUserIdentityRequest) returns (RPCSuccess);
+}
+
+// 创建实名认证信息
+message CreateUserIdentityRequest {
+	string orgType = 1;
+	string type = 2;
+	string realName = 3;
+	string number = 4;
+	repeated int64 fileIds = 5;
+}
+
+message CreateUserIdentityResponse {
+	int64 userIdentityId = 1;
+}
+
+// 查找单个实名认证信息
+message FindEnabledUserIdentityRequest {
+	int64 userIdentityId = 1;
+}
+
+message FindEnabledUserIdentityResponse {
+	UserIdentity userIdentity = 1;
+}
+
+// 查看某个类型的实名认证信息
+message FindEnabledUserIdentityWithOrgTypeRequest {
+	int64 userId = 1; // 用户端不需要设置此参数
+	string orgType = 2; // 阻止类型
+}
+
+message FindEnabledUserIdentityWithOrgTypeResponse {
+	UserIdentity userIdentity = 1;
+}
+
+// 检查是否正在审核中
+message CheckUserIdentityIsSubmittedRequest {
+	int64 userId = 1;
+}
+
+message CheckUserIdentityIsSubmittedResponse {
+	bool isSubmitted = 1;
+}
+
+// 修改实名认证信息
+message UpdateUserIdentityRequest {
+	int64 userIdentityId = 1;
+	string type = 2;
+	string realName = 3;
+	string number = 4;
+	repeated int64 fileIds = 5;
+}
+
+// 提交审核实名认证信息
+message SubmitUserIdentityRequest {
+	int64 userIdentityId = 1;
+}
+
+// 取消提交身份审核认证信息
+message CancelUserIdentityRequest {
+	int64 userIdentityId = 1;
+}
+
+// 重置用户实名认证信息
+message ResetUserIdentityRequest {
+	int64 userIdentityId = 1;
+}
+
+// 拒绝用户实名认证信息
+message RejectUserIdentityRequest {
+	int64 userIdentityId = 1;
+	string reason = 2;
+}
+
+// 通过用户实名认证信息
+message VerifyUserIdentityRequest {
+	int64 userIdentityId = 1;
+}

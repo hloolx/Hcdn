@@ -1,0 +1,24 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/model_user.proto";
+
+message UserBill {
+	int64 id = 1;
+	User user = 2;
+	string type = 3;
+	string typeName = 4;
+	string description = 5;
+	double amount = 6;
+	string month = 7;
+	bool isPaid = 8;
+	int64 paidAt = 9;
+	string code = 10;
+	bool canPay = 11;
+	string dayFrom = 12;
+	string dayTo = 13;
+	string pricePeriod = 14;
+	bool isOverdue = 15; // 是否已逾期
+}

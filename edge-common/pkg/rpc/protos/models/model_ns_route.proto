@@ -1,0 +1,27 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/model_ns_cluster.proto";
+import "models/model_ns_domain.proto";
+import "models/model_ns_route_category.proto";
+
+// 线路
+message NSRoute {
+	int64 id = 1;
+	bool isOn = 2;
+	string name = 3;
+	bytes rangesJSON = 4;
+	bool isDeleted = 5;
+	int32 order = 6;
+	int64 version = 7;
+	string code = 8;
+	bool isPublic = 9;
+	int32 priority = 10; // 优先级
+	int64 userId = 11; // 所属用户ID
+
+	NSCluster nsCluster = 30;
+	NSDomain nsDomain = 31;
+	NSRouteCategory nsRouteCategory = 32;
+}

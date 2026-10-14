@@ -1,0 +1,55 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/rpc_messages.proto";
+import "models/model_http_firewall_rule_set.proto";
+
+// WAF规则集服务
+service HTTPFirewallRuleSetService {
+	// 根据配置创建或修改规则集
+	rpc createOrUpdateHTTPFirewallRuleSetFromConfig (CreateOrUpdateHTTPFirewallRuleSetFromConfigRequest) returns (CreateOrUpdateHTTPFirewallRuleSetFromConfigResponse);
+
+	// 设置开启状态
+	rpc updateHTTPFirewallRuleSetIsOn (UpdateHTTPFirewallRuleSetIsOnRequest) returns (RPCSuccess);
+
+	// 查找规则集配置
+	rpc findEnabledHTTPFirewallRuleSetConfig (FindEnabledHTTPFirewallRuleSetConfigRequest) returns (FindEnabledHTTPFirewallRuleSetConfigResponse);
+
+	// 查找规则集信息
+	rpc findEnabledHTTPFirewallRuleSet (FindEnabledHTTPFirewallRuleSetRequest) returns (FindEnabledHTTPFirewallRuleSetResponse);
+}
+
+// 根据配置创建或修改规则集
+message CreateOrUpdateHTTPFirewallRuleSetFromConfigRequest {
+	bytes firewallRuleSetConfigJSON = 1;
+}
+
+message CreateOrUpdateHTTPFirewallRuleSetFromConfigResponse {
+	int64 firewallRuleSetId = 1;
+}
+
+// 设置开启状态
+message UpdateHTTPFirewallRuleSetIsOnRequest {
+	int64 firewallRuleSetId = 1;
+	bool isOn = 2;
+}
+
+// 查找规则集配置
+message FindEnabledHTTPFirewallRuleSetConfigRequest {
+	int64 firewallRuleSetId = 1;
+}
+
+message FindEnabledHTTPFirewallRuleSetConfigResponse {
+	bytes firewallRuleSetJSON = 1;
+}
+
+// 查找规则集
+message FindEnabledHTTPFirewallRuleSetRequest {
+	int64 firewallRuleSetId = 1;
+}
+
+message FindEnabledHTTPFirewallRuleSetResponse {
+	HTTPFirewallRuleSet firewallRuleSet = 1;
+}

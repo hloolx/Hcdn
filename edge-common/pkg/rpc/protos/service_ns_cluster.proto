@@ -1,0 +1,315 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/model_ns_cluster.proto";
+import "models/rpc_messages.proto";
+
+// 域名服务集群相关服务
+service NSClusterService {
+	// 创建集群
+	rpc createNSCluster (CreateNSClusterRequest) returns (CreateNSClusterResponse);
+
+	// 修改集群
+	rpc updateNSCluster (UpdateNSClusterRequest) returns (RPCSuccess);
+
+	// 查找集群访问日志配置
+	rpc findNSClusterAccessLog (FindNSClusterAccessLogRequest) returns (FindNSClusterAccessLogResponse);
+
+	// 修改集群访问日志配置
+	rpc updateNSClusterAccessLog (UpdateNSClusterAccessLogRequest) returns (RPCSuccess);
+
+	// 删除集群
+	rpc deleteNSCluster (DeleteNSCluster) returns (RPCSuccess);
+
+	// 查找单个可用集群信息
+	rpc findNSCluster (FindNSClusterRequest) returns (FindNSClusterResponse);
+
+	// 计算所有可用集群的数量
+	rpc countAllNSClusters (CountAllNSClustersRequest) returns (RPCCountResponse);
+
+	// 列出单页可用集群
+	rpc listNSClusters (ListNSClustersRequest) returns (ListNSClustersResponse);
+
+	// 查找所有可用集群
+	rpc findAllNSClusters (FindAllNSClustersRequest) returns (FindAllNSClustersResponse);
+
+	// 设置递归DNS配置
+	rpc updateNSClusterRecursionConfig(UpdateNSClusterRecursionConfigRequest) returns (RPCSuccess);
+
+	// 读取递归DNS配置
+	rpc findNSClusterRecursionConfig(FindNSClusterRecursionConfigRequest) returns (FindNSClusterRecursionConfigResponse);
+
+	// 查找集群的TCP设置
+	rpc findNSClusterTCPConfig(FindNSClusterTCPConfigRequest) returns (FindNSClusterTCPConfigResponse);
+
+	// 修改集群的TCP设置
+	rpc updateNSClusterTCP (UpdateNSClusterTCPRequest) returns (RPCSuccess);
+
+	// 查找集群的TLS设置
+	rpc findNSClusterTLSConfig(FindNSClusterTLSConfigRequest) returns (FindNSClusterTLSConfigResponse);
+
+	// 修改集群的TLS设置
+	rpc updateNSClusterTLS (UpdateNSClusterTLSRequest) returns (RPCSuccess);
+
+	// 查找集群的UDP设置
+	rpc findNSClusterUDPConfig(FindNSClusterUDPConfigRequest) returns (FindNSClusterUDPConfigResponse);
+
+	// 修改集群的UDP设置
+	rpc updateNSClusterUDP (UpdateNSClusterUDPRequest) returns (RPCSuccess);
+
+	// 查找集群的DoH设置
+	rpc findNSClusterDoHConfig(FindNSClusterDoHConfigRequest) returns (FindNSClusterDoHConfigResponse);
+
+	// 修改集群的DoH设置
+	rpc updateNSClusterDoH (UpdateNSClusterDoHRequest) returns (RPCSuccess);
+
+	// 计算使用某个SSL证书的集群数量
+	rpc countAllNSClustersWithSSLCertId (CountAllNSClustersWithSSLCertIdRequest) returns (RPCCountResponse);
+
+	// 获取NS集群的DDoS设置
+	rpc findNSClusterDDoSProtection(FindNSClusterDDoSProtectionRequest) returns (FindNSClusterDDoSProtectionResponse);
+
+	// 修改NS集群的DDoS设置
+	rpc updateNSClusterDDoSProtection(UpdateNSClusterDDoSProtectionRequest) returns (RPCSuccess);
+
+	// 查找NS集群的主机地址
+	rpc findNSClusterHosts(FindNSClusterHostsRequest) returns (FindNSClusterHostsResponse);
+
+	// 查找用户可以使用的主机地址
+	rpc findAvailableNSHostsForUser(FindAvailableNSHostsForUserRequest) returns (FindAvailableNSHostsForUserResponse);
+
+	// 查找应答模式
+	rpc findNSClusterAnswerConfig(FindNSClusterAnswerConfigRequest) returns (FindNSClusterAnswerConfigResponse);
+
+	// 设置应答模式
+	rpc updateNSClusterAnswerConfig(UpdateNSClusterAnswerConfigRequest) returns (RPCSuccess);
+
+	// 查找SOA配置
+	rpc findNSClusterSOAConfig(FindNSClusterSOAConfigRequest) returns (FindNSClusterSOAConfigResponse);
+
+	// 设置SOA配置
+	rpc updateNSClusterSOAConfig(UpdateNSClusterSOAConfigRequest) returns (RPCSuccess);
+}
+
+// 创建集群
+message CreateNSClusterRequest {
+	string name = 1;
+	bytes accessLogJSON = 2;
+	repeated string hosts = 3;
+	bytes soaJSON = 4;
+	string email = 5;
+}
+
+message CreateNSClusterResponse {
+	int64 nsClusterId = 1;
+}
+
+// 修改集群
+message UpdateNSClusterRequest {
+	int64 nsClusterId = 1;
+	string name = 2;
+	bool isOn = 3;
+	repeated string hosts = 4;
+	string email = 8;
+	bool autoRemoteStart = 5;
+	string timeZone = 6;
+	bool detectAgents = 7;
+	bool checkingPorts = 9; // 是否检查端口连通性（目前仅在节点列表上）
+}
+
+// 查找集群访问日志配置
+message FindNSClusterAccessLogRequest {
+	int64 nsClusterId = 1;
+}
+
+message FindNSClusterAccessLogResponse {
+	bytes AccessLogJSON = 1;
+}
+
+// 修改集群访问日志配置
+message UpdateNSClusterAccessLogRequest {
+	int64 nsClusterId = 1;
+	bytes accessLogJSON = 2;
+}
+
+// 删除集群
+message DeleteNSCluster {
+	int64 nsClusterId = 1;
+}
+
+// 查找单个可用集群信息
+message FindNSClusterRequest {
+	int64 nsClusterId = 1;
+}
+
+message FindNSClusterResponse {
+	NSCluster nsCluster = 1;
+}
+
+// 计算所有可用集群的数量
+message CountAllNSClustersRequest {
+}
+
+// 列出单页可用集群
+message ListNSClustersRequest {
+	int64 offset = 1;
+	int64 size = 2;
+}
+
+message ListNSClustersResponse {
+	repeated NSCluster nsClusters = 1;
+}
+
+// 查找所有可用集群
+message FindAllNSClustersRequest {
+
+}
+
+message FindAllNSClustersResponse {
+	repeated NSCluster nsClusters = 1;
+}
+
+// 设置递归DNS配置
+message UpdateNSClusterRecursionConfigRequest {
+	int64 nsClusterId = 1;
+	bytes recursionJSON = 2;
+}
+
+// 读取递归DNS配置
+message FindNSClusterRecursionConfigRequest {
+	int64 nsClusterId = 1;
+}
+
+message FindNSClusterRecursionConfigResponse {
+	bytes recursionJSON = 1;
+}
+
+// 查找集群的TCP设置
+message FindNSClusterTCPConfigRequest {
+	int64 nsClusterId = 1;
+}
+
+message FindNSClusterTCPConfigResponse {
+	bytes tcpJSON = 1;
+}
+
+// 查找集群的TLS设置
+message FindNSClusterTLSConfigRequest {
+	int64 nsClusterId = 1;
+}
+
+message FindNSClusterTLSConfigResponse {
+	bytes tlsJSON = 1;
+}
+
+// 查找集群的UDP设置
+message FindNSClusterUDPConfigRequest {
+	int64 nsClusterId = 1;
+}
+
+message FindNSClusterUDPConfigResponse {
+	bytes udpJSON = 1;
+}
+
+// 查找集群的DoH设置
+message FindNSClusterDoHConfigRequest {
+	int64 nsClusterId = 1;
+}
+
+message FindNSClusterDoHConfigResponse {
+	bytes dohJSON = 1;
+}
+
+// 修改集群的TCP设置
+message UpdateNSClusterTCPRequest {
+	int64 nsClusterId = 1;
+	bytes tcpJSON = 2;
+}
+
+// 修改集群的TLS设置
+message UpdateNSClusterTLSRequest {
+	int64 nsClusterId = 1;
+	bytes tlsJSON = 2;
+}
+
+// 修改集群的UDP设置
+message UpdateNSClusterUDPRequest {
+	int64 nsClusterId = 1;
+	bytes udpJSON = 2;
+}
+
+// 修改集群的DoH设置
+message UpdateNSClusterDoHRequest {
+	int64 nsClusterId = 1;
+	bytes dohJSON = 2;
+}
+
+// 计算使用某个SSL证书的集群数量
+message CountAllNSClustersWithSSLCertIdRequest {
+	int64 sslCertId = 1;
+}
+
+// 获取集群的DDoS设置
+message FindNSClusterDDoSProtectionRequest {
+	int64 nsClusterId = 1;
+}
+
+message FindNSClusterDDoSProtectionResponse {
+	bytes ddosProtectionJSON = 1;
+}
+
+// 修改集群的DDoS设置
+message UpdateNSClusterDDoSProtectionRequest {
+	int64 nsClusterId = 1;
+	bytes ddosProtectionJSON = 2;
+}
+
+// 查找NS集群的主机地址
+message FindNSClusterHostsRequest {
+	int64 nsClusterId = 1;
+}
+
+message FindNSClusterHostsResponse {
+	repeated string hosts = 1;
+}
+
+// 查找用户可以使用的主机地址
+message FindAvailableNSHostsForUserRequest {
+	int64 userId = 1;
+}
+
+message FindAvailableNSHostsForUserResponse {
+	repeated string hosts = 1;
+}
+
+// 查找应答模式
+message FindNSClusterAnswerConfigRequest {
+	int64 nsClusterId = 1;
+}
+
+message FindNSClusterAnswerConfigResponse {
+	bytes answerJSON = 1;
+}
+
+// 设置应答模式
+message UpdateNSClusterAnswerConfigRequest {
+	int64 nsClusterId = 1;
+	bytes answerJSON = 2;
+}
+
+// 查找SOA配置
+message FindNSClusterSOAConfigRequest {
+	int64 nsClusterId = 1;
+}
+
+message FindNSClusterSOAConfigResponse {
+	bytes soaJSON = 1;
+}
+
+// 设置SOA配置
+message UpdateNSClusterSOAConfigRequest {
+	int64 nsClusterId = 1;
+	bytes soaJSON = 2;
+}

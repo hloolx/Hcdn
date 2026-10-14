@@ -1,0 +1,116 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/rpc_messages.proto";
+import "models/model_ip_library.proto";
+
+// IP库
+service IPLibraryService {
+	// 创建IP库
+	rpc createIPLibrary (CreateIPLibraryRequest) returns (CreateIPLibraryResponse) {
+		option deprecated = true;
+	};
+
+	// 查找最新的IP库
+	rpc findLatestIPLibraryWithType (FindLatestIPLibraryWithTypeRequest) returns (FindLatestIPLibraryWithTypeResponse) {
+		option deprecated = true;
+	};
+
+	// 查找单个IP库
+	rpc findEnabledIPLibrary (FindEnabledIPLibraryRequest) returns (FindEnabledIPLibraryResponse) {
+		option deprecated = true;
+	};
+
+	// 列出某个类型的所有IP库
+	rpc findAllEnabledIPLibrariesWithType (FindAllEnabledIPLibrariesWithTypeRequest) returns (FindAllEnabledIPLibrariesWithTypeResponse) {
+		option deprecated = true;
+	};
+
+	// 删除IP库
+	rpc deleteIPLibrary (DeleteIPLibraryRequest) returns (RPCSuccess) {
+		option deprecated = true;
+	};
+
+	// 查询某个IP信息
+	rpc lookupIPRegion (LookupIPRegionRequest) returns (LookupIPRegionResponse);
+
+	// 查询一组IP信息
+	rpc lookupIPRegions (LookupIPRegionsRequest) returns (LookupIPRegionsResponse);
+}
+
+// 创建IP库
+message CreateIPLibraryRequest {
+	string type = 1;
+	int64 fileId = 3;
+}
+
+message CreateIPLibraryResponse {
+	int64 ipLibraryId = 1;
+}
+
+// 查找单个IP库
+message FindEnabledIPLibraryRequest {
+	int64 ipLibraryId = 1;
+}
+
+message FindEnabledIPLibraryResponse {
+	IPLibrary ipLibrary = 1;
+}
+
+// 查找最新的IP库
+message FindLatestIPLibraryWithTypeRequest {
+	string type = 1;
+}
+
+message FindLatestIPLibraryWithTypeResponse {
+	IPLibrary ipLibrary = 1;
+}
+
+// 列出某个类型的所有IP库
+message FindAllEnabledIPLibrariesWithTypeRequest {
+	string type = 1;
+}
+
+message FindAllEnabledIPLibrariesWithTypeResponse {
+	repeated IPLibrary ipLibraries = 1;
+}
+
+// 删除IP库
+message DeleteIPLibraryRequest {
+	int64 ipLibraryId = 1;
+}
+
+// 查询某个IP信息
+message LookupIPRegionRequest {
+	string ip = 1;
+}
+
+message LookupIPRegionResponse {
+	IPRegion ipRegion = 1;
+}
+
+// 查询一组IP信息
+message LookupIPRegionsRequest {
+	repeated string ipList = 1;
+}
+
+message LookupIPRegionsResponse {
+	map<string, IPRegion> ipRegionMap = 1;
+}
+
+// IP信息
+message IPRegion {
+	string country = 1; // 国家/地区名称
+	string region = 2; // 区域名称
+	string province = 3; // 省份名称
+	string city = 4; // 城市名称
+	string isp = 5; // 运营商名称
+	int64 countryId = 6; // 国家/地区ID
+	int64 provinceId = 7; // 省份ID
+	int64 cityId = 9; // 城市ID
+	int64 townId = 10; // 区县ID
+	int64 providerId = 11; // 运营商ID
+	string summary = 8; // 完整的地区组合
+}

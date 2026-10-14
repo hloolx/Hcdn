@@ -1,0 +1,198 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+import "models/model_api_node.proto";
+import "models/rpc_messages.proto";
+
+// API节点服务
+service APINodeService {
+	// 创建API节点
+	rpc createAPINode (CreateAPINodeRequest) returns (CreateAPINodeResponse);
+
+	// 修改API节点
+	rpc updateAPINode (UpdateAPINodeRequest) returns (RPCSuccess);
+
+	// 删除API节点
+	rpc deleteAPINode (DeleteAPINodeRequest) returns (RPCSuccess);
+
+	// 列出所有可用API节点
+	rpc findAllEnabledAPINodes (FindAllEnabledAPINodesRequest) returns (FindAllEnabledAPINodesResponse);
+
+	// 计算API节点数量
+	rpc countAllEnabledAPINodes (CountAllEnabledAPINodesRequest) returns (RPCCountResponse);
+
+	// 计算启用的API节点数量
+	rpc countAllEnabledAndOnAPINodes (CountAllEnabledAndOnAPINodesRequest) returns (RPCCountResponse);
+
+	// 列出单页的API节点
+	rpc listEnabledAPINodes (ListEnabledAPINodesRequest) returns (ListEnabledAPINodesResponse);
+
+	// 根据ID查找节点
+	rpc findEnabledAPINode (FindEnabledAPINodeRequest) returns (FindEnabledAPINodeResponse);
+
+	// 获取当前API节点的版本
+	rpc findCurrentAPINodeVersion (FindCurrentAPINodeVersionRequest) returns (FindCurrentAPINodeVersionResponse);
+
+	// 获取当前API节点的信息
+	rpc findCurrentAPINode(FindCurrentAPINodeRequest) returns (FindCurrentAPINodeResponse);
+
+	// 计算使用某个SSL证书的API节点数量
+	rpc countAllEnabledAPINodesWithSSLCertId (CountAllEnabledAPINodesWithSSLCertIdRequest) returns (RPCCountResponse);
+
+	// 修改调试模式状态
+	rpc debugAPINode(DebugAPINodeRequest) returns (RPCSuccess);
+
+	// 上传新版API节点文件
+	rpc uploadAPINodeFile(UploadAPINodeFileRequest) returns (UploadAPINodeFileResponse);
+
+	// 上传节点安装文件
+	rpc uploadDeployFileToAPINode(UploadDeployFileToAPINodeRequest) returns (RPCSuccess);
+
+	// 查找已有节点安装文件信息
+	rpc findLatestDeployFiles(FindLatestDeployFilesRequest) returns (FindLatestDeployFilesResponse);
+
+}
+
+// 创建API节点
+message CreateAPINodeRequest {
+	string name = 1; // API节点名称
+	string description = 2; // API节点描述
+	bytes httpJSON = 3; // 监听HTTP地址配置 @link json:http_protocol
+	bytes httpsJSON = 4; // 监听HTTPS地址配置 @link json:https_protocol
+	bytes accessAddrsJSON = 5; // 访问地址 @link json:network_address
+	bool isOn = 6; // 是否启用当前API节点
+	bool restIsOn = 7; // 是否启用API
+	bytes restHTTPJSON = 8; // API地址HTTP地址配置 @link json:http_protocol
+	bytes restHTTPSJSON = 9;  // API地址HTTPS地址配置 @link json:https_protocol
+}
+
+message CreateAPINodeResponse {
+	int64 apiNodeId = 1;
+}
+
+// 修改API节点
+message UpdateAPINodeRequest {
+	int64 apiNodeId = 1; // API节点ID
+	string name = 2; // API节点名称
+	string description = 3; // API节点描述
+	bytes httpJSON = 4; // 监听HTTP地址配置 @link json:http_protocol
+	bytes httpsJSON = 5; // 监听HTTPS地址配置 @link json:https_protocol
+	bytes accessAddrsJSON = 6; // 访问地址 @link json:network_address
+	bool isOn = 7; // 是否启用当前API节点
+	bool restIsOn = 8; // 是否启用API
+	bytes restHTTPJSON = 9; // API地址HTTP地址配置 @link json:http_protocol
+	bytes restHTTPSJSON = 10; // API地址HTTPS地址配置 @link json:https_protocol
+	bool isPrimary = 11; // 是否为主要API节点，日常任务主要运行在主要API节点上
+}
+
+// 删除API节点
+message DeleteAPINodeRequest {
+	int64 apiNodeId = 1;
+}
+
+// 列出所有可用API节点
+message FindAllEnabledAPINodesRequest {
+
+}
+
+message FindAllEnabledAPINodesResponse {
+	repeated APINode apiNodes = 1;
+}
+
+// 计算API节点数量
+message CountAllEnabledAPINodesRequest {
+
+}
+
+// 计算启用的API节点数量
+message CountAllEnabledAndOnAPINodesRequest {
+
+}
+
+// 列出单页的API节点
+message ListEnabledAPINodesRequest {
+	int64 offset = 1;
+	int64 size = 2;
+}
+
+message ListEnabledAPINodesResponse {
+	repeated APINode apiNodes = 1;
+}
+
+// 根据ID查找节点
+message FindEnabledAPINodeRequest {
+	int64 apiNodeId = 1;
+}
+
+message FindEnabledAPINodeResponse {
+	APINode apiNode = 1;
+}
+
+// 获取当前API节点的版本
+message FindCurrentAPINodeVersionRequest {
+
+}
+
+message FindCurrentAPINodeVersionResponse {
+	string version = 1; // 版本号
+	string os = 2; // 系统代号，比如linux
+	string arch = 3; // 架构，比如amd64
+	string role = 4; // 角色，通常为api
+}
+
+// 获取当前API节点的信息
+message FindCurrentAPINodeRequest {
+}
+
+message FindCurrentAPINodeResponse {
+	APINode apiNode = 1;
+}
+
+// 计算使用某个SSL证书的API节点数量
+message CountAllEnabledAPINodesWithSSLCertIdRequest {
+	int64 sslCertId = 1;
+}
+
+// 修改调试模式状态
+message DebugAPINodeRequest {
+	bool debug = 1;
+}
+
+// 上传新版API节点文件
+message UploadAPINodeFileRequest {
+	string filename = 1; // 文件名
+	string sum = 2; // 整个文件的SUM值
+	bytes chunkData = 3; // 片段数据
+	bool isFirstChunk = 4; // 是否为第一个片段
+	bool isLastChunk = 5; // 是否为最后一个片段
+}
+
+message UploadAPINodeFileResponse {
+
+}
+
+// 上传节点安装文件
+message UploadDeployFileToAPINodeRequest {
+	string filename = 1; // 文件名
+	string sum = 2; // 整个文件的SUM值
+	bytes chunkData = 3; // 片段数据
+	bool isFirstChunk = 4; // 是否为第一个片段
+	bool isLastChunk = 5; // 是否为最后一个片段
+}
+
+// 查找已有节点安装文件信息
+message FindLatestDeployFilesRequest {
+
+}
+
+message FindLatestDeployFilesResponse {
+	repeated DeployFile nodeDeployFiles = 1; // 边缘节点
+	repeated DeployFile nsNodeDeployFiles = 2; // NS节点
+
+	message DeployFile {
+		string os = 1; // 操作系统代号
+		string arch = 2; // 架构
+		string version = 3; // 版本号
+	}
+}

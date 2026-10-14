@@ -1,0 +1,198 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/model_http_firewall_policy.proto";
+import "models/model_ip_list.proto";
+import "models/model_ip_item.proto";
+import "models/model_region_country.proto";
+import "models/model_region_province.proto";
+import "models/rpc_messages.proto";
+
+// HTTP防火墙（WAF）服务
+service HTTPFirewallPolicyService {
+	// 获取所有可用策略
+	rpc findAllEnabledHTTPFirewallPolicies (FindAllEnabledHTTPFirewallPoliciesRequest) returns (FindAllEnabledHTTPFirewallPoliciesResponse);
+
+	// 创建防火墙策略
+	rpc createHTTPFirewallPolicy (CreateHTTPFirewallPolicyRequest) returns (CreateHTTPFirewallPolicyResponse);
+
+	// 创建空防火墙策略
+	rpc createEmptyHTTPFirewallPolicy (CreateEmptyHTTPFirewallPolicyRequest) returns (CreateEmptyHTTPFirewallPolicyResponse);
+
+	// 修改防火墙策略
+	rpc updateHTTPFirewallPolicy (UpdateHTTPFirewallPolicyRequest) returns (RPCSuccess);
+
+	// 修改分组信息
+	rpc updateHTTPFirewallPolicyGroups (UpdateHTTPFirewallPolicyGroupsRequest) returns (RPCSuccess);
+
+	// 修改inbound信息
+	rpc updateHTTPFirewallInboundConfig (UpdateHTTPFirewallInboundConfigRequest) returns (RPCSuccess);
+
+	// 计算可用的防火墙策略数量
+	rpc countAllEnabledHTTPFirewallPolicies (CountAllEnabledHTTPFirewallPoliciesRequest) returns (RPCCountResponse);
+
+	// 列出单页的防火墙策略
+	rpc listEnabledHTTPFirewallPolicies (ListEnabledHTTPFirewallPoliciesRequest) returns (ListEnabledHTTPFirewallPoliciesResponse);
+
+	// 删除某个防火墙策略
+	rpc deleteHTTPFirewallPolicy (DeleteHTTPFirewallPolicyRequest) returns (RPCSuccess);
+
+	// 查找单个防火墙配置
+	rpc findEnabledHTTPFirewallPolicyConfig (FindEnabledHTTPFirewallPolicyConfigRequest) returns (FindEnabledHTTPFirewallPolicyConfigResponse);
+
+	// 获取防火墙的基本信息
+	rpc findEnabledHTTPFirewallPolicy (FindEnabledHTTPFirewallPolicyRequest) returns (FindEnabledHTTPFirewallPolicyResponse);
+
+	// 导入策略数据
+	rpc importHTTPFirewallPolicy (ImportHTTPFirewallPolicyRequest) returns (RPCSuccess);
+
+	// 检查IP状态
+	rpc checkHTTPFirewallPolicyIPStatus (CheckHTTPFirewallPolicyIPStatusRequest) returns (CheckHTTPFirewallPolicyIPStatusResponse);
+
+	// 获取防火墙对应的网站ID
+	rpc findServerIdWithHTTPFirewallPolicyId(FindServerIdWithHTTPFirewallPolicyIdRequest) returns (FindServerIdWithHTTPFirewallPolicyIdResponse);
+}
+
+// 获取所有可用策略
+message FindAllEnabledHTTPFirewallPoliciesRequest {
+
+}
+
+message FindAllEnabledHTTPFirewallPoliciesResponse {
+	repeated HTTPFirewallPolicy firewallPolicies = 1;
+}
+
+// 创建防火墙策略
+message CreateHTTPFirewallPolicyRequest {
+	bool isOn = 1;
+	string name = 2;
+	string description = 3;
+	repeated string httpFirewallGroupCodes = 4;
+	int64 serverId = 5;
+	int64 serverGroupId = 6;
+}
+
+message CreateHTTPFirewallPolicyResponse {
+	int64 httpFirewallPolicyId = 1;
+}
+
+// 创建空防火墙策略
+message CreateEmptyHTTPFirewallPolicyRequest {
+	bool isOn = 1;
+	string name = 2;
+	string description = 3;
+	int64 serverId = 4;
+	int64 serverGroupId = 5;
+}
+
+message CreateEmptyHTTPFirewallPolicyResponse {
+	int64 httpFirewallPolicyId = 1;
+}
+
+// 修改防火墙策略
+message UpdateHTTPFirewallPolicyRequest {
+	int64 httpFirewallPolicyId = 1;
+	bool isOn = 2;
+	string name = 3;
+	string description = 4;
+	repeated string firewallGroupCodes = 5;
+	bytes blockOptionsJSON = 6; // 阻止动作配置
+	bytes pageOptionsJSON = 15; // 显示网页动作配置
+	bytes captchaOptionsJSON = 11; // 验证码动作配置
+	bytes jsCookieOptionsJSON = 16; // JSCookie动作配置
+	string mode = 7;
+	bool useLocalFirewall = 8; // 是否使用本地防火墙
+	bytes synFloodJSON = 9; // SYN Flood相关配置
+	bytes LogJSON = 10; // 日志相关配置
+	int64 maxRequestBodySize = 12; // 最大文件尺寸，单位为字节
+	string denyCountryHTML = 13; // 区域封禁提示
+	string denyProvinceHTML = 14; // 省份封禁提示
+}
+
+// 修改分组信息
+message UpdateHTTPFirewallPolicyGroupsRequest {
+	int64 httpFirewallPolicyId = 1;
+	bytes inboundJSON = 2;
+	bytes outboundJSON = 3;
+}
+
+// 修改inbound信息
+message UpdateHTTPFirewallInboundConfigRequest {
+	int64 httpFirewallPolicyId = 1;
+	bytes inboundJSON = 2;
+}
+
+// 计算可用的防火墙策略数量
+message CountAllEnabledHTTPFirewallPoliciesRequest {
+	string keyword = 1;
+	int64 nodeClusterId = 2;
+}
+
+// 列出单页的防火墙策略
+message ListEnabledHTTPFirewallPoliciesRequest {
+	int64 offset = 1;
+	int64 size = 2;
+	string keyword = 3;
+	int64 nodeClusterId = 4;
+}
+
+message ListEnabledHTTPFirewallPoliciesResponse {
+	repeated HTTPFirewallPolicy httpFirewallPolicies = 1;
+}
+
+// 删除某个防火墙策略
+message DeleteHTTPFirewallPolicyRequest {
+	int64 httpFirewallPolicyId = 1;
+}
+
+// 查找单个防火墙配置
+message FindEnabledHTTPFirewallPolicyConfigRequest {
+	int64 httpFirewallPolicyId = 1;
+}
+
+message FindEnabledHTTPFirewallPolicyConfigResponse {
+	bytes httpFirewallPolicyJSON = 1;
+}
+
+// 获取防火墙的基本信息
+message FindEnabledHTTPFirewallPolicyRequest {
+	int64 httpFirewallPolicyId = 1;
+}
+
+message FindEnabledHTTPFirewallPolicyResponse {
+	HTTPFirewallPolicy httpFirewallPolicy = 1;
+}
+
+// 导入策略数据
+message ImportHTTPFirewallPolicyRequest {
+	int64 httpFirewallPolicyId = 1;
+	bytes httpFirewallPolicyJSON = 2;
+}
+
+// 检查IP状态
+message CheckHTTPFirewallPolicyIPStatusRequest {
+	int64 httpFirewallPolicyId = 1;
+	string ip = 2;
+}
+
+message CheckHTTPFirewallPolicyIPStatusResponse {
+	bool isOk = 1; // 是否查询成功
+	string error = 2; // 错误信息
+	bool isFound = 3; // 是否找到
+	bool isAllowed = 4; // 是否允许访问
+	IPList ipList = 5; // 匹配的IPList
+	IPItem ipItem = 6; // 匹配的IPItem
+	RegionCountry regionCountry = 7; // 匹配到封禁的地区
+	RegionProvince regionProvince = 8; // 匹配到封禁的省份
+}
+
+// 获取防火墙对应的网站ID
+message FindServerIdWithHTTPFirewallPolicyIdRequest {
+	int64 httpFirewallPolicyId = 1; // 防火墙策略ID
+}
+
+message FindServerIdWithHTTPFirewallPolicyIdResponse {
+	int64 serverId = 1; // 防火墙策略对应的网站ID，公共的防火墙策略的网站ID为0
+}

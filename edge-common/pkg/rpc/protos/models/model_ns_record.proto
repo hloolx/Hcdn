@@ -1,0 +1,38 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/model_ns_domain.proto";
+import "models/model_ns_route.proto";
+
+// 域名记录
+message NSRecord {
+	int64 id = 1; // 记录ID
+	string description = 2; // 备注
+	string name = 3; // 记录名
+	string type = 4; // 记录类型
+	string value = 5; // 记录值
+
+	int32 mxPriority = 12; // mx优先级
+
+	int32 srvPriority = 13; // SRV优先级
+	int32 srvWeight = 14; // SRV权重
+	int32 srvPort = 15; // SRV端口
+
+	int32 caaFlag = 16; // CAA Flag
+	string caaTag = 17; // CAA TAG
+
+	int32 ttl = 6; // TTL
+	int32 weight = 7; // 权重
+	int64 createdAt = 8;
+	bool isDeleted = 9;
+	int64 version = 10;
+	bool isOn = 11; // 是否启用
+
+	bytes healthCheckJSON = 18; // 健康检查配置
+	bool isUp = 19; // 是否在线（根据健康检查结果）
+
+	NSDomain nsDomain = 30; // 所属域名
+	repeated NSRoute nsRoutes = 31; // 线路
+}

@@ -1,0 +1,424 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/model_http_web.proto";
+import "models/rpc_messages.proto";
+
+// HTTP Web相关管理服务
+service HTTPWebService {
+	// 创建Web配置
+	rpc createHTTPWeb (CreateHTTPWebRequest) returns (CreateHTTPWebResponse);
+
+	// 查找Web信息
+	rpc findEnabledHTTPWeb (FindEnabledHTTPWebRequest) returns (FindEnabledHTTPWebResponse);
+
+	// 查找Web配置
+	rpc findEnabledHTTPWebConfig (FindEnabledHTTPWebConfigRequest) returns (FindEnabledHTTPWebConfigResponse);
+
+	// 更改Web配置
+	rpc updateHTTPWeb (UpdateHTTPWebRequest) returns (RPCSuccess);
+
+	// 更改压缩配置
+	rpc updateHTTPWebCompression (UpdateHTTPWebCompressionRequest) returns (RPCSuccess);
+
+	// 更改页面优化配置
+	rpc updateHTTPWebOptimization(UpdateHTTPWebOptimizationRequest) returns (RPCSuccess);
+
+	// 更改WebP配置
+	rpc updateHTTPWebWebP (UpdateHTTPWebWebPRequest) returns (RPCSuccess);
+
+	// 更改RemoteAddr配置
+	rpc updateHTTPWebRemoteAddr(UpdateHTTPWebRemoteAddrRequest) returns (RPCSuccess);
+
+	// 更改字符集配置
+	rpc updateHTTPWebCharset (UpdateHTTPWebCharsetRequest) returns (RPCSuccess);
+
+	// 更改请求Header策略
+	rpc updateHTTPWebRequestHeader (UpdateHTTPWebRequestHeaderRequest) returns (RPCSuccess);
+
+	// 更改响应Header策略
+	rpc updateHTTPWebResponseHeader (UpdateHTTPWebResponseHeaderRequest) returns (RPCSuccess);
+
+	// 更改Shutdown
+	rpc updateHTTPWebShutdown (UpdateHTTPWebShutdownRequest) returns (RPCSuccess);
+
+	// 更改Pages
+	rpc updateHTTPWebPages (UpdateHTTPWebPagesRequest) returns (RPCSuccess);
+
+	// 更改系统自定义页面启用状态
+	rpc updateHTTPWebGlobalPagesEnabled(UpdateHTTPWebGlobalPagesEnabledRequest) returns (RPCSuccess);
+
+	// 更改访问日志配置
+	rpc updateHTTPWebAccessLog (UpdateHTTPWebAccessLogRequest) returns (RPCSuccess);
+
+	// 更改统计配置
+	rpc updateHTTPWebStat (UpdateHTTPWebStatRequest) returns (RPCSuccess);
+
+	// 更改缓存配置
+	rpc updateHTTPWebCache (UpdateHTTPWebCacheRequest) returns (RPCSuccess);
+
+	// 更改防火墙设置
+	rpc updateHTTPWebFirewall (UpdateHTTPWebFirewallRequest) returns (RPCSuccess);
+
+	// 更改路径规则配置
+	rpc updateHTTPWebLocations (UpdateHTTPWebLocationsRequest) returns (RPCSuccess);
+
+	// 更改跳转到HTTPS设置
+	rpc updateHTTPWebRedirectToHTTPS (UpdateHTTPWebRedirectToHTTPSRequest) returns (RPCSuccess);
+
+	// 更改Websocket设置
+	rpc updateHTTPWebWebsocket (UpdateHTTPWebWebsocketRequest) returns (RPCSuccess);
+
+	// 更改Fastcgi设置
+	rpc updateHTTPWebFastcgi (UpdateHTTPWebFastcgiRequest) returns (RPCSuccess);
+
+	// 更改重写规则设置
+	rpc updateHTTPWebRewriteRules (UpdateHTTPWebRewriteRulesRequest) returns (RPCSuccess);
+
+	// 更改主机跳转设置
+	rpc updateHTTPWebHostRedirects (UpdateHTTPWebHostRedirectsRequest) returns (RPCSuccess);
+
+	// 查找主机跳转设置
+	rpc findHTTPWebHostRedirects (FindHTTPWebHostRedirectsRequest) returns (FindHTTPWebHostRedirectsResponse);
+
+	// 更改认证设置
+	rpc updateHTTPWebAuth (UpdateHTTPWebAuthRequest) returns (RPCSuccess);
+
+	// 更改通用设置
+	rpc updateHTTPWebCommon(UpdateHTTPWebCommonRequest) returns (RPCSuccess);
+
+	// 修改请求限制
+	rpc updateHTTPWebRequestLimit(UpdateHTTPWebRequestLimitRequest) returns (RPCSuccess);
+
+	// 查找请求限制
+	rpc findHTTPWebRequestLimit(FindHTTPWebRequestLimitRequest) returns (FindHTTPWebRequestLimitResponse);
+
+	// 修改请求脚本
+	rpc updateHTTPWebRequestScripts(UpdateHTTPWebRequestScriptsRequest) returns (RPCSuccess);
+
+	// 查找请求脚本
+	rpc findHTTPWebRequestScripts(FindHTTPWebRequestScriptsRequest) returns (FindHTTPWebRequestScriptsResponse);
+
+	// 修改UAM设置
+	rpc updateHTTPWebUAM(UpdateHTTPWebUAMRequest) returns (RPCSuccess);
+
+	// 查找UAM设置
+	rpc findHTTPWebUAM(FindHTTPWebUAMRequest) returns (FindHTTPWebUAMResponse);
+
+	// 修改CC设置
+	rpc updateHTTPWebCC(UpdateHTTPWebCCRequest) returns (RPCSuccess);
+
+	// 查找CC设置
+	rpc findHTTPWebCC(FindHTTPWebCCRequest) returns (FindHTTPWebCCResponse);
+
+	// 修改防盗链设置
+	rpc updateHTTPWebReferers(UpdateHTTPWebReferersRequest) returns (RPCSuccess);
+
+	// 查找防盗链设置
+	rpc findHTTPWebReferers(FindHTTPWebReferersRequest) returns (FindHTTPWebReferersResponse);
+
+	// 修改UserAgent设置
+	rpc updateHTTPWebUserAgent(UpdateHTTPWebUserAgentRequest) returns (RPCSuccess);
+
+	// 查找UserAgent设置
+	rpc findHTTPWebUserAgent(FindHTTPWebUserAgentRequest) returns (FindHTTPWebUserAgentResponse);
+
+	// 修改HLS设置
+	rpc updateHTTPWebHLS(UpdateHTTPWebHLSRequest) returns (RPCSuccess);
+
+	// 查找HLS设置
+	rpc findHTTPWebHLS(FindHTTPWebHLSRequest) returns (FindHTTPWebHLSResponse);
+
+	// 根据WebId查找ServerId
+	rpc findServerIdWithHTTPWebId(FindServerIdWithHTTPWebIdRequest) returns (FindServerIdWithHTTPWebIdResponse);
+}
+
+// 创建Web配置
+message CreateHTTPWebRequest {
+	bytes rootJSON = 1; // 可选，静态分发配置
+}
+
+message CreateHTTPWebResponse {
+	int64 httpWebId = 1;
+}
+
+// 查找Web信息
+message FindEnabledHTTPWebRequest {
+	int64 httpWebId = 1;
+}
+
+message FindEnabledHTTPWebResponse {
+	HTTPWeb httpWeb = 1;
+}
+
+// 查找Web配置
+message FindEnabledHTTPWebConfigRequest {
+	int64 httpWebId = 1;
+}
+
+message FindEnabledHTTPWebConfigResponse {
+	bytes httpWebJSON = 1;
+}
+
+// 更改Web配置
+message UpdateHTTPWebRequest {
+	int64 httpWebId = 1;
+	bytes rootJSON = 2;
+}
+
+// 更改压缩配置
+message UpdateHTTPWebCompressionRequest {
+	int64 httpWebId = 1;
+	bytes compressionJSON = 2;
+}
+
+// 更改页面优化配置
+message UpdateHTTPWebOptimizationRequest {
+	int64 httpWebId = 1;
+	bytes optimizationJSON = 2;
+}
+
+// 更改WebP配置
+message UpdateHTTPWebWebPRequest {
+	int64 httpWebId = 1;
+	bytes webpJSON = 2;
+}
+
+// 更改RemoteAddr配置
+message UpdateHTTPWebRemoteAddrRequest {
+	int64 httpWebId = 1;
+	bytes remoteAddrJSON = 2; // @link json:http_remote_addr_config
+}
+
+// 更改字符集配置
+message UpdateHTTPWebCharsetRequest {
+	int64 httpWebId = 1;
+	bytes charsetJSON = 2;
+}
+
+// 更改请求Header策略
+message UpdateHTTPWebRequestHeaderRequest {
+	int64 httpWebId = 1;
+	bytes headerJSON = 2;
+}
+
+// 更改响应Header策略
+message UpdateHTTPWebResponseHeaderRequest {
+	int64 httpWebId = 1;
+	bytes headerJSON = 2;
+}
+
+// 更改Shutdown
+message UpdateHTTPWebShutdownRequest {
+	int64 httpWebId = 1;
+	bytes shutdownJSON = 2;
+}
+
+// 更改Pages
+message UpdateHTTPWebPagesRequest {
+	int64 httpWebId = 1;
+	bytes pagesJSON = 2;
+}
+
+// 更改系统自定义页面启用状态
+message UpdateHTTPWebGlobalPagesEnabledRequest {
+	int64 httpWebId = 1; // Web ID
+	bool isEnabled = 2; // 是否启用
+}
+
+// 更改访问日志配置
+message UpdateHTTPWebAccessLogRequest {
+	int64 httpWebId = 1;
+	bytes accessLogJSON = 2; // @link json:http_access_log_ref
+}
+
+// 更改统计配置
+message UpdateHTTPWebStatRequest {
+	int64 httpWebId = 1;
+	bytes statJSON = 2; // @link json:http_stat_stat_ref
+}
+
+// 更改缓存配置
+message UpdateHTTPWebCacheRequest {
+	int64 httpWebId = 1;
+	bytes cacheJSON = 2; // @link json:http_cache_config
+}
+
+// 更改防火墙设置
+message UpdateHTTPWebFirewallRequest {
+	int64 httpWebId = 1;
+	bytes firewallJSON = 2; // @link json:http_firewall_ref
+}
+
+// 更改路径规则配置
+message UpdateHTTPWebLocationsRequest {
+	int64 httpWebId = 1;
+	bytes locationsJSON = 3;
+}
+
+// 更改跳转到HTTPS设置
+message UpdateHTTPWebRedirectToHTTPSRequest {
+	int64 httpWebId = 1;
+	bytes redirectToHTTPSJSON = 2;
+}
+
+// 更改Websocket设置
+message UpdateHTTPWebWebsocketRequest {
+	int64 httpWebId = 1;
+	bytes websocketJSON = 2; // @link json:http_websocket_ref
+}
+
+// 更改Fastcgi设置
+message UpdateHTTPWebFastcgiRequest {
+	int64 httpWebId = 1;
+	bytes fastcgiJSON = 2;
+}
+
+// 更改重写规则设置
+message UpdateHTTPWebRewriteRulesRequest {
+	int64 httpWebId = 1;
+	bytes rewriteRulesJSON = 2;
+}
+
+// 更改主机跳转设置
+message UpdateHTTPWebHostRedirectsRequest {
+	int64 httpWebId = 1;
+	bytes hostRedirectsJSON = 2;
+}
+
+// 查找主机跳转设置
+message FindHTTPWebHostRedirectsRequest {
+	int64 httpWebId = 1;
+}
+
+message FindHTTPWebHostRedirectsResponse {
+	bytes hostRedirectsJSON = 1;
+}
+
+// 更改认证设置
+message UpdateHTTPWebAuthRequest {
+	int64 httpWebId = 1;
+	bytes authJSON = 2;
+}
+
+// 更改通用设置
+message UpdateHTTPWebCommonRequest {
+	int64 httpWebId = 1;
+	bool mergeSlashes = 2;
+}
+
+// 修改请求限制
+message UpdateHTTPWebRequestLimitRequest {
+	int64 httpWebId = 1;
+	bytes requestLimitJSON = 2;
+}
+
+// 查找请求限制
+message FindHTTPWebRequestLimitRequest {
+	int64 httpWebId = 1;
+}
+
+message FindHTTPWebRequestLimitResponse {
+	bytes requestLimitJSON = 1;
+}
+
+// 修改请求脚本
+message UpdateHTTPWebRequestScriptsRequest {
+	int64 httpWebId = 1;
+	bytes requestScriptsJSON = 2;
+}
+
+// 查找请求脚本
+message FindHTTPWebRequestScriptsRequest {
+	int64 httpWebId = 1;
+}
+
+message FindHTTPWebRequestScriptsResponse {
+	bytes requestScriptsJSON = 1;
+}
+
+// 修改网站UAM设置
+message UpdateHTTPWebUAMRequest {
+	int64 httpWebId = 1;
+	bytes uamJSON = 2;
+}
+
+// 查找网站UAM设置
+message FindHTTPWebUAMRequest {
+	int64 httpWebId = 1;
+}
+
+message FindHTTPWebUAMResponse {
+	bytes uamJSON = 1;
+}
+
+// 修改网站CC设置
+message UpdateHTTPWebCCRequest {
+	int64 httpWebId = 1;
+	bytes ccJSON = 2;
+}
+
+// 查找网站CC设置
+message FindHTTPWebCCRequest {
+	int64 httpWebId = 1;
+}
+
+message FindHTTPWebCCResponse {
+	bytes ccJSON = 1;
+}
+
+// 修改防盗链设置
+message UpdateHTTPWebReferersRequest {
+	int64 httpWebId = 1;
+	bytes referersJSON = 2;
+}
+
+// 查找防盗链设置
+message FindHTTPWebReferersRequest {
+	int64 httpWebId = 1;
+}
+
+message FindHTTPWebReferersResponse {
+	bytes referersJSON = 1;
+}
+
+// 修改防盗链设置
+message UpdateHTTPWebUserAgentRequest {
+	int64 httpWebId = 1;
+	bytes userAgentJSON = 2;
+}
+
+// 查找UserAgent设置
+message FindHTTPWebUserAgentRequest {
+	int64 httpWebId = 1;
+}
+
+message FindHTTPWebUserAgentResponse {
+	bytes userAgentJSON = 1;
+}
+
+// 修改HLS设置
+message UpdateHTTPWebHLSRequest {
+	int64 httpWebId = 1; // Web配置ID
+	bytes hlsJSON = 2; // HLS配置
+}
+
+// 查找HLS设置
+message FindHTTPWebHLSRequest {
+	int64 httpWebId = 1; // Web配置ID
+}
+
+message FindHTTPWebHLSResponse {
+	bytes hlsJSON = 1; // HLS配置
+}
+
+// 根据WebId查找ServerId
+message FindServerIdWithHTTPWebIdRequest {
+	int64 httpWebId = 1; // Web设置ID
+}
+
+message FindServerIdWithHTTPWebIdResponse {
+	int64 serverId = 1; // 网站ID
+}

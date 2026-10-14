@@ -1,0 +1,43 @@
+Hcdn
+====
+
+This repository contains software derived from GoEdge
+(https://github.com/TeaOSLab), version v1.3.9, which is distributed under
+the BSD 3-Clause License:
+
+    Copyright (c) 2020, LiuXiangChao
+    All rights reserved.
+
+The original license text is retained, unmodified, in each imported
+component:
+
+    edge-api/LICENSE      from TeaOSLab/EdgeAPI     tag v1.3.9
+    edge-admin/LICENSE    from TeaOSLab/EdgeAdmin   tag v1.3.9
+    edge-common/LICENSE   from TeaOSLab/EdgeCommon  tag v1.3.9
+    edge-node/LICENSE     from TeaOSLab/EdgeNode    tag v1.3.9
+
+Copyright headers in the original source files are retained.
+
+Upstream baseline
+-----------------
+
+The sources were exported with `git archive` from the v1.3.9 tags, without
+any upstream git history. In the baseline commit, the tree hash of each
+directory is identical to the tree hash of the corresponding upstream tag:
+
+    directory    upstream             tag     commit                                    tree
+    edge-api     TeaOSLab/EdgeAPI     v1.3.9  40b7bf03b5d24140c1d2a885213f41b3c0e43ed1  dff150ff181d3a5525c0fe4747c8ff33119472fb
+    edge-admin   TeaOSLab/EdgeAdmin   v1.3.9  3b8e04d421d791270ba236c4377c0c40bc97793a  1678674bc56a15333e7a08d245e7ed59a256f14e
+    edge-common  TeaOSLab/EdgeCommon  v1.3.9  ae7ca4b083d2773ef3db2ab88d94d1fc1d4b1285  0bce8d85fba12682e9bdce487235f4a50ec29b4c
+    edge-node    TeaOSLab/EdgeNode    v1.3.9  b0d1f2c8ea268dacc812f88cdb5acafd5af1414d  126aff3f9501e01f84a67c9c10444d4f46df8b33
+
+To check a directory against upstream:
+
+    git rev-parse <baseline-commit>:edge-api
+    # in a clone of TeaOSLab/EdgeAPI:
+    git rev-parse 'v1.3.9^{tree}'
+
+Hcdn is an independent project. It is not affiliated with, endorsed by, or
+supported by the original GoEdge author or by the current maintainers of
+the GoEdge project. The name "GoEdge" is used here only to identify the
+origin of the code.

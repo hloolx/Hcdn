@@ -1,0 +1,99 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/model_reverse_proxy.proto";
+import "models/rpc_messages.proto";
+
+// 反向代理管理服务
+service ReverseProxyService {
+	// 创建反向代理
+	rpc createReverseProxy (CreateReverseProxyRequest) returns (CreateReverseProxyResponse);
+
+	// 查找反向代理
+	rpc findEnabledReverseProxy (FindEnabledReverseProxyRequest) returns (FindEnabledReverseProxyResponse);
+
+	// 查找反向代理配置
+	rpc findEnabledReverseProxyConfig (FindEnabledReverseProxyConfigRequest) returns (FindEnabledReverseProxyConfigResponse);
+
+	// 修改反向代理的调度算法
+	rpc updateReverseProxyScheduling (UpdateReverseProxySchedulingRequest) returns (RPCSuccess);
+
+	// 修改主要源站信息
+	rpc updateReverseProxyPrimaryOrigins (UpdateReverseProxyPrimaryOriginsRequest) returns (RPCSuccess);
+
+	// 修改备用源站信息
+	rpc updateReverseProxyBackupOrigins (UpdateReverseProxyBackupOriginsRequest) returns (RPCSuccess);
+
+	// 修改反向代理设置
+	rpc updateReverseProxy (UpdateReverseProxyRequest) returns (RPCSuccess);
+}
+
+// 创建反向代理
+message CreateReverseProxyRequest {
+	bytes schedulingJSON = 1; // 可选项，调度设置 @link json:scheduling
+	bytes primaryOriginsJSON = 2; // 可选项，主要源站 @link json:origin_refs
+	bytes backupOriginsJSON = 3; // 可选项，备用源站 @link json:origin_refs
+}
+
+message CreateReverseProxyResponse {
+	int64 reverseProxyId = 1; // 反向代理ID
+}
+
+// 查找反向代理
+message FindEnabledReverseProxyRequest {
+	int64 reverseProxyId = 1; // 反向代理ID
+}
+
+message FindEnabledReverseProxyResponse {
+	ReverseProxy reverseProxy = 1; // 反向代理信息
+}
+
+// 查找反向代理配置
+message FindEnabledReverseProxyConfigRequest {
+	int64 reverseProxyId = 1; // 反向代理ID
+}
+
+message FindEnabledReverseProxyConfigResponse {
+	bytes reverseProxyJSON = 1; // 反向代理配置
+}
+
+// 修改反向代理调度算法
+message UpdateReverseProxySchedulingRequest {
+	int64 reverseProxyId = 1; // 反向代理ID
+	bytes schedulingJSON = 2; // 调度配置 @link json:scheduling
+}
+
+// 修改主要源站信息
+message UpdateReverseProxyPrimaryOriginsRequest {
+	int64 reverseProxyId = 1; // 反向代理ID
+	bytes originsJSON = 2; // 源站配置 @link json:origin_refs
+}
+
+// 修改备用源站信息
+message UpdateReverseProxyBackupOriginsRequest {
+	int64 reverseProxyId = 1; // 反向代理ID
+	bytes originsJSON = 2; // 源站配置 @link json:origin_refs
+}
+
+// 修改反向代理设置
+message UpdateReverseProxyRequest {
+	int64 reverseProxyId = 1; // 反向代理ID
+	int32 requestHostType = 6; // 可选参数，回源主机名类型：0 跟随CDN域名，1跟随源站，2自定义
+	string requestHost = 2; // 可选参数，自定义回源主机名
+	bool requestHostExcludingPort = 15; // 可选参数，回源主机名中去除端口
+	string requestURI = 3; // 可选参数，请求URI
+	string stripPrefix = 4; // 可选参数，去除URI前缀
+	bool autoFlush = 5; // 可选参数，自动刷新
+	repeated string addHeaders = 7; // 可选参数，可以添加的请求报头
+	bytes connTimeoutJSON = 8; // 可选参数，连接超时时间
+	bytes readTimeoutJSON = 9; // 可选参数，读取超时时间
+	bytes idleTimeoutJSON = 10; // 可选参数，空闲连接超时时间
+	int32 maxConns = 11; // 可选参数，最大连接数
+	int32 maxIdleConns = 12; // 可选参数，最大空闲连接数
+	bytes proxyProtocolJSON = 13; // 可选参数，PROXY Protocol设置
+	bool followRedirects = 14; // 可选参数，跳转跟随
+	bool retry50X = 16; // 可选参数，是否启用50X重试
+	bool retry40X = 17; // 可选参数，是否启用40X重试
+}

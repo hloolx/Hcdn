@@ -1,0 +1,24 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/model_user.proto";
+import "models/model_plan.proto";
+import "models/model_server.proto";
+
+message UserPlan {
+	int64 id = 1; // 套餐ID
+	int64 userId = 2; // 用户ID
+	int64 planId = 3; // 套餐定义ID
+	bool isOn = 4; // 是否启用
+	string dayTo = 5; // 到期日期Y-m-d
+	string name = 6; // 自定义备注名称
+
+	User user = 30; // 用户信息
+	Plan plan = 31; // 套餐定义信息
+	repeated Server servers = 33; // 绑定的网站列表
+
+	Server server = 32 [deprecated = true]; // 绑定的网站，已过期，使用 servers 代替
+}
+

@@ -1,0 +1,21 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/model_node_cluster.proto";
+import "models/model_node.proto";
+
+message Message {
+	int64 id = 1;
+	string type = 2;
+	string body = 3;
+	string level = 4;
+	bytes paramsJSON = 5;
+	bool isRead = 6;
+	int64 createdAt = 7;
+	string role = 8;
+
+	NodeCluster nodeCluster = 30;
+	Node node = 31;
+}

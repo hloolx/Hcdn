@@ -1,0 +1,95 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/model_origin.proto";
+import "models/model_network_address.proto";
+import "models/rpc_messages.proto";
+
+// 源站管理服务
+service OriginService {
+	// 创建源站
+	rpc createOrigin (CreateOriginRequest) returns (CreateOriginResponse);
+
+	// 修改源站
+	rpc updateOrigin (UpdateOriginRequest) returns (RPCSuccess);
+
+	// 查找单个源站信息
+	rpc findEnabledOrigin (FindEnabledOriginRequest) returns (FindEnabledOriginResponse);
+
+	// 查找源站配置
+	rpc findEnabledOriginConfig (FindEnabledOriginConfigRequest) returns (FindEnabledOriginConfigResponse);
+
+	// 设置源站是否启用
+	rpc updateOriginIsOn(UpdateOriginIsOnRequest) returns (RPCSuccess);
+}
+
+// 创建源站
+message CreateOriginRequest {
+	string name = 1; // 名称，为可选项
+	NetworkAddress addr = 2; // 源站网络地址
+	bytes ossJSON = 15; // OSS配置信息，源站网络地址中protocol为oss:开头时需要设置此项
+	string description = 3; // 描述，为可选项
+	int32 weight = 4; // 权重，不小于0，一般设置为10
+	bool isOn = 5; // 是否启用，一般为true
+	bytes connTimeoutJSON = 6; // 可选项，连接超时时间
+	bytes readTimeoutJSON = 7; // 可选项，读取超时时间
+	bytes idleTimeoutJSON = 8; // 可选项，空闲超时时间
+	int32 maxConns = 9; // 可选项，最大连接数
+	int32 maxIdleConns = 10; // 可选项，最大空闲连接数
+	repeated string domains = 11; // 可选项，专属域名列表
+	bytes certRefJSON = 12; // 可选项，证书设置
+	string host = 13; // 可选项，回源主机名
+	bool followPort = 14; // 可选项，是否跟随端口
+	bool http2Enabled = 16; // 可选项，是否支持HTTP/2，只在HTTPS源站时生效
+}
+
+message CreateOriginResponse {
+	int64 originId = 1; // 创建的源站ID
+}
+
+// 修改源站
+message UpdateOriginRequest {
+	int64 originId = 1; // 源站ID
+	string name = 2; // 可选项
+	NetworkAddress addr = 3; // 源站网络地址
+	bytes ossJSON = 16; // OSS配置信息，源站网络地址中protocol为oss:开头时需要设置此项
+	string description = 4; // 可选项
+	int32 weight = 5; // 权重，不小于0，一般设置为10
+	bool isOn = 6; // 是否启用
+	bytes connTimeoutJSON = 7; // 可选项
+	bytes readTimeoutJSON = 8; // 可选项
+	bytes idleTimeoutJSON = 9; // 可选项
+	int32 maxConns = 10; // 可选项
+	int32 maxIdleConns = 11; // 可选项
+	repeated string domains = 12; // 可选项
+	bytes certRefJSON = 13; // 可选项
+	string host = 14; // 可选项
+	bool followPort = 15; // 可选项
+	bool http2Enabled = 17; // 可选项，是否支持HTTP/2，只在HTTPS源站时生效
+}
+
+// 查找单个源站信息
+message FindEnabledOriginRequest {
+	int64 originId = 1; // 源站ID
+}
+
+message FindEnabledOriginResponse {
+	Origin Origin = 1; // 源站信息
+}
+
+// 查找源站配置
+message FindEnabledOriginConfigRequest {
+	int64 originId = 1; // 源站ID
+}
+
+message FindEnabledOriginConfigResponse {
+	bytes originJSON = 1; // 源站信息
+}
+
+// 设置源站是否启用
+message UpdateOriginIsOnRequest {
+	int64 originId = 1; // 源站ID
+	bool isOn = 2; // 是否启用
+}

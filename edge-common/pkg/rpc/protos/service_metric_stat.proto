@@ -1,0 +1,46 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+import "models/model_metric_stat.proto";
+import "models/rpc_messages.proto";
+
+// 指标统计数据相关服务
+service MetricStatService {
+	// 上传统计数据
+	rpc uploadMetricStats (UploadMetricStatsRequest) returns (RPCSuccess);
+
+	// 计算指标数据数量
+	rpc countMetricStats (CountMetricStatsRequest) returns (RPCCountResponse);
+
+	// 读取单页指标数据
+	rpc listMetricStats (ListMetricStatsRequest) returns (ListMetricStatsResponse);
+}
+
+// 上传统计数据
+message UploadMetricStatsRequest {
+	int64 serverId = 1; // 网站ID
+	string time = 2; // 时间
+	int64 count = 3; // 数量
+	float total = 4; // 总数
+	int32 version = 5; // 版本号
+	int64 itemId = 6; // 指标ID
+	repeated UploadingMetricStat metricStats = 7; // 指标统计数据
+	repeated string keepKeys = 8; // 需要保留的指标值
+}
+
+// 计算指标数据数量
+message CountMetricStatsRequest {
+	int64 metricItemId = 1;
+}
+
+// 读取单页指标数据
+message ListMetricStatsRequest {
+	int64 metricItemId = 1;
+	int64 offset = 2;
+	int64 size = 3;
+}
+
+message ListMetricStatsResponse {
+	repeated MetricStat metricStats = 1;
+}

@@ -1,0 +1,214 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/rpc_messages.proto";
+import "models/model_ssl_cert.proto";
+import "models/model_user.proto";
+
+// SSL证书管理服务
+service SSLCertService {
+	// 创建证书
+	rpc createSSLCert (CreateSSLCertRequest) returns (CreateSSLCertResponse);
+
+	// 创建一组证书
+	rpc createSSLCerts(CreateSSLCertsRequest) returns (CreateSSLCertsResponse);
+
+	// 修改证书
+	rpc updateSSLCert (UpdateSSLCertRequest) returns (RPCSuccess);
+
+	// 删除证书
+	rpc deleteSSLCert (DeleteSSLCertRequest) returns (RPCSuccess);
+
+	// 查找证书配置
+	rpc findEnabledSSLCertConfig (FindEnabledSSLCertConfigRequest) returns (FindEnabledSSLCertConfigResponse);
+
+	// 计算匹配的证书数量
+	rpc countSSLCerts (CountSSLCertRequest) returns (RPCCountResponse);
+
+	// 列出单页匹配的证书
+	rpc listSSLCerts (ListSSLCertsRequest) returns (ListSSLCertsResponse);
+
+	// 计算有OCSP错误的证书数量
+	rpc countAllSSLCertsWithOCSPError (CountAllSSLCertsWithOCSPErrorRequest) returns (RPCCountResponse);
+
+	// 列出有OCSP错误的证书
+	rpc listSSLCertsWithOCSPError (ListSSLCertsWithOCSPErrorRequest) returns (ListSSLCertsWithOCSPErrorResponse);
+
+	// 忽略一组OCSP证书错误
+	rpc ignoreSSLCertsWithOCSPError (IgnoreSSLCertsWithOCSPErrorRequest) returns (RPCSuccess);
+
+	// 重置一组证书OCSP错误状态
+	rpc resetSSLCertsWithOCSPError (ResetSSLCertsWithOCSPErrorRequest) returns (RPCSuccess);
+
+	// 重置所有证书OCSP错误状态
+	rpc resetAllSSLCertsWithOCSPError (ResetAllSSLCertsWithOCSPErrorRequest) returns (RPCSuccess);
+
+	// 读取证书的OCSP
+	rpc listUpdatedSSLCertOCSP(ListUpdatedSSLCertOCSPRequest) returns (ListUpdatedSSLCertOCSPResponse);
+
+	// 查找证书所属用户
+	rpc findSSLCertUser(FindSSLCertUserRequest) returns (FindSSLCertUserResponse);
+}
+
+// 创建证书
+message CreateSSLCertRequest {
+	bool isOn = 1;
+	int64 userId = 12; // 所属用户，仅管理员才能指定
+	string name = 2;
+	string description = 3;
+	string serverName = 4;
+	bool isCA = 5;
+	bytes certData = 6;
+	bytes keyData = 7;
+	int64 timeBeginAt = 8;
+	int64 timeEndAt = 9;
+	repeated string dnsNames = 10;
+	repeated string commonNames = 11;
+}
+
+message CreateSSLCertResponse {
+	int64 sslCertId = 1;
+}
+
+// 创建一组证书
+message CreateSSLCertsRequest {
+	repeated cert SSLCerts = 1; // 证书信息
+	int64 userId = 2; // 用户ID
+
+	message cert {
+		bool isOn = 1;
+		string name = 2;
+		string description = 3;
+		string serverName = 4;
+		bool isCA = 5;
+		bytes certData = 6;
+		bytes keyData = 7;
+		int64 timeBeginAt = 8;
+		int64 timeEndAt = 9;
+		repeated string dnsNames = 10;
+		repeated string commonNames = 11;
+	}
+}
+
+message CreateSSLCertsResponse {
+	repeated int64 sslCertIds = 1;
+}
+
+// 修改证书
+message UpdateSSLCertRequest {
+	int64 sslCertId = 1;
+	bool isOn = 2;
+	string name = 3;
+	string description = 4;
+	string serverName = 5;
+	bool isCA = 6;
+	bytes certData = 7;
+	bytes keyData = 8;
+	int64 timeBeginAt = 9;
+	int64 timeEndAt = 10;
+	repeated string dnsNames = 11;
+	repeated string commonNames = 12;
+}
+
+// 查找证书配置
+message FindEnabledSSLCertConfigRequest {
+	int64 sslCertId = 1;
+}
+
+message FindEnabledSSLCertConfigResponse {
+	bytes sslCertJSON = 1;
+}
+
+// 删除证书
+message DeleteSSLCertRequest {
+	int64 sslCertId = 1;
+}
+
+// 计算匹配的证书数量
+message CountSSLCertRequest {
+	bool isCA = 1; // 可选项，是否为CA证书
+	bool isAvailable = 2; // 可选项，是否可用（在有效期内）
+	bool isExpired = 3; // 可选项，是否已过期
+	int32 expiringDays = 4; // 可选项，离过期日的天数
+	string keyword = 5; // 可选项，关键词
+	int64 userId = 6; // 可选项，用户ID，不填则表示读取管理员上传的证书
+	repeated string domains = 7; // 可选项，搜索使用的域名列表
+	bool userOnly = 8; // 可选项，只列出用户上传的证书
+}
+
+// 列出单页匹配的证书
+message ListSSLCertsRequest {
+	bool isCA = 1; // 可选项，是否为CA证书
+	bool isAvailable = 2; // 可选项，是否可用（在有效期内）
+	bool isExpired = 3; //可选项， 是否已过期
+	int32 expiringDays = 4; // 可选项，离过期日的天数
+	string keyword = 5; // 可选项，关键词
+	int64 userId = 8; // 可选项，用户ID，不填则表示读取管理员上传的证书
+	repeated string domains = 9; // 可选项，搜索使用的域名列表
+	int64 offset = 6; // 读取位置
+	int64 size = 7; // 读取长度，不能小于0
+	bool userOnly = 10; // 可选项，只列出用户上传的证书
+}
+
+message ListSSLCertsResponse {
+	bytes sslCertsJSON = 1;
+}
+
+// 计算有OCSP错误的证书数量
+message CountAllSSLCertsWithOCSPErrorRequest {
+	string keyword = 1;
+}
+
+// 列出有OCSP错误的证书
+message ListSSLCertsWithOCSPErrorRequest {
+	string keyword = 1;
+	int64 offset = 2;
+	int64 size = 3;
+}
+
+message ListSSLCertsWithOCSPErrorResponse {
+	repeated SSLCert sslCerts = 1;
+}
+
+// 忽略一组OCSP证书错误
+message IgnoreSSLCertsWithOCSPErrorRequest {
+	repeated int64 sslCertIds = 1;
+}
+
+// 重置一组证书OCSP错误状态
+message ResetSSLCertsWithOCSPErrorRequest {
+	repeated int64 sslCertIds = 1;
+}
+
+// 重置所有证书OCSP错误状态
+message ResetAllSSLCertsWithOCSPErrorRequest {
+
+}
+
+// 读取证书的OCSP
+message ListUpdatedSSLCertOCSPRequest {
+	int64 version = 1;
+	int32 size = 2;
+}
+
+message ListUpdatedSSLCertOCSPResponse {
+	repeated SSLCertOCSP sslCertOCSP = 1;
+
+	message SSLCertOCSP {
+		int64 sslCertId = 1;
+		bytes data = 2;
+		int64 version = 3;
+		int64 expiresAt = 4;
+	}
+}
+
+// 查找证书所属用户
+message FindSSLCertUserRequest {
+	int64 sslCertId = 1; // 证书ID
+}
+
+message FindSSLCertUserResponse {
+	User user = 1; // 用户信息，只包含几个基本的信息
+}

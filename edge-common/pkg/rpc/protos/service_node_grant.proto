@@ -1,0 +1,132 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+import "models/model_node_grant.proto";
+import "models/rpc_messages.proto";
+
+// 节点认证信息管理服务
+service NodeGrantService {
+	// 创建认证
+	rpc createNodeGrant (CreateNodeGrantRequest) returns (CreateNodeGrantResponse);
+
+	// 修改认证
+	rpc updateNodeGrant (UpdateNodeGrantRequest) returns (RPCSuccess);
+
+	// 禁用认证
+	rpc disableNodeGrant (DisableNodeGrantRequest) returns (DisableNodeGrantResponse);
+
+	// 计算认证的数量
+	rpc countAllEnabledNodeGrants (CountAllEnabledNodeGrantsRequest) returns (RPCCountResponse);
+
+	// 列出单页认证
+	rpc listEnabledNodeGrants (ListEnabledNodeGrantsRequest) returns (ListEnabledNodeGrantsResponse);
+
+	// 列出所有认证
+	rpc findAllEnabledNodeGrants (FindAllEnabledNodeGrantsRequest) returns (FindAllEnabledNodeGrantsResponse);
+
+	// 获取单个认证信息
+	rpc findEnabledNodeGrant (FindEnabledNodeGrantRequest) returns (FindEnabledNodeGrantResponse);
+
+	// 测试连接
+	rpc testNodeGrant (TestNodeGrantRequest) returns (TestNodeGrantResponse);
+
+	// 查找集群推荐的认证
+	rpc findSuggestNodeGrants(FindSuggestNodeGrantsRequest) returns (FindSuggestNodeGrantsResponse);
+}
+
+// 创建节点认证
+message CreateNodeGrantRequest {
+	string name = 1;
+	string method = 2;
+	string username = 3;
+	string password = 4;
+	string privateKey = 5;
+	string passphrase = 8;
+	string description = 6;
+	int64 nodeId = 7;
+	bool su = 9;
+}
+
+message CreateNodeGrantResponse {
+	int64 nodeGrantId = 1;
+}
+
+// 修改节点认证
+message UpdateNodeGrantRequest {
+	int64 nodeGrantId = 8;
+	string name = 1;
+	string method = 2;
+	string username = 3;
+	string password = 4;
+	string privateKey = 5;
+	string passphrase = 9;
+	string description = 6;
+	int64 nodeId = 7;
+	bool su = 10;
+}
+
+// 禁用节点认证
+message DisableNodeGrantRequest {
+	int64 nodeGrantId = 1;
+}
+
+message DisableNodeGrantResponse {
+
+}
+
+// 计算节点认证数量
+message CountAllEnabledNodeGrantsRequest {
+	string keyword = 1;
+}
+
+// 列出单页认证
+message ListEnabledNodeGrantsRequest {
+	string keyword = 3;
+	int64 offset = 1;
+	int64 size = 2;
+}
+
+message ListEnabledNodeGrantsResponse {
+	repeated NodeGrant nodeGrants = 1;
+}
+
+// 获取所有认证信息
+message FindAllEnabledNodeGrantsRequest {
+
+}
+
+message FindAllEnabledNodeGrantsResponse {
+	repeated NodeGrant nodeGrants = 1;
+}
+
+// 获取认证信息
+message FindEnabledNodeGrantRequest {
+	int64 nodeGrantId = 1;
+}
+
+message FindEnabledNodeGrantResponse {
+	NodeGrant nodeGrant = 1;
+}
+
+// 测试连接
+message TestNodeGrantRequest {
+	int64 nodeGrantId = 1;
+	string host = 2;
+	int32 port = 3;
+}
+
+message TestNodeGrantResponse {
+	bool isOk = 1;
+	string error = 2;
+}
+
+// 查找集群推荐的认证
+message FindSuggestNodeGrantsRequest {
+	int64 nodeClusterId = 1; // 边缘节点集群
+	int64 nsClusterId = 2; // NS节点集群
+}
+
+message FindSuggestNodeGrantsResponse {
+	repeated NodeGrant nodeGrants = 1;
+}

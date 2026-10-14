@@ -1,0 +1,126 @@
+syntax = "proto3";
+option go_package = "./pb";
+
+package pb;
+
+import "models/model_http_cache_policy.proto";
+import "models/rpc_messages.proto";
+
+// 缓存策略服务
+service HTTPCachePolicyService {
+	// 获取所有可用策略
+	rpc findAllEnabledHTTPCachePolicies (FindAllEnabledHTTPCachePoliciesRequest) returns (FindAllEnabledHTTPCachePoliciesResponse);
+
+	// 创建缓存策略
+	rpc createHTTPCachePolicy (CreateHTTPCachePolicyRequest) returns (CreateHTTPCachePolicyResponse);
+
+	// 修改缓存策略
+	rpc updateHTTPCachePolicy (UpdateHTTPCachePolicyRequest) returns (RPCSuccess);
+
+	// 删除缓存策略
+	rpc deleteHTTPCachePolicy (DeleteHTTPCachePolicyRequest) returns (RPCSuccess);
+
+	// 计算缓存策略数量
+	rpc countAllEnabledHTTPCachePolicies (CountAllEnabledHTTPCachePoliciesRequest) returns (RPCCountResponse);
+
+	// 列出单页的缓存策略
+	rpc listEnabledHTTPCachePolicies (ListEnabledHTTPCachePoliciesRequest) returns (ListEnabledHTTPCachePoliciesResponse);
+
+	// 查找单个缓存策略配置
+	rpc findEnabledHTTPCachePolicyConfig (FindEnabledHTTPCachePolicyConfigRequest) returns (FindEnabledHTTPCachePolicyConfigResponse);
+
+	// 查找单个缓存策略信息
+	rpc findEnabledHTTPCachePolicy (FindEnabledHTTPCachePolicyRequest) returns (FindEnabledHTTPCachePolicyResponse);
+
+	// 设置缓存策略的默认条件
+	rpc updateHTTPCachePolicyRefs (UpdateHTTPCachePolicyRefsRequest) returns (RPCSuccess);
+}
+
+// 获取所有可用策略
+message FindAllEnabledHTTPCachePoliciesRequest {
+
+}
+
+message FindAllEnabledHTTPCachePoliciesResponse {
+	repeated HTTPCachePolicy cachePolicies = 1;
+}
+
+// 创建缓存策略
+message CreateHTTPCachePolicyRequest {
+	bool isOn = 1;
+	string name = 2;
+	string description = 3;
+	bytes capacityJSON = 4;
+	bytes maxSizeJSON = 6;
+	string type = 7;
+	bytes optionsJSON = 8;
+	bool syncCompressionCache = 9;
+	bytes fetchTimeoutJSON = 10; // 预热超时时间
+}
+
+message CreateHTTPCachePolicyResponse {
+	int64 httpCachePolicyId = 1;
+}
+
+// 修改缓存策略
+message UpdateHTTPCachePolicyRequest {
+	int64 httpCachePolicyId = 1;
+	bool isOn = 2;
+	string name = 3;
+	string description = 4;
+	bytes capacityJSON = 5;
+	bytes maxSizeJSON = 7;
+	string type = 8;
+	bytes optionsJSON = 9;
+	bool syncCompressionCache = 10;
+	bytes fetchTimeoutJSON = 11; // 预热超时时间
+}
+
+// 删除缓存策略
+message DeleteHTTPCachePolicyRequest {
+	int64 httpCachePolicyId = 1;
+}
+
+// 计算缓存策略数量
+message CountAllEnabledHTTPCachePoliciesRequest {
+	string keyword = 1;
+	int64 nodeClusterId = 2;
+	string type = 3;
+}
+
+// 列出单页的缓存策略
+message ListEnabledHTTPCachePoliciesRequest {
+	int64 offset = 1;
+	int64 size = 2;
+	string keyword = 3;
+	int64 nodeClusterId = 4;
+	string type = 5;
+}
+
+message ListEnabledHTTPCachePoliciesResponse {
+	bytes httpCachePoliciesJSON = 1;
+}
+
+// 查找单个缓存策略配置
+message FindEnabledHTTPCachePolicyConfigRequest {
+	int64 httpCachePolicyId = 1;
+}
+
+message FindEnabledHTTPCachePolicyConfigResponse {
+	bytes httpCachePolicyJSON = 1;
+}
+
+// 查找单个缓存策略信息
+message FindEnabledHTTPCachePolicyRequest {
+	int64 httpCachePolicyId = 1;
+}
+
+message FindEnabledHTTPCachePolicyResponse {
+	HTTPCachePolicy httpCachePolicy = 1;
+}
+
+// 设置缓存策略的默认条件
+message UpdateHTTPCachePolicyRefsRequest {
+	int64 httpCachePolicyId = 1;
+	bytes refsJSON = 2;
+}
