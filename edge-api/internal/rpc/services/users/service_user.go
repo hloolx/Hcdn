@@ -3,7 +3,6 @@ package users
 import (
 	"context"
 	"encoding/json"
-	teaconst "github.com/TeaOSLab/EdgeAPI/internal/const"
 	"github.com/TeaOSLab/EdgeAPI/internal/db/models"
 	"github.com/TeaOSLab/EdgeAPI/internal/errors"
 	"github.com/TeaOSLab/EdgeAPI/internal/rpc/services"
@@ -291,6 +290,10 @@ func (this *UserService) CheckUserUsername(ctx context.Context, req *pb.CheckUse
 }
 
 // LoginUser 登录
+//
+// 调用方只能是 role=user 的节点（控制台BFF，代用户发起登录）或 role=admin；
+// rpcutils.ValidateRequest 的角色绑定（FIX-01）已保证到这里时不会是其他角色，
+// 因此不再像开源版那样整体禁用本接口（原先无条件 IsPlus 才允许登录）。
 func (this *UserService) LoginUser(ctx context.Context, req *pb.LoginUserRequest) (*pb.LoginUserResponse, error) {
 	_, err := this.ValidateUserNode(ctx, false)
 	if err != nil {
@@ -299,14 +302,6 @@ func (this *UserService) LoginUser(ctx context.Context, req *pb.LoginUserRequest
 		if err != nil {
 			return nil, err
 		}
-	}
-
-	if !teaconst.IsPlus {
-		return &pb.LoginUserResponse{
-			UserId:  0,
-			IsOk:    false,
-			Message: "你正在使用的系统版本为非商业版本或已过期，请管理员续费后才能登录",
-		}, nil
 	}
 
 	if len(req.Username) == 0 || len(req.Password) == 0 {
