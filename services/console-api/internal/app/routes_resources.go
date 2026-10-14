@@ -44,16 +44,41 @@ func (a *App) routesUserResources(m *http.ServeMux, p string) {
 }
 
 func (a *App) routesAdminResources(m *http.ServeMux, p string) {
-	ni := a.notImplemented
+	ad := a.admin
 	routes := map[string]http.HandlerFunc{
-		"GET /dashboard": ni,
-		"GET /nodes":     ni, "GET /nodes/{id}": ni, "POST /nodes": ni, "PATCH /nodes/{id}": ni, "DELETE /nodes/{id}": ni,
-		"GET /clusters": ni, "POST /clusters": ni, "PATCH /clusters/{id}": ni, "PUT /clusters/{id}/dns": ni,
-		"GET /users": ni, "POST /users": ni, "PATCH /users/{id}": ni, "POST /users/{id}/reset-password": ni, "DELETE /users/{id}": ni,
-		"GET /sites": ni, "PATCH /sites/{id}": ni, "GET /certs": ni,
-		"GET /dns/providers": ni, "POST /dns/providers": ni, "DELETE /dns/providers/{id}": ni,
-		"GET /dns/domains": ni, "POST /dns/domains": ni, "POST /dns/domains/{id}/sync": ni,
-		"GET /settings": ni, "PUT /settings": ni, "GET /audit-logs": ni,
+		"GET /dashboard": ad(a.adminDashboard),
+
+		"GET /nodes":         ad(a.adminNodes),
+		"GET /nodes/{id}":    ad(a.adminNode),
+		"POST /nodes":        ad(a.adminCreateNode),
+		"PATCH /nodes/{id}":  ad(a.adminUpdateNode),
+		"DELETE /nodes/{id}": ad(a.adminDeleteNode),
+
+		"GET /clusters":          ad(a.adminClusters),
+		"POST /clusters":         ad(a.adminCreateCluster),
+		"PATCH /clusters/{id}":   ad(a.adminUpdateCluster),
+		"PUT /clusters/{id}/dns": ad(a.adminClusterDNS),
+
+		"GET /users":                      ad(a.adminUsers),
+		"POST /users":                     ad(a.adminCreateUser),
+		"PATCH /users/{id}":               ad(a.adminUpdateUser),
+		"POST /users/{id}/reset-password": ad(a.adminResetPassword),
+		"DELETE /users/{id}":              ad(a.adminDeleteUser),
+
+		"GET /sites":        ad(a.adminSites),
+		"PATCH /sites/{id}": ad(a.adminUpdateSite),
+		"GET /certs":        ad(a.adminCerts),
+
+		"GET /dns/providers":          ad(a.adminDNSProviders),
+		"POST /dns/providers":         ad(a.adminCreateDNSProvider),
+		"DELETE /dns/providers/{id}":  ad(a.adminDeleteDNSProvider),
+		"GET /dns/domains":            ad(a.adminDNSDomains),
+		"POST /dns/domains":           ad(a.adminCreateDNSDomain),
+		"POST /dns/domains/{id}/sync": ad(a.adminSyncDNSDomain),
+
+		"GET /settings":   ad(a.adminSettings),
+		"PUT /settings":   ad(a.adminUpdateSettings),
+		"GET /audit-logs": ad(a.adminAuditLogs),
 	}
 	register(m, p, routes)
 }

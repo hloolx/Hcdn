@@ -347,6 +347,11 @@ func clientIP(r *http.Request) string {
 	return ""
 }
 
+func clientIPAddr(r *http.Request) netip.Addr {
+	ip, _ := r.Context().Value(clientIPKey).(netip.Addr)
+	return ip
+}
+
 func rateLimited(wait int) *httpx.Error {
 	e := httpx.Errorf(http.StatusTooManyRequests, "rate_limited", "请求过于频繁，请 %d 秒后重试", wait)
 	e.RetryAfter = wait
