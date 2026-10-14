@@ -112,8 +112,9 @@ export function TagInput({
         value={draft}
         disabled={disabled}
         onChange={(e) => {
-          const v = e.target.value;
-          if (SPLIT.test(v) && v.trim()) commit(v);
+          // Ignore leading separators; a separator after real text commits the entry.
+          const v = e.target.value.replace(/^[\s,，;；]+/, "");
+          if (SPLIT.test(v)) commit(v);
           else setDraft(v);
         }}
         onKeyDown={onKeyDown}

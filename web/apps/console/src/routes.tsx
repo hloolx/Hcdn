@@ -8,6 +8,7 @@ import { NotFoundPage, OverviewPage } from "@/pages/overview";
 import { RouteError } from "@/components/route-error";
 import { Placeholder } from "@/components/placeholder";
 import { SitesPage } from "@/pages/sites/list";
+import { NewSitePage } from "@/pages/sites/new";
 
 export const router = createBrowserRouter([
   {
@@ -28,7 +29,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <OverviewPage /> },
       { path: "sites", element: <SitesPage /> },
-      { path: "sites/new", element: <Placeholder title="添加网站" /> },
+      { path: "sites/new", element: <NewSitePage /> },
       { path: "sites/:id/*", element: <Placeholder title="网站详情" /> },
       { path: "certs", element: <Placeholder title="证书" /> },
       { path: "cache", element: <Placeholder title="缓存" /> },
