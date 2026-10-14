@@ -536,7 +536,7 @@ func (this *Node) checkClusterConfig() error {
 	}
 	rpcClient, err := rpc.NewRPCClient(&configs.APIConfig{
 		RPCEndpoints:     config.RPCEndpoints,
-		RPCDisableUpdate: config.RPCDisableUpdate,
+		RPCDisableUpdate: configs.BoolPtr(config.RPCDisableUpdate),
 		RPCCAFile:        config.RPCCAFile,
 		RPCServerName:    config.RPCServerName,
 		NodeId:           config.ClusterId,
@@ -559,7 +559,7 @@ func (this *Node) checkClusterConfig() error {
 	}
 	var apiConfig = &configs.APIConfig{
 		RPCEndpoints:     resp.Endpoints,
-		RPCDisableUpdate: false,
+		RPCDisableUpdate: configs.BoolPtr(false),
 		RPCCAFile:        config.RPCCAFile,
 		RPCServerName:    config.RPCServerName,
 		NodeId:           resp.UniqueId,
@@ -1194,6 +1194,19 @@ func (this *Node) changeAPINodeAddrs(apiNodeAddrs []*serverconfigs.NetworkAddres
 			addrs = append(addrs, addr.FullAddresses()...)
 		}
 	}
+
+	// FIX-27：服务端下发的API节点地址必须位于本地白名单内（启动时的rpc.endpoints，或
+	// 显式配置的rpc.allowedEndpoints），否则忽略并记录日志。避免被恶意或被攻陷的API
+	// 服务端通过下发配置把节点的控制连接重定向到任意主机。
+	var allowedAddrs = []string{}
+	for _, addr := range addrs {
+		if configs.IsAllowedEndpoint(addr) {
+			allowedAddrs = append(allowedAddrs, addr)
+		} else {
+			remotelogs.Error("NODE", "changeAPINodeAddrs: ignoring endpoint not in local allowlist (rpc.endpoints/rpc.allowedEndpoints): '"+addr+"'")
+		}
+	}
+	addrs = allowedAddrs
 	sort.Strings(addrs)
 
 	if utils.EqualStrings(this.lastAPINodeAddrs, addrs) {

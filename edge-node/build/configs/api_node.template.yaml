@@ -5,3 +5,9 @@ secret: ""
 # Optional TLS hardening for rpc.endpoints (see FIX-05):
 # rpc.caFile: ""        # path to a PEM CA bundle; when set, ONLY these CAs are trusted (pins a private CA)
 # rpc.serverName: ""    # override the expected certificate name, e.g. when an endpoint host is a bare IP
+
+# Optional control-plane trust hardening (see FIX-27):
+# rpc.disableUpdate: false       # explicitly allow this node to auto-sync rpc.endpoints from the
+#                                 # control plane's API-node list (default when omitted: disabled)
+# rpc.allowedEndpoints: [ ]      # extra endpoints (besides rpc.endpoints above) the control plane
+#                                 # is allowed to move this node's connection to; anything else is ignored

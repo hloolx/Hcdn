@@ -70,7 +70,7 @@ func (this *SyncAPINodesTask) Loop() error {
 	}
 
 	// 是否禁止自动升级
-	if config.RPCDisableUpdate {
+	if config.DisableUpdate() {
 		return nil
 	}
 
@@ -87,12 +87,24 @@ func (this *SyncAPINodesTask) Loop() error {
 		return err
 	}
 
-	var newEndpoints = []string{}
+	var candidateEndpoints = []string{}
 	for _, node := range resp.ApiNodes {
 		if !node.IsOn {
 			continue
 		}
-		newEndpoints = append(newEndpoints, node.AccessAddrs...)
+		candidateEndpoints = append(candidateEndpoints, node.AccessAddrs...)
+	}
+
+	// FIX-27：服务端返回的API节点地址必须位于本地白名单内（启动时的rpc.endpoints，或
+	// 显式配置的rpc.allowedEndpoints），否则忽略并记录日志，防止被恶意或被攻陷的API
+	// 服务端把节点控制连接重定向到任意主机、并写入到本地配置文件中。
+	var newEndpoints = []string{}
+	for _, endpoint := range candidateEndpoints {
+		if configs.IsAllowedEndpoint(endpoint) {
+			newEndpoints = append(newEndpoints, endpoint)
+		} else {
+			logs.Println("[TASK][SYNC_API_NODES_TASK]ignoring endpoint not in local allowlist (rpc.endpoints/rpc.allowedEndpoints): '" + endpoint + "'")
+		}
 	}
 
 	// 和现有的对比

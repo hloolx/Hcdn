@@ -69,6 +69,26 @@ func TestValidateEndpoint_Malformed(t *testing.T) {
 	}
 }
 
+func TestEndpointIsAllowed(t *testing.T) {
+	var allowed = []string{"https://10.0.0.1:8003", "https://10.0.0.2:8003"}
+
+	if !rpcutils.EndpointIsAllowed("https://10.0.0.1:8003", allowed) {
+		t.Fatal("expected an endpoint present in the list to be allowed")
+	}
+	if rpcutils.EndpointIsAllowed("https://10.0.0.3:8003", allowed) {
+		t.Fatal("expected an endpoint not present in the list to be rejected")
+	}
+	if rpcutils.EndpointIsAllowed("https://10.0.0.1:9999", allowed) {
+		t.Fatal("expected matching to be exact (same host, different port must not match)")
+	}
+	if rpcutils.EndpointIsAllowed("http://10.0.0.1:8003", allowed) {
+		t.Fatal("expected matching to be exact (same host:port, different scheme must not match)")
+	}
+	if rpcutils.EndpointIsAllowed("https://10.0.0.1:8003", nil) {
+		t.Fatal("expected an empty allowlist to allow nothing")
+	}
+}
+
 func TestIsLoopbackHost(t *testing.T) {
 	var loopback = []string{"127.0.0.1", "127.1.2.3", "::1", "localhost"}
 	for _, host := range loopback {

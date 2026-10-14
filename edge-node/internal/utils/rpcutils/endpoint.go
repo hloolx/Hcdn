@@ -58,3 +58,20 @@ func IsLoopbackHost(host string) bool {
 	}
 	return ip.IsLoopback()
 }
+
+// EndpointIsAllowed reports whether endpoint is present in allowedEndpoints, using an exact
+// string match (endpoints are compared as written, e.g. "https://host:port").
+//
+// This is used to enforce that the control plane can only move a node's RPC connection to a
+// host the node already knew about locally: server-supplied endpoints that aren't in this set
+// must be ignored rather than adopted (see FIX-27). Matching is intentionally a plain string
+// comparison, not a semantic/URL-aware one, so the allowlist is easy to reason about; operators
+// must list endpoints exactly as the API node advertises them (scheme + host + port).
+func EndpointIsAllowed(endpoint string, allowedEndpoints []string) bool {
+	for _, allowed := range allowedEndpoints {
+		if allowed == endpoint {
+			return true
+		}
+	}
+	return false
+}
