@@ -169,6 +169,7 @@ build_node() {
 	mkdir -p "$dist/bin" "$dist/configs" "$dist/logs" "$dist/data"
 	cp "$REPO/edge-node/build/configs/api_node.template.yaml" "$dist/configs/"
 	cp "$REPO/edge-node/build/configs/cluster.template.yaml" "$dist/configs/"
+	cp "$REPO/edge-node/build/configs/local.template.yaml" "$dist/configs/"
 	cp -R "$REPO/edge-node/build/www" "$dist/"
 	cp -R "$REPO/edge-node/build/pages" "$dist/"
 

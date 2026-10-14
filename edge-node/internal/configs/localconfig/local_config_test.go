@@ -4,6 +4,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -104,5 +105,31 @@ func TestParse_Invalid(t *testing.T) {
 			t.Fatalf("expected error for:\n%s", data)
 		}
 		t.Log(err)
+	}
+}
+
+// the shipped template must be valid both as-is and with its settings uncommented
+func TestTemplate(t *testing.T) {
+	data, err := os.ReadFile("../../../build/configs/local.template.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	config, err := localconfig.Parse(data)
+	if err != nil || len(config.Listen.Remap) != 0 || !config.KernelFirewallEnabled() {
+		t.Fatal("template as-is should mean defaults:", err)
+	}
+
+	var lines = strings.Split(string(data), "\n")
+	for i, line := range lines {
+		if strings.HasPrefix(line, "#") && !strings.HasPrefix(line, "# ") || strings.HasPrefix(line, "#  ") {
+			lines[i] = line[1:]
+		}
+	}
+	config, err = localconfig.Parse([]byte(strings.Join(lines, "\n")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if config.FindRemap(443) == nil || config.FindRemap(443).Addr != "127.0.0.1:10443" {
+		t.Fatal("expected remap for 443")
 	}
 }

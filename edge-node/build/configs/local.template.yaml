@@ -1,0 +1,27 @@
+# Node-local settings for edge-node. Copy to configs/local.yaml to use it.
+# The file is optional (missing = upstream behavior), read once at startup,
+# never written by edge-node and never synced from the API.
+# An invalid file (including unknown keys) makes edge-node refuse to start.
+# See docs/EDGE-NODE-LOCAL-CONFIG.md.
+
+#listen:
+#  # Bind a configured (control-plane) TCP port on another local address,
+#  # e.g. when an L4 load balancer / SNI router owns the public port.
+#  # Applies to every TCP-based listener (http/https/tcp/tls and their 4/6
+#  # variants) on that port; UDP and HTTP/3 are never remapped.
+#  remap:
+#    - port: 443                # configured port
+#      addr: "127.0.0.1:10443"  # actual bind address (IP:port)
+#      proxyProtocol: true      # require a PROXY v1/v2 header (default: true)
+#
+#  # Sources allowed to connect to remapped listeners that require a PROXY
+#  # header (IPs or CIDRs). Default: loopback only.
+#  proxyProtocolTrusted: ["127.0.0.1/32", "::1/128"]
+#
+#  # Max time to wait for the PROXY header (default: 2s).
+#  proxyProtocolHeaderTimeout: 2s
+
+#firewall:
+#  # false = never install kernel firewall drop rules (nftables/firewalld);
+#  # blocked IPs are rejected at application level only. Default: true.
+#  kernel: true
