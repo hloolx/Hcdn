@@ -6,7 +6,6 @@ import { RegisterPage } from "@/pages/auth/register";
 import { ForgotPasswordPage, ResetPasswordPage, VerifyEmailPage } from "@/pages/auth/password";
 import { NotFoundPage, OverviewPage } from "@/pages/overview";
 import { RouteError } from "@/components/route-error";
-import { Placeholder } from "@/components/placeholder";
 import { SitesPage } from "@/pages/sites/list";
 import { NewSitePage } from "@/pages/sites/new";
 import { SiteLayout } from "@/pages/sites/detail/layout";
@@ -20,6 +19,8 @@ import { CertsPage } from "@/pages/certs";
 import { CachePage } from "@/pages/cache";
 import { StatsPage } from "@/pages/stats";
 import { LogsPage } from "@/pages/logs";
+import { AccountPage } from "@/pages/account/profile";
+import { AccessKeysPage } from "@/pages/account/keys";
 
 export const router = createBrowserRouter([
   {
@@ -57,8 +58,8 @@ export const router = createBrowserRouter([
       { path: "cache", element: <CachePage /> },
       { path: "stats", element: <StatsPage /> },
       { path: "logs", element: <LogsPage /> },
-      { path: "account", element: <Placeholder title="账号设置" /> },
-      { path: "account/keys", element: <Placeholder title="API 密钥" /> },
+      { path: "account", element: <AccountPage /> },
+      { path: "account/keys", element: <AccessKeysPage /> },
       { path: "*", element: <NotFoundPage /> },
     ],
   },
