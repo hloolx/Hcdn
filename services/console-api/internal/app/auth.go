@@ -434,7 +434,7 @@ func (a *App) sendVerifyEmail(userID int64, username, email string) {
 	a.bg.Add(1)
 	go func() {
 		defer a.bg.Done()
-		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+		ctx, cancel := context.WithTimeout(a.base, time.Minute)
 		defer cancel()
 		raw, err := a.store.CreateEmailToken(ctx, store.PurposeVerify, userID, email, verifyTTL, a.now())
 		if err != nil {
@@ -508,7 +508,7 @@ func (a *App) forgotPassword(w http.ResponseWriter, r *http.Request) error {
 	a.bg.Add(1)
 	go func() {
 		defer a.bg.Done()
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		ctx, cancel := context.WithTimeout(a.base, 2*time.Minute)
 		defer cancel()
 		if err := a.mailResetLinks(ctx, email); err != nil {
 			a.log.Warn("password reset mail", "err", err)

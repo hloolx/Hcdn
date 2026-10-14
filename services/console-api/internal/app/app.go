@@ -45,6 +45,9 @@ type App struct {
 	userAPI  *http.ServeMux
 	adminAPI *http.ServeMux
 
+	acmeSem chan struct{}
+	base    context.Context // cancelled on shutdown; parent of background jobs
+
 	dnsMu    sync.Mutex
 	dnsCache map[int64]dnsCacheEntry
 
@@ -74,6 +77,8 @@ func New(cfg *config.Config, st *store.Store, edge *edgeapi.Client, log *slog.Lo
 		globalRL: httpx.NewLimiter(cfg.RateLimit.GlobalRPS, cfg.RateLimit.GlobalRPS*4),
 		authRL:   httpx.NewLimiter(cfg.RateLimit.AuthPerMinute/60, cfg.RateLimit.AuthPerMinute),
 		dnsCache: map[int64]dnsCacheEntry{},
+		acmeSem:  make(chan struct{}, 4),
+		base:     context.Background(),
 	}
 	if st != nil {
 		a.sessions = st
@@ -99,6 +104,7 @@ func New(cfg *config.Config, st *store.Store, edge *edgeapi.Client, log *slog.Lo
 
 // Run serves until ctx is cancelled.
 func (a *App) Run(ctx context.Context) error {
+	a.base = ctx
 	if a.store != nil {
 		if err := a.loadSettings(ctx); err != nil {
 			a.log.Warn("load settings", "err", err)

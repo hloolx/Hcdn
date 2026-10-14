@@ -190,6 +190,10 @@ func (c *Call) Done() {
 }
 
 func (c *Client) call(parent context.Context, cred Credential, role string, id int64) (*Call, error) {
+	return c.callFor(parent, cred, role, id, c.timeout)
+}
+
+func (c *Client) callFor(parent context.Context, cred Credential, role string, id int64, timeout time.Duration) (*Call, error) {
 	if !cred.Valid() {
 		return nil, fmt.Errorf("%w (%s)", ErrNotConfigured, role)
 	}
@@ -197,7 +201,7 @@ func (c *Client) call(parent context.Context, cred Credential, role string, id i
 	if err != nil {
 		return nil, err
 	}
-	ctx, cancel := context.WithTimeout(parent, c.timeout)
+	ctx, cancel := context.WithTimeout(parent, timeout)
 	ctx = metadata.AppendToOutgoingContext(ctx, "nodeId", cred.NodeID, "token", token)
 	return &Call{Ctx: ctx, cancel: cancel, conn: c.conn()}, nil
 }
@@ -209,6 +213,16 @@ func (c *Client) AsUser(parent context.Context, userID int64) (*Call, error) {
 		return nil, errors.New("edgeapi: AsUser requires a user id")
 	}
 	return c.call(parent, c.user, RoleUser, userID)
+}
+
+// AsUserFor is AsUser with a custom deadline (long-running RPCs such as ACME).
+// The token is checked once when the RPC starts (EdgeAPI's ±300 s window), so
+// a long call duration is fine; issue only one RPC per such Call.
+func (c *Client) AsUserFor(parent context.Context, userID int64, timeout time.Duration) (*Call, error) {
+	if userID <= 0 {
+		return nil, errors.New("edgeapi: AsUser requires a user id")
+	}
+	return c.callFor(parent, c.user, RoleUser, userID, timeout)
 }
 
 // AsUserNode returns an anonymous user-node caller (userId 0). Only for RPCs
