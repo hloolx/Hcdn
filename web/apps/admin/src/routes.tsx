@@ -19,6 +19,7 @@ export const router = createBrowserRouter([
     errorElement: <RouteError />,
     hydrateFallbackElement: <FullPageLoader />,
     children: [
+      { index: true, lazy: () => import("@/pages/dashboard").then((m) => ({ Component: m.DashboardPage })) },
       { path: "*", element: <NotFoundPage /> },
     ],
   },
