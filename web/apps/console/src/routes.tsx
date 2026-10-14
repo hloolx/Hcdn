@@ -9,6 +9,13 @@ import { RouteError } from "@/components/route-error";
 import { Placeholder } from "@/components/placeholder";
 import { SitesPage } from "@/pages/sites/list";
 import { NewSitePage } from "@/pages/sites/new";
+import { SiteLayout } from "@/pages/sites/detail/layout";
+import { SiteOverviewTab } from "@/pages/sites/detail/overview";
+import { SiteDomainsTab } from "@/pages/sites/detail/domains";
+import { SiteHttpsTab } from "@/pages/sites/detail/https";
+import { SiteCacheTab } from "@/pages/sites/detail/cache";
+import { SiteSecurityTab } from "@/pages/sites/detail/security";
+import { SiteLogsTab } from "@/pages/sites/detail/logs";
 
 export const router = createBrowserRouter([
   {
@@ -30,7 +37,18 @@ export const router = createBrowserRouter([
       { index: true, element: <OverviewPage /> },
       { path: "sites", element: <SitesPage /> },
       { path: "sites/new", element: <NewSitePage /> },
-      { path: "sites/:id/*", element: <Placeholder title="网站详情" /> },
+      {
+        path: "sites/:id",
+        element: <SiteLayout />,
+        children: [
+          { index: true, element: <SiteOverviewTab /> },
+          { path: "domains", element: <SiteDomainsTab /> },
+          { path: "https", element: <SiteHttpsTab /> },
+          { path: "cache", element: <SiteCacheTab /> },
+          { path: "security", element: <SiteSecurityTab /> },
+          { path: "logs", element: <SiteLogsTab /> },
+        ],
+      },
       { path: "certs", element: <Placeholder title="证书" /> },
       { path: "cache", element: <Placeholder title="缓存" /> },
       { path: "stats", element: <Placeholder title="统计分析" /> },
