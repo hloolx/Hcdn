@@ -4,23 +4,12 @@ import { AuthLayout } from "@/layouts/auth-layout";
 import { LoginPage } from "@/pages/auth/login";
 import { RegisterPage } from "@/pages/auth/register";
 import { ForgotPasswordPage, ResetPasswordPage, VerifyEmailPage } from "@/pages/auth/password";
-import { NotFoundPage, OverviewPage } from "@/pages/overview";
 import { RouteError } from "@/components/route-error";
-import { SitesPage } from "@/pages/sites/list";
-import { NewSitePage } from "@/pages/sites/new";
-import { SiteLayout } from "@/pages/sites/detail/layout";
-import { SiteOverviewTab } from "@/pages/sites/detail/overview";
-import { SiteDomainsTab } from "@/pages/sites/detail/domains";
-import { SiteHttpsTab } from "@/pages/sites/detail/https";
-import { SiteCacheTab } from "@/pages/sites/detail/cache";
-import { SiteSecurityTab } from "@/pages/sites/detail/security";
-import { SiteLogsTab } from "@/pages/sites/detail/logs";
-import { CertsPage } from "@/pages/certs";
-import { CachePage } from "@/pages/cache";
-import { StatsPage } from "@/pages/stats";
-import { LogsPage } from "@/pages/logs";
-import { AccountPage } from "@/pages/account/profile";
-import { AccessKeysPage } from "@/pages/account/keys";
+import { FullPageLoader } from "@/lib/auth";
+
+// Console pages are code-split per route; charts (recharts, the world map)
+// only load on pages that use them.
+const lazy = <M,>(load: () => Promise<M>, pick: (m: M) => React.ComponentType) => async () => ({ Component: pick(await load()) });
 
 export const router = createBrowserRouter([
   {
@@ -38,29 +27,30 @@ export const router = createBrowserRouter([
     path: "/",
     element: <ConsoleLayout />,
     errorElement: <RouteError />,
+    hydrateFallbackElement: <FullPageLoader />,
     children: [
-      { index: true, element: <OverviewPage /> },
-      { path: "sites", element: <SitesPage /> },
-      { path: "sites/new", element: <NewSitePage /> },
+      { index: true, lazy: lazy(() => import("@/pages/overview"), (m) => m.OverviewPage) },
+      { path: "sites", lazy: lazy(() => import("@/pages/sites/list"), (m) => m.SitesPage) },
+      { path: "sites/new", lazy: lazy(() => import("@/pages/sites/new"), (m) => m.NewSitePage) },
       {
         path: "sites/:id",
-        element: <SiteLayout />,
+        lazy: lazy(() => import("@/pages/sites/detail/layout"), (m) => m.SiteLayout),
         children: [
-          { index: true, element: <SiteOverviewTab /> },
-          { path: "domains", element: <SiteDomainsTab /> },
-          { path: "https", element: <SiteHttpsTab /> },
-          { path: "cache", element: <SiteCacheTab /> },
-          { path: "security", element: <SiteSecurityTab /> },
-          { path: "logs", element: <SiteLogsTab /> },
+          { index: true, lazy: lazy(() => import("@/pages/sites/detail/overview"), (m) => m.SiteOverviewTab) },
+          { path: "domains", lazy: lazy(() => import("@/pages/sites/detail/domains"), (m) => m.SiteDomainsTab) },
+          { path: "https", lazy: lazy(() => import("@/pages/sites/detail/https"), (m) => m.SiteHttpsTab) },
+          { path: "cache", lazy: lazy(() => import("@/pages/sites/detail/cache"), (m) => m.SiteCacheTab) },
+          { path: "security", lazy: lazy(() => import("@/pages/sites/detail/security"), (m) => m.SiteSecurityTab) },
+          { path: "logs", lazy: lazy(() => import("@/pages/sites/detail/logs"), (m) => m.SiteLogsTab) },
         ],
       },
-      { path: "certs", element: <CertsPage /> },
-      { path: "cache", element: <CachePage /> },
-      { path: "stats", element: <StatsPage /> },
-      { path: "logs", element: <LogsPage /> },
-      { path: "account", element: <AccountPage /> },
-      { path: "account/keys", element: <AccessKeysPage /> },
-      { path: "*", element: <NotFoundPage /> },
+      { path: "certs", lazy: lazy(() => import("@/pages/certs"), (m) => m.CertsPage) },
+      { path: "cache", lazy: lazy(() => import("@/pages/cache"), (m) => m.CachePage) },
+      { path: "stats", lazy: lazy(() => import("@/pages/stats"), (m) => m.StatsPage) },
+      { path: "logs", lazy: lazy(() => import("@/pages/logs"), (m) => m.LogsPage) },
+      { path: "account", lazy: lazy(() => import("@/pages/account/profile"), (m) => m.AccountPage) },
+      { path: "account/keys", lazy: lazy(() => import("@/pages/account/keys"), (m) => m.AccessKeysPage) },
+      { path: "*", lazy: lazy(() => import("@/pages/overview"), (m) => m.NotFoundPage) },
     ],
   },
 ]);
