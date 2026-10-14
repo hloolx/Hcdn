@@ -1,9 +1,9 @@
 package utils
 
 import (
+	"errors"
 	teaconst "github.com/TeaOSLab/EdgeAdmin/internal/const"
 	"github.com/TeaOSLab/EdgeCommon/pkg/configutils"
-	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/logs"
 	"github.com/miekg/dns"
 	"sync"
@@ -38,16 +38,12 @@ func LookupCNAME(host string) (string, error) {
 	var success = false
 	var result = ""
 
-	var serverAddrs = sharedDNSConfig.Servers
-
-	{
-		var publicDNSHosts = []string{"8.8.8.8" /** Google **/, "8.8.4.4" /** Google **/}
-		for _, publicDNSHost := range publicDNSHosts {
-			if !lists.ContainsString(serverAddrs, publicDNSHost) {
-				serverAddrs = append(serverAddrs, publicDNSHost)
-			}
-		}
+	if sharedDNSConfig == nil || sharedDNSClient == nil {
+		return "", errors.New("dns client has not been configured")
 	}
+
+	// only use the resolvers configured on this system
+	var serverAddrs = sharedDNSConfig.Servers
 
 	var wg = &sync.WaitGroup{}
 
