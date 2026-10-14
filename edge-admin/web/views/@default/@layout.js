@@ -100,16 +100,6 @@ Tea.context(function () {
 	}
 
 	/**
-	 * 底部伸展框
-	 */
-	this.showQQGroupQrcode = function () {
-		teaweb.popup("/about/qq", {
-			width: "21em",
-			height: "30em"
-		})
-	}
-
-	/**
 	 * 弹窗中默认成功回调
 	 */
 	if (window.IS_POPUP === true) {
