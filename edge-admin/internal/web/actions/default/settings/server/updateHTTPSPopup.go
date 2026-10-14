@@ -123,11 +123,11 @@ func (this *UpdateHTTPSPopupAction) RunPost(params struct {
 			this.ErrorPage(err)
 			return
 		}
-		err = os.WriteFile(Tea.ConfigFile("https.key.pem"), certConfig.KeyData, 0666)
+		err = os.WriteFile(Tea.ConfigFile("https.key.pem"), certConfig.KeyData, 0600)
 		if err != nil {
 			this.Fail("保存密钥失败：" + err.Error())
 		}
-		err = os.WriteFile(Tea.ConfigFile("https.cert.pem"), certConfig.CertData, 0666)
+		err = os.WriteFile(Tea.ConfigFile("https.cert.pem"), certConfig.CertData, 0600)
 		if err != nil {
 			this.Fail("保存证书失败：" + err.Error())
 		}

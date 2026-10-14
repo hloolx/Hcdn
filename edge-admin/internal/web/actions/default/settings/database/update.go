@@ -118,7 +118,7 @@ func (this *UpdateAction) RunPost(params struct {
 	// 保存
 
 	var configFile = Tea.ConfigFile("api_db.yaml")
-	err = os.WriteFile(configFile, configYAML, 0666)
+	err = os.WriteFile(configFile, configYAML, 0600)
 	if err != nil {
 		this.Fail("保存配置失败：" + err.Error())
 		return

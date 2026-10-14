@@ -36,7 +36,7 @@ func WriteServerConfig(serverConfig *TeaGo.ServerConfig) error {
 	if err != nil {
 		return err
 	}
-	err = os.WriteFile(Tea.ConfigFile(configFilename), data, 0666)
+	err = os.WriteFile(Tea.ConfigFile(configFilename), data, 0600)
 	if err != nil {
 		return err
 	}

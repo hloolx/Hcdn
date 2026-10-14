@@ -77,7 +77,7 @@ func LoadAPIConfig() (*APIConfig, error) {
 
 	if !isFromLocal {
 		// 恢复文件
-		_ = os.WriteFile(realFile, data, 0666)
+		_ = os.WriteFile(realFile, data, 0600)
 	}
 
 	// 自动生成新配置文件
@@ -156,7 +156,7 @@ func (this *APIConfig) WriteFile(path string) error {
 		return err
 	}
 
-	err = os.WriteFile(path, data, 0666)
+	err = os.WriteFile(path, data, 0600)
 	if err != nil {
 		return err
 	}
@@ -170,14 +170,14 @@ func (this *APIConfig) WriteFile(path string) error {
 		dir := homeDir + "/." + teaconst.ProcessName
 		stat, err := os.Stat(dir)
 		if err == nil && stat.IsDir() {
-			err = os.WriteFile(dir+"/"+filename, data, 0666)
+			err = os.WriteFile(dir+"/"+filename, data, 0600)
 			if err != nil {
 				return err
 			}
 		} else if err != nil && os.IsNotExist(err) {
-			err = os.Mkdir(dir, 0777)
+			err = os.Mkdir(dir, 0700)
 			if err == nil {
-				err = os.WriteFile(dir+"/"+filename, data, 0666)
+				err = os.WriteFile(dir+"/"+filename, data, 0600)
 				if err != nil {
 					return err
 				}
@@ -190,11 +190,11 @@ func (this *APIConfig) WriteFile(path string) error {
 		var dir = "/etc/" + teaconst.ProcessName
 		stat, err := os.Stat(dir)
 		if err == nil && stat.IsDir() {
-			_ = os.WriteFile(dir+"/"+filename, data, 0666)
+			_ = os.WriteFile(dir+"/"+filename, data, 0600)
 		} else if err != nil && os.IsNotExist(err) {
-			err = os.Mkdir(dir, 0777)
+			err = os.Mkdir(dir, 0700)
 			if err == nil {
-				_ = os.WriteFile(dir+"/"+filename, data, 0666)
+				_ = os.WriteFile(dir+"/"+filename, data, 0600)
 			}
 		}
 	}

@@ -42,7 +42,7 @@ func (this *SimpleDBConfig) GenerateOldConfig(targetFile string) error {
 		return encodeErr
 	}
 
-	err := os.WriteFile(targetFile, oldConfigYAML, 0666)
+	err := os.WriteFile(targetFile, oldConfigYAML, 0600)
 	if err != nil {
 		return fmt.Errorf("create database config file failed: %w", err)
 	}

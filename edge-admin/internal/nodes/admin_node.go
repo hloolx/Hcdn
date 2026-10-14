@@ -190,7 +190,7 @@ func (this *AdminNode) checkServer() error {
 		templateFile := Tea.ConfigFile("server.template.yaml")
 		data, err := os.ReadFile(templateFile)
 		if err == nil {
-			err = os.WriteFile(configFile, data, 0666)
+			err = os.WriteFile(configFile, data, 0600)
 			if err != nil {
 				return fmt.Errorf("create config file failed: %w", err)
 			}
@@ -210,7 +210,7 @@ https:
   cert: ""
   key: ""
 `
-			err = os.WriteFile(configFile, []byte(templateYAML), 0666)
+			err = os.WriteFile(configFile, []byte(templateYAML), 0600)
 			if err != nil {
 				return fmt.Errorf("create config file failed: %w", err)
 			}
@@ -307,7 +307,7 @@ func (this *AdminNode) startAPINode() {
 			if err == nil {
 				data, err := os.ReadFile(path)
 				if err == nil {
-					err = os.WriteFile(configPath, data, 0666)
+					err = os.WriteFile(configPath, data, 0600)
 					if err == nil {
 						logs.Println("[NODE]recover 'edge-api/configs/api.yaml' from '" + path + "'")
 						canStart = true
@@ -333,7 +333,7 @@ func (this *AdminNode) startAPINode() {
 			if err == nil {
 				data, err := os.ReadFile(path)
 				if err == nil {
-					err = os.WriteFile(dbPath, data, 0666)
+					err = os.WriteFile(dbPath, data, 0600)
 					if err == nil {
 						logs.Println("[NODE]recover 'edge-api/configs/db.yaml' from '" + path + "'")
 						break
