@@ -55,7 +55,7 @@ export function createAdminApi(opts: Partial<ClientOptions> = {}) {
     // resources across tenants
     sites: (q: PageQuery & { userId?: number } = {}) => c.get<Page<AdminSite>>("/sites", q),
     updateSite: (id: number, body: { isOn: boolean }) => c.patch<AdminSite>(`/sites/${id}`, body),
-    certs: (q: PageQuery = {}) => c.get<Page<AdminCert>>("/certs", q),
+    certs: (q: PageQuery & { userId?: number } = {}) => c.get<Page<AdminCert>>("/certs", q),
 
     // DNS
     dnsProviders: () => c.get<DnsProvider[]>("/dns/providers"),

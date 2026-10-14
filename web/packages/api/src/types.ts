@@ -136,6 +136,7 @@ export interface StatsReport {
   /** Same metrics for the previous period of equal length (for deltas). */
   previous: TrafficTotals | null;
   series: TrafficPoint[];
+  /** Empty when the backend has no status-code breakdown (current EdgeAPI). */
   statusCodes: StatusCodeCount[];
   regions: RegionStat[];
   topSites: TopSite[];
@@ -184,11 +185,13 @@ export interface Site {
   cname: string;
   status: SiteStatus;
   isOn: boolean;
+  /** Empty in list responses (`GET /sites`); filled by `GET /sites/{id}`. */
   origins: Origin[];
   /** Host header sent to the origin; empty = the requested host. */
   originHost: string;
   https: SiteHttps;
   createdAt: number;
+  /** null in list responses. */
   traffic24h: { bytes: number; requests: number } | null;
   dnsCheckedAt: number | null;
   dnsChecks: DnsCheck[];
@@ -237,6 +240,7 @@ export interface AccessLog {
   id: string;
   time: number;
   clientIp: string;
+  /** Empty when unknown. */
   region: string;
   method: string;
   scheme: "http" | "https";
@@ -442,6 +446,7 @@ export interface AdminSite extends Site {
 }
 
 export interface AdminCert extends Cert {
+  /** 0 / "" when unknown (the cross-tenant list only knows the owner when filtered by userId). */
   userId: number;
   username: string;
 }
