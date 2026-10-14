@@ -22,6 +22,8 @@ export const router = createBrowserRouter([
       { index: true, lazy: () => import("@/pages/dashboard").then((m) => ({ Component: m.DashboardPage })) },
       { path: "nodes", lazy: () => import("@/pages/nodes/list").then((m) => ({ Component: m.NodesPage })) },
       { path: "nodes/:id", lazy: () => import("@/pages/nodes/detail").then((m) => ({ Component: m.NodeDetailPage })) },
+      { path: "clusters", lazy: () => import("@/pages/clusters").then((m) => ({ Component: m.ClustersPage })) },
+      { path: "dns", lazy: () => import("@/pages/dns").then((m) => ({ Component: m.DnsPage })) },
       { path: "*", element: <NotFoundPage /> },
     ],
   },
