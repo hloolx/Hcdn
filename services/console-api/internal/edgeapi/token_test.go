@@ -43,7 +43,7 @@ func TestEncryptMatchesEdgeAPI(t *testing.T) {
 }
 
 func TestTokenRoundTrip(t *testing.T) {
-	cred := Credential{NodeID: "c0ffee00c0ffee00c0ffee00c0ffee00", Secret: "s3cr3t-0123456789abcdef0123456789abcdefXYZ"}
+	cred := Credential{NodeID: "c0ffee00c0ffee00c0ffee00c0ffee00", Secret: "s3cr3t-0123456789abcdef0123456789abcdefXYZ"} // gitleaks:allow (dummy test credential)
 	now := time.Unix(1700000000, 0)
 	tok, err := EncodeToken(cred, RoleUser, 42, now)
 	if err != nil {
