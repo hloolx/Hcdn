@@ -119,9 +119,9 @@ export function LogViewer({ siteId: fixedSiteId }: { siteId?: number }) {
   return (
     <div className="space-y-4">
       {/* Filter bar */}
-      <div className="flex flex-col gap-2 lg:flex-row lg:flex-wrap lg:items-center">
-        {fixedSiteId ? null : <SitePicker value={siteId} onChange={setSiteId} className="w-full lg:w-52" />}
-        <Segmented value={range} onChange={(r) => { setRange(r); setAnchor(Math.floor(Date.now() / 1000)); }} options={RANGES.map((r) => ({ ...r, label: t(r.label) }))} className="w-fit" />
+      <div className="grid grid-cols-2 gap-2 lg:flex lg:flex-wrap lg:items-center">
+        {fixedSiteId ? null : <SitePicker value={siteId} onChange={setSiteId} className="col-span-2 w-full lg:w-52" />}
+        <Segmented value={range} onChange={(r) => { setRange(r); setAnchor(Math.floor(Date.now() / 1000)); }} options={RANGES.map((r) => ({ ...r, label: t(r.label) }))} className="col-span-2 w-fit" />
         <Select value={status} onValueChange={setStatus}>
           <SelectTrigger className="w-full lg:w-36" aria-label={t("状态码")}>
             <SelectValue />
@@ -135,13 +135,14 @@ export function LogViewer({ siteId: fixedSiteId }: { siteId?: number }) {
           </SelectContent>
         </Select>
         <InputGroup className="w-full lg:w-44" inputClassName="font-mono text-[13px] placeholder:font-sans" leading={<Filter />} placeholder={t("客户端 IP")} aria-label={t("客户端 IP")} value={ip} onChange={(e) => setIp(e.target.value)} />
-        <InputGroup className="w-full lg:min-w-48 lg:flex-1" leading={<Search />} placeholder={t("搜索路径、域名或 User-Agent")} aria-label={t("关键词")} value={keyword} onChange={(e) => setKeyword(e.target.value)} />
-        <div className="flex items-center gap-1">
+        <div className="col-span-2 flex items-center gap-2 lg:min-w-48 lg:flex-1">
+          <InputGroup className="min-w-0 flex-1" leading={<Search />} placeholder={t("搜索路径、域名或 User-Agent")} aria-label={t("关键词")} value={keyword} onChange={(e) => setKeyword(e.target.value)} />
           {filtered ? (
-            <Button variant="ghost" size="sm" onClick={reset} className="text-muted-foreground">
-              <X />
-              {t("清除筛选")}
-            </Button>
+            <Hint label={t("清除筛选")}>
+              <Button variant="ghost" size="icon" onClick={reset} className="text-muted-foreground" aria-label={t("清除筛选")}>
+                <X />
+              </Button>
+            </Hint>
           ) : null}
           <Hint label={t("刷新")}>
             <Button variant="outline" size="icon" aria-label={t("刷新")} onClick={() => setAnchor(Math.floor(Date.now() / 1000))}>

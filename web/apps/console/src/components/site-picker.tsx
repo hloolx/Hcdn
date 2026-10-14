@@ -17,8 +17,12 @@ export function SitePicker({ value, onChange, className, allLabel }: { value: nu
   return (
     <Select value={value == null ? "all" : String(value)} onValueChange={(v) => onChange(v === "all" ? undefined : Number(v))}>
       <SelectTrigger className={cn("min-w-0", className)} aria-label={t("网站")}>
-        <Globe className="text-muted-foreground" />
-        <SelectValue className="flex-1 justify-start text-left" placeholder={allLabel ?? t("全部网站")} />
+        <span className="flex min-w-0 flex-1 items-center gap-2 text-left">
+          <Globe className="text-muted-foreground" />
+          <span className="min-w-0 truncate">
+            <SelectValue placeholder={allLabel ?? t("全部网站")} />
+          </span>
+        </span>
       </SelectTrigger>
       <SelectContent className="max-h-80">
         <SelectItem value="all">{allLabel ?? t("全部网站")}</SelectItem>
