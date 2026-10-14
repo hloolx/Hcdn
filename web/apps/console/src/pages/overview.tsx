@@ -144,7 +144,7 @@ export function OverviewPage() {
               data={(data?.series ?? []) as unknown as Record<string, number>[]}
               series={trafficSeries}
               formatValue={(v) => formatBytes(v)}
-              formatAxisValue={(v) => formatBytes(v, 0)}
+              unit="bytes"
               formatTime={timeLabel(data?.step ?? 3600, locale)}
               formatTooltipTime={tooltipTimeLabel(data?.step ?? 3600, locale)}
             />

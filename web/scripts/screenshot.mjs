@@ -1,4 +1,4 @@
-// Usage: node scripts/screenshot.mjs <url> <out.png> [--dark] [--mobile] [--full] [--wait=ms] [--click=selector]
+// Usage: node scripts/screenshot.mjs <url> <out.png> [--dark] [--mobile] [--full] [--wait=ms] [--click=selector] [--scroll=y]
 import { chromium } from "playwright-core";
 
 const [, , url, out, ...flags] = process.argv;
@@ -25,6 +25,9 @@ page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
 await page.goto(url, { waitUntil: "networkidle" });
 if (opt("click")) {
   await page.click(opt("click"));
+}
+if (opt("scroll")) {
+  await page.evaluate((y) => window.scrollTo(0, y), Number(opt("scroll")));
 }
 await page.waitForTimeout(Number(opt("wait") ?? 900));
 await page.screenshot({ path: out, fullPage: has("--full") });

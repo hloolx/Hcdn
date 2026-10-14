@@ -14,6 +14,8 @@ export interface TimeSeriesProps {
   formatAxisValue?: (v: number) => string;
   formatTime?: (t: number) => string;
   formatTooltipTime?: (t: number) => string;
+  /** Data unit. Bytes/bits get axis ticks that are round in the displayed unit (1024- / 1000-based). */
+  unit?: "bytes" | "bits";
 }
 
 const axisTick = { fontSize: 11, fill: "var(--chart-axis)" } as const;
@@ -21,6 +23,37 @@ const axisTick = { fontSize: 11, fill: "var(--chart-axis)" } as const;
 function defaultTime(t: number) {
   const d = new Date(t < 1e12 ? t * 1000 : t);
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+const BYTE_UNITS = ["B", "KB", "MB", "GB", "TB", "PB"];
+const BIT_UNITS = ["bps", "Kbps", "Mbps", "Gbps", "Tbps"];
+
+/** 0 plus ~4 steps of 1/2/5×10^n in the unit that fits `max`. */
+export function niceUnitTicks(max: number, base: 1000 | 1024, count = 4): number[] {
+  if (!(max > 0)) return [0, base];
+  const p = Math.max(0, Math.floor(Math.log(max) / Math.log(base)));
+  const unit = Math.pow(base, p);
+  const raw = max / unit / count;
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const norm = raw / mag;
+  const step = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10) * mag;
+  const ticks: number[] = [];
+  for (let i = 0; i <= count + 1; i++) {
+    ticks.push(Math.round(i * step * unit * 1000) / 1000);
+    if (i * step * unit >= max) break;
+  }
+  return ticks;
+}
+
+function unitLabel(v: number, base: 1000 | 1024, units: string[]) {
+  if (v === 0) return `0 ${units[0]}`;
+  let i = 0;
+  let x = v;
+  while (x >= base && i < units.length - 1) {
+    x /= base;
+    i++;
+  }
+  return `${+x.toFixed(1)} ${units[i]}`;
 }
 
 function compact(v: number) {
@@ -46,9 +79,26 @@ export function TimeSeriesChart({
   formatAxisValue,
   formatTime = defaultTime,
   formatTooltipTime,
+  unit,
 }: TimeSeriesProps) {
   const gid = React.useId().replace(/:/g, "");
-  const axisFmt = formatAxisValue ?? formatValue;
+  const base = unit === "bytes" ? 1024 : 1000;
+  const units = unit === "bytes" ? BYTE_UNITS : BIT_UNITS;
+  const axisFmt = unit ? (v: number) => unitLabel(v, base, units) : (formatAxisValue ?? formatValue);
+  const ticks = React.useMemo(() => {
+    if (!unit) return undefined;
+    let max = 0;
+    for (const row of data) {
+      if (stacked) {
+        let sum = 0;
+        for (const s of series) sum += Number(row[s.key] ?? 0);
+        max = Math.max(max, sum);
+      } else {
+        for (const s of series) max = Math.max(max, Number(row[s.key] ?? 0));
+      }
+    }
+    return niceUnitTicks(max, base);
+  }, [data, series, stacked, unit, base]);
 
   const tooltip = (
     <Tooltip
@@ -89,7 +139,9 @@ export function TimeSeriesChart({
         axisLine={false}
         tick={axisTick}
         tickFormatter={(v: number) => axisFmt(v)}
-        width={56}
+        ticks={ticks}
+        domain={ticks ? [0, ticks[ticks.length - 1] ?? "auto"] : undefined}
+        width={64}
         tickMargin={4}
         allowDecimals={false}
       />
