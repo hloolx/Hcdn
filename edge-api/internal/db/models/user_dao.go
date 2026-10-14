@@ -5,6 +5,7 @@ import (
 	dbutils "github.com/TeaOSLab/EdgeAPI/internal/db/utils"
 	"github.com/TeaOSLab/EdgeAPI/internal/errors"
 	"github.com/TeaOSLab/EdgeAPI/internal/utils"
+	"github.com/TeaOSLab/EdgeAPI/internal/utils/passwordutils"
 	"github.com/TeaOSLab/EdgeCommon/pkg/nodeconfigs"
 	"github.com/TeaOSLab/EdgeCommon/pkg/rpc/pb"
 	"github.com/TeaOSLab/EdgeCommon/pkg/systemconfigs"
@@ -15,7 +16,6 @@ import (
 	"github.com/iwind/TeaGo/lists"
 	"github.com/iwind/TeaGo/rands"
 	"github.com/iwind/TeaGo/types"
-	stringutil "github.com/iwind/TeaGo/utils/string"
 	timeutil "github.com/iwind/TeaGo/utils/time"
 )
 
@@ -210,9 +210,14 @@ func (this *UserDAO) CreateUser(tx *dbs.Tx, username string,
 	features []string,
 	registeredIP string,
 	isVerified bool) (int64, error) {
+	hash, err := passwordutils.HashPassword(password)
+	if err != nil {
+		return 0, err
+	}
+
 	var op = NewUserOperator()
 	op.Username = username
-	op.Password = stringutil.Md5(password)
+	op.Password = hash
 	op.Fullname = fullname
 	op.Mobile = mobile
 	op.Tel = tel
@@ -238,7 +243,7 @@ func (this *UserDAO) CreateUser(tx *dbs.Tx, username string,
 
 	op.IsOn = true
 	op.State = UserStateEnabled
-	err := this.Save(tx, op)
+	err = this.Save(tx, op)
 	if err != nil {
 		return 0, err
 	}
@@ -255,7 +260,11 @@ func (this *UserDAO) UpdateUser(tx *dbs.Tx, userId int64, username string, passw
 	op.Id = userId
 	op.Username = username
 	if len(password) > 0 {
-		op.Password = stringutil.Md5(password)
+		hash, err := passwordutils.HashPassword(password)
+		if err != nil {
+			return err
+		}
+		op.Password = hash
 	}
 	op.Fullname = fullname
 	op.Mobile = mobile
@@ -303,7 +312,11 @@ func (this *UserDAO) UpdateUserLogin(tx *dbs.Tx, userId int64, username string, 
 	op.Id = userId
 	op.Username = username
 	if len(password) > 0 {
-		op.Password = stringutil.Md5(password)
+		hash, err := passwordutils.HashPassword(password)
+		if err != nil {
+			return err
+		}
+		op.Password = hash
 	}
 	return this.Save(tx, op)
 }
@@ -316,7 +329,11 @@ func (this *UserDAO) UpdateUserPassword(tx *dbs.Tx, userId int64, password strin
 	var op = NewUserOperator()
 	op.Id = userId
 	if len(password) > 0 {
-		op.Password = stringutil.Md5(password)
+		hash, err := passwordutils.HashPassword(password)
+		if err != nil {
+			return err
+		}
+		op.Password = hash
 	}
 	return this.Save(tx, op)
 }
@@ -417,45 +434,67 @@ func (this *UserDAO) ListEnabledUserIds(tx *dbs.Tx, offset, size int64) ([]int64
 }
 
 // CheckUserPassword 检查用户名+密码
-func (this *UserDAO) CheckUserPassword(tx *dbs.Tx, username string, encryptedPassword string) (int64, error) {
-	if len(username) == 0 || len(encryptedPassword) == 0 {
-		return 0, nil
-	}
-	return this.Query(tx).
-		Attr("username", username).
-		Attr("password", encryptedPassword).
-		Attr("state", UserStateEnabled).
-		Attr("isOn", true).
-		ResultPk().
-		FindInt64Col(0)
+func (this *UserDAO) CheckUserPassword(tx *dbs.Tx, username string, password string) (int64, error) {
+	return this.checkUserPasswordByAttr(tx, "username", username, password)
 }
 
 // CheckUserEmailPassword 检查邮箱+密码
-func (this *UserDAO) CheckUserEmailPassword(tx *dbs.Tx, verifiedEmail string, encryptedPassword string) (int64, error) {
-	if len(verifiedEmail) == 0 || len(encryptedPassword) == 0 {
-		return 0, nil
-	}
-	return this.Query(tx).
-		Attr("verifiedEmail", verifiedEmail).
-		Attr("password", encryptedPassword).
-		Attr("state", UserStateEnabled).
-		Attr("isOn", true).
-		ResultPk().
-		FindInt64Col(0)
+func (this *UserDAO) CheckUserEmailPassword(tx *dbs.Tx, verifiedEmail string, password string) (int64, error) {
+	return this.checkUserPasswordByAttr(tx, "verifiedEmail", verifiedEmail, password)
 }
 
-// CheckUserMobilePassword 检查邮箱+密码
-func (this *UserDAO) CheckUserMobilePassword(tx *dbs.Tx, verifiedEmail string, encryptedPassword string) (int64, error) {
-	if len(verifiedEmail) == 0 || len(encryptedPassword) == 0 {
+// CheckUserMobilePassword 检查手机号+密码
+func (this *UserDAO) CheckUserMobilePassword(tx *dbs.Tx, verifiedMobile string, password string) (int64, error) {
+	return this.checkUserPasswordByAttr(tx, "verifiedMobile", verifiedMobile, password)
+}
+
+// checkUserPasswordByAttr 按指定已验证字段（用户名/邮箱/手机号）查找用户并校验密码。
+//
+// FIX-15: 密码以bcrypt哈希存储，不能再用SQL等值过滤比较，需要先取出该行，
+// 再在Go代码中校验；旧版未加盐MD5哈希校验通过时会透明升级为bcrypt，具体规则见
+// passwordutils.Verify。attrName 始终是调用方传入的固定字符串字面量，不受外部输入影响。
+func (this *UserDAO) checkUserPasswordByAttr(tx *dbs.Tx, attrName string, attrValue string, password string) (int64, error) {
+	if len(attrValue) == 0 || len(password) == 0 {
 		return 0, nil
 	}
-	return this.Query(tx).
-		Attr("verifiedMobile", verifiedEmail).
-		Attr("password", encryptedPassword).
+
+	one, err := this.Query(tx).
+		Attr(attrName, attrValue).
 		Attr("state", UserStateEnabled).
 		Attr("isOn", true).
-		ResultPk().
-		FindInt64Col(0)
+		Result("id", "password").
+		Find()
+	if err != nil || one == nil {
+		return 0, err
+	}
+	var user = one.(*User)
+
+	ok, needsUpgrade := passwordutils.Verify(password, user.Password)
+	if !ok {
+		return 0, nil
+	}
+
+	if needsUpgrade {
+		// 升级失败不应影响本次正常登录，仅记录错误
+		upgradeErr := this.upgradeUserPasswordHash(tx, int64(user.Id), password)
+		if upgradeErr != nil {
+			utils.PrintError(upgradeErr)
+		}
+	}
+
+	return int64(user.Id), nil
+}
+
+// upgradeUserPasswordHash 将用户密码透明升级为bcrypt哈希
+func (this *UserDAO) upgradeUserPasswordHash(tx *dbs.Tx, userId int64, plaintextPassword string) error {
+	hash, err := passwordutils.HashPassword(plaintextPassword)
+	if err != nil {
+		return err
+	}
+	var op = NewUserOperator()
+	op.Id = userId
+	op.Password = hash
+	return this.Save(tx, op)
 }
 
 // FindUserClusterId 查找用户所在集群

@@ -3,11 +3,12 @@ package models
 import (
 	dbutils "github.com/TeaOSLab/EdgeAPI/internal/db/utils"
 	"github.com/TeaOSLab/EdgeAPI/internal/errors"
+	"github.com/TeaOSLab/EdgeAPI/internal/utils"
+	"github.com/TeaOSLab/EdgeAPI/internal/utils/passwordutils"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/dbs"
 	"github.com/iwind/TeaGo/types"
-	stringutil "github.com/iwind/TeaGo/utils/string"
 )
 
 const (
@@ -100,18 +101,57 @@ func (this *AdminDAO) FindAdminFullname(tx *dbs.Tx, adminId int64) (string, erro
 }
 
 // CheckAdminPassword 检查用户名、密码
-func (this *AdminDAO) CheckAdminPassword(tx *dbs.Tx, username string, encryptedPassword string) (int64, error) {
-	if len(username) == 0 || len(encryptedPassword) == 0 {
+//
+// FIX-15: passwords are stored as bcrypt hashes. 'password' here is the
+// value the RPC received, which by the current convention is the plaintext
+// password (see passwordutils.Verify doc for the one legacy exception kept
+// for clients that still MD5-hash it themselves). We can no longer do the
+// check as a SQL equality filter, since bcrypt hashes are salted: fetch the
+// candidate row first, then verify in Go, transparently upgrading legacy
+// unsalted-MD5 rows to bcrypt on first successful verification.
+func (this *AdminDAO) CheckAdminPassword(tx *dbs.Tx, username string, password string) (int64, error) {
+	if len(username) == 0 || len(password) == 0 {
 		return 0, nil
 	}
-	return this.Query(tx).
+
+	one, err := this.Query(tx).
 		Attr("username", username).
-		Attr("password", encryptedPassword).
 		Attr("state", AdminStateEnabled).
 		Attr("isOn", true).
 		Attr("canLogin", 1).
-		ResultPk().
-		FindInt64Col(0)
+		Result("id", "password").
+		Find()
+	if err != nil || one == nil {
+		return 0, err
+	}
+	var admin = one.(*Admin)
+
+	ok, needsUpgrade := passwordutils.Verify(password, admin.Password)
+	if !ok {
+		return 0, nil
+	}
+
+	if needsUpgrade {
+		// 升级失败不应影响本次正常登录，仅记录错误
+		upgradeErr := this.upgradePasswordHash(tx, int64(admin.Id), password)
+		if upgradeErr != nil {
+			utils.PrintError(upgradeErr)
+		}
+	}
+
+	return int64(admin.Id), nil
+}
+
+// upgradePasswordHash 将管理员密码透明升级为bcrypt哈希
+func (this *AdminDAO) upgradePasswordHash(tx *dbs.Tx, adminId int64, plaintextPassword string) error {
+	hash, err := passwordutils.HashPassword(plaintextPassword)
+	if err != nil {
+		return err
+	}
+	var op = NewAdminOperator()
+	op.Id = adminId
+	op.Password = hash
+	return this.Save(tx, op)
 }
 
 // FindAdminIdWithUsername 根据用户名查询管理员ID
@@ -148,21 +188,30 @@ func (this *AdminDAO) UpdateAdminPassword(tx *dbs.Tx, adminId int64, password st
 	if adminId <= 0 {
 		return errors.New("invalid adminId")
 	}
+	hash, err := passwordutils.HashPassword(password)
+	if err != nil {
+		return err
+	}
 	var op = NewAdminOperator()
 	op.Id = adminId
-	op.Password = stringutil.Md5(password)
-	err := this.Save(tx, op)
+	op.Password = hash
+	err = this.Save(tx, op)
 	return err
 }
 
 // CreateAdmin 创建管理员
 func (this *AdminDAO) CreateAdmin(tx *dbs.Tx, username string, canLogin bool, password string, fullname string, isSuper bool, modulesJSON []byte) (int64, error) {
+	hash, err := passwordutils.HashPassword(password)
+	if err != nil {
+		return 0, err
+	}
+
 	var op = NewAdminOperator()
 	op.IsOn = true
 	op.State = AdminStateEnabled
 	op.Username = username
 	op.CanLogin = canLogin
-	op.Password = stringutil.Md5(password)
+	op.Password = hash
 	op.Fullname = fullname
 	op.IsSuper = isSuper
 	if len(modulesJSON) > 0 {
@@ -170,7 +219,7 @@ func (this *AdminDAO) CreateAdmin(tx *dbs.Tx, username string, canLogin bool, pa
 	} else {
 		op.Modules = "[]"
 	}
-	err := this.Save(tx, op)
+	err = this.Save(tx, op)
 	if err != nil {
 		return 0, err
 	}
@@ -200,7 +249,11 @@ func (this *AdminDAO) UpdateAdmin(tx *dbs.Tx, adminId int64, username string, ca
 	op.Username = username
 	op.CanLogin = canLogin
 	if len(password) > 0 {
-		op.Password = stringutil.Md5(password)
+		hash, err := passwordutils.HashPassword(password)
+		if err != nil {
+			return err
+		}
+		op.Password = hash
 	}
 	op.IsSuper = isSuper
 	if len(modulesJSON) > 0 {
@@ -247,7 +300,11 @@ func (this *AdminDAO) UpdateAdminLogin(tx *dbs.Tx, adminId int64, username strin
 	op.Id = adminId
 	op.Username = username
 	if len(password) > 0 {
-		op.Password = stringutil.Md5(password)
+		hash, err := passwordutils.HashPassword(password)
+		if err != nil {
+			return err
+		}
+		op.Password = hash
 	}
 	err := this.Save(tx, op)
 	return err
