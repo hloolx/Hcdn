@@ -8,7 +8,6 @@ import (
 	"github.com/TeaOSLab/EdgeCommon/pkg/rpc/pb"
 	"github.com/TeaOSLab/EdgeCommon/pkg/serverconfigs"
 	"github.com/TeaOSLab/EdgeNode/internal/caches"
-	"github.com/TeaOSLab/EdgeNode/internal/configs"
 	teaconst "github.com/TeaOSLab/EdgeNode/internal/const"
 	"github.com/TeaOSLab/EdgeNode/internal/errors"
 	"github.com/TeaOSLab/EdgeNode/internal/events"
@@ -16,10 +15,7 @@ import (
 	"github.com/TeaOSLab/EdgeNode/internal/remotelogs"
 	"github.com/TeaOSLab/EdgeNode/internal/rpc"
 	executils "github.com/TeaOSLab/EdgeNode/internal/utils/exec"
-	"github.com/TeaOSLab/EdgeNode/internal/utils/goman"
-	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/maps"
-	"net/url"
 	"regexp"
 	"runtime"
 	"strconv"
@@ -117,8 +113,6 @@ func (this *APIStream) loop() error {
 			err = this.handleCheckSystemdService(message)
 		case messageconfigs.MessageCodeCheckLocalFirewall: // 检查本地防火墙
 			err = this.handleCheckLocalFirewall(message)
-		case messageconfigs.MessageCodeChangeAPINode: // 修改API节点地址
-			err = this.handleChangeAPINode(message)
 		default:
 			err = this.handleUnknownMessage(message)
 		}
@@ -417,65 +411,6 @@ func (this *APIStream) handleCheckLocalFirewall(message *pb.NodeStreamMessage) e
 	} else {
 		this.replyFail(message.RequestId, "invalid firewall name '"+dataMessage.Name+"'")
 	}
-
-	return nil
-}
-
-// 修改API地址
-func (this *APIStream) handleChangeAPINode(message *pb.NodeStreamMessage) error {
-	config, err := configs.LoadAPIConfig()
-	if err != nil {
-		this.replyFail(message.RequestId, "read config error: "+err.Error())
-		return nil
-	}
-
-	var messageData = &messageconfigs.ChangeAPINodeMessage{}
-	err = json.Unmarshal(message.DataJSON, messageData)
-	if err != nil {
-		this.replyFail(message.RequestId, "unmarshal message failed: "+err.Error())
-		return nil
-	}
-
-	_, err = url.Parse(messageData.Addr)
-	if err != nil {
-		this.replyFail(message.RequestId, "invalid new api node address: '"+messageData.Addr+"'")
-		return nil
-	}
-
-	config.RPCEndpoints = []string{messageData.Addr}
-
-	// 保存到文件
-	err = config.WriteFile(Tea.ConfigFile(configs.ConfigFileName))
-	if err != nil {
-		this.replyFail(message.RequestId, "save config file failed: "+err.Error())
-		return nil
-	}
-
-	this.replyOk(message.RequestId, "")
-
-	goman.New(func() {
-		// 延后生效，防止变更前的API无法读取到状态
-		time.Sleep(1 * time.Second)
-
-		rpcClient, err := rpc.SharedRPC()
-		if err != nil {
-			remotelogs.Error("API_STREAM", "change rpc endpoint to '"+
-				messageData.Addr+"' failed: "+err.Error())
-			return
-		}
-
-		rpcClient.Close()
-
-		err = rpcClient.UpdateConfig(config)
-		if err != nil {
-			remotelogs.Error("API_STREAM", "change rpc endpoint to '"+
-				messageData.Addr+"' failed: "+err.Error())
-			return
-		}
-
-		remotelogs.Println("API_STREAM", "change rpc endpoint to '"+
-			messageData.Addr+"' successfully")
-	})
 
 	return nil
 }
