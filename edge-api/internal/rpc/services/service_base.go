@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"time"
+
 	teaconst "github.com/TeaOSLab/EdgeAPI/internal/const"
 	"github.com/TeaOSLab/EdgeAPI/internal/db/models"
 	"github.com/TeaOSLab/EdgeAPI/internal/db/models/authority"
@@ -165,6 +167,12 @@ func (this *BaseService) ValidateNodeId(ctx context.Context, roles ...rpcutils.U
 	err = json.Unmarshal(data, &m)
 	if err != nil {
 		return rpcutils.UserTypeNone, 0, errors.New("decode token error: " + err.Error())
+	}
+
+	// FIX-04: this function decodes the token independently of
+	// rpcutils.ValidateRequest, so it needs its own replay/staleness check.
+	if !rpcutils.IsFreshTimestamp(m.GetInt64("timestamp"), time.Now().Unix(), rpcutils.MaxTokenClockSkewSeconds) {
+		return rpcutils.UserTypeNone, 0, errors.New("context: token timestamp is missing or outside of the allowed window")
 	}
 
 	role = apiToken.Role
