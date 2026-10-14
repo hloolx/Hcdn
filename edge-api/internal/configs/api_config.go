@@ -68,7 +68,7 @@ func SharedAPIConfig() (*APIConfig, error) {
 
 		if !isFromLocal {
 			// 恢复文件
-			_ = os.WriteFile(localFile, data, 0666)
+			_ = os.WriteFile(localFile, data, 0600)
 		}
 	}
 
@@ -88,7 +88,7 @@ func SharedAPIConfig() (*APIConfig, error) {
 				if err == nil {
 					data, err := os.ReadFile(path)
 					if err == nil {
-						_ = os.WriteFile(dbConfigFile, data, 0666)
+						_ = os.WriteFile(dbConfigFile, data, 0600)
 						break
 					}
 				}
@@ -128,16 +128,16 @@ func (this *APIConfig) WriteFile(path string) error {
 	for _, backupDir := range backupDirs {
 		stat, err := os.Stat(backupDir)
 		if err == nil && stat.IsDir() {
-			_ = os.WriteFile(backupDir+"/"+filename, data, 0666)
+			_ = os.WriteFile(backupDir+"/"+filename, data, 0600)
 		} else if err != nil && os.IsNotExist(err) {
-			err = os.Mkdir(backupDir, 0777)
+			err = os.Mkdir(backupDir, 0700)
 			if err == nil {
-				_ = os.WriteFile(backupDir+"/"+filename, data, 0666)
+				_ = os.WriteFile(backupDir+"/"+filename, data, 0600)
 			}
 		}
 	}
 
-	return os.WriteFile(path, data, 0666)
+	return os.WriteFile(path, data, 0600)
 }
 
 // ResetAPIConfig 重置配置

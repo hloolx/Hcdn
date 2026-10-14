@@ -49,7 +49,7 @@ func (this *SimpleDBConfig) GenerateOldConfig() error {
 	}
 
 	var targetFile = Tea.ConfigFile(".db.yaml")
-	err := os.WriteFile(targetFile, oldConfigYAML, 0666)
+	err := os.WriteFile(targetFile, oldConfigYAML, 0600)
 	if err != nil {
 		return fmt.Errorf("create database config file failed: %w", err)
 	}

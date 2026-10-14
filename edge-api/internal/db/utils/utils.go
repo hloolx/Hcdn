@@ -170,7 +170,7 @@ func FindMySQLPathAndRemember() {
 	}
 
 	var cacheFile = Tea.Root + "/data/mysql-path.cache"
-	_ = os.WriteFile(cacheFile, []byte(path), 0666) // ignore error
+	_ = os.WriteFile(cacheFile, []byte(path), 0600) // ignore error
 }
 
 // StartLocalMySQL try to start local mysql server

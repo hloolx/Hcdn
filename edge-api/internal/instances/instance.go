@@ -176,12 +176,12 @@ func (this *Instance) SetupDB() error {
 			var dir = this.options.WorkDir + "/usr/local/goedge"
 			_, err = os.Stat(dir)
 			if err != nil {
-				err = os.MkdirAll(dir, 0777)
+				err = os.MkdirAll(dir, 0700)
 				if err != nil {
 					return fmt.Errorf("create directory '"+dir+"' failed: %w", err)
 				}
 			}
-			err = os.WriteFile(dir+"/password.txt", []byte("Admin Password: "+password+"\n"), 0666)
+			err = os.WriteFile(dir+"/password.txt", []byte("Admin Password: "+password+"\n"), 0600)
 			if err != nil {
 				return fmt.Errorf("write 'password.txt' failed: %w", err)
 			}
@@ -569,7 +569,7 @@ func (this *Instance) SetupAdminNode() error {
 			return err
 		}
 		apiYAMLData = data
-		err = os.WriteFile(this.targetPrefix()+"/edge-admin/configs/api_admin.yaml", data, 0666)
+		err = os.WriteFile(this.targetPrefix()+"/edge-admin/configs/api_admin.yaml", data, 0600)
 		if err != nil {
 			return err
 		}
@@ -583,9 +583,9 @@ func (this *Instance) SetupAdminNode() error {
 			var dir = homeDir + "/.edge-admin/"
 			_, err = os.Stat(dir)
 			if err != nil {
-				_ = os.MkdirAll(dir, 0777)
+				_ = os.MkdirAll(dir, 0700)
 			}
-			_ = os.WriteFile(dir+"/api_admin.yaml", apiYAMLData, 0666)
+			_ = os.WriteFile(dir+"/api_admin.yaml", apiYAMLData, 0600)
 		}
 	}
 
@@ -605,7 +605,7 @@ func (this *Instance) SetupAdminNode() error {
 		if err != nil {
 			return err
 		}
-		err = os.WriteFile(this.targetPrefix()+"/edge-admin/configs/api_db.yaml", data, 0666)
+		err = os.WriteFile(this.targetPrefix()+"/edge-admin/configs/api_db.yaml", data, 0600)
 		if err != nil {
 			return err
 		}
@@ -621,7 +621,7 @@ func (this *Instance) SetupAdminNode() error {
 		if err != nil {
 			return err
 		}
-		err = os.WriteFile(this.targetPrefix()+"/edge-admin/configs/server.yaml", data, 0666)
+		err = os.WriteFile(this.targetPrefix()+"/edge-admin/configs/server.yaml", data, 0600)
 		if err != nil {
 			return err
 		}
@@ -665,7 +665,7 @@ func (this *Instance) SetupAPINode() error {
 		if err != nil {
 			return err
 		}
-		err = os.WriteFile(this.targetPrefix()+"/edge-api/configs/api.yaml", data, 0666)
+		err = os.WriteFile(this.targetPrefix()+"/edge-api/configs/api.yaml", data, 0600)
 		if err != nil {
 			return err
 		}
@@ -687,7 +687,7 @@ func (this *Instance) SetupAPINode() error {
 		if err != nil {
 			return err
 		}
-		err = os.WriteFile(this.targetPrefix()+"/edge-api/configs/db.yaml", data, 0666)
+		err = os.WriteFile(this.targetPrefix()+"/edge-api/configs/db.yaml", data, 0600)
 		if err != nil {
 			return err
 		}
@@ -732,7 +732,7 @@ func (this *Instance) SetupNode() error {
 		if err != nil {
 			return err
 		}
-		err = os.WriteFile(this.targetPrefix()+"/edge-node/configs/api_node.yaml", data, 0666)
+		err = os.WriteFile(this.targetPrefix()+"/edge-node/configs/api_node.yaml", data, 0600)
 		if err != nil {
 			return err
 		}
@@ -781,7 +781,7 @@ func (this *Instance) SetupUserNode() error {
 		if err != nil {
 			return err
 		}
-		err = os.WriteFile(this.targetPrefix()+"/edge-user/configs/api_user.yaml", data, 0666)
+		err = os.WriteFile(this.targetPrefix()+"/edge-user/configs/api_user.yaml", data, 0600)
 		if err != nil {
 			return err
 		}
