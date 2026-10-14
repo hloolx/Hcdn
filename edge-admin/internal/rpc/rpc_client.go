@@ -2,7 +2,6 @@ package rpc
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -523,11 +522,16 @@ func (this *RPCClient) init() error {
 			Time: 30 * time.Second,
 		})
 		if u.Scheme == "http" {
+			if !IsLoopbackHost(u.Host) {
+				return fmt.Errorf("plain 'http://' rpc.endpoints entry '%s' is only allowed for loopback hosts (127.0.0.1/[::1]/localhost); use 'https://' instead", endpoint)
+			}
 			conn, err = grpc.Dial(apiHost, grpc.WithTransportCredentials(insecure.NewCredentials()), callOptions, keepaliveParams)
 		} else if u.Scheme == "https" {
-			conn, err = grpc.Dial(apiHost, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{
-				InsecureSkipVerify: true,
-			})), callOptions, keepaliveParams)
+			tlsConfig, tlsErr := BuildTLSConfig(this.apiConfig, u.Host)
+			if tlsErr != nil {
+				return tlsErr
+			}
+			conn, err = grpc.Dial(apiHost, grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)), callOptions, keepaliveParams)
 		} else {
 			return errors.New("parse endpoint failed: invalid scheme '" + u.Scheme + "'")
 		}

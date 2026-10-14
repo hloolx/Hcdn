@@ -2,7 +2,6 @@ package tasks
 
 import (
 	"context"
-	"crypto/tls"
 	"github.com/TeaOSLab/EdgeAdmin/internal/configs"
 	teaconst "github.com/TeaOSLab/EdgeAdmin/internal/const"
 	"github.com/TeaOSLab/EdgeAdmin/internal/events"
@@ -93,7 +92,7 @@ func (this *SyncAPINodesTask) Loop() error {
 	}
 
 	// 测试是否有API节点可用
-	hasOk := this.testEndpoints(newEndpoints)
+	hasOk := this.testEndpoints(newEndpoints, config)
 	if !hasOk {
 		return nil
 	}
@@ -120,7 +119,7 @@ func (this *SyncAPINodesTask) isSame(endpoints1 []string, endpoints2 []string) b
 	return strings.Join(endpoints1, "&") == strings.Join(endpoints2, "&")
 }
 
-func (this *SyncAPINodesTask) testEndpoints(endpoints []string) bool {
+func (this *SyncAPINodesTask) testEndpoints(endpoints []string, apiConfig *configs.APIConfig) bool {
 	if len(endpoints) == 0 {
 		return false
 	}
@@ -146,11 +145,17 @@ func (this *SyncAPINodesTask) testEndpoints(endpoints []string) bool {
 			var conn *grpc.ClientConn
 
 			if u.Scheme == "http" {
+				if !rpc.IsLoopbackHost(u.Host) {
+					// 明文端点只允许回环地址，不合规的候选端点直接跳过
+					return
+				}
 				conn, err = grpc.DialContext(ctx, u.Host, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 			} else if u.Scheme == "https" {
-				conn, err = grpc.DialContext(ctx, u.Host, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{
-					InsecureSkipVerify: true,
-				})), grpc.WithBlock())
+				tlsConfig, tlsErr := rpc.BuildTLSConfig(apiConfig, u.Host)
+				if tlsErr != nil {
+					return
+				}
+				conn, err = grpc.DialContext(ctx, u.Host, grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)), grpc.WithBlock())
 			}
 			if err != nil {
 				return

@@ -22,6 +22,11 @@ type APIConfig struct {
 	RPCEndpoints     []string `yaml:"rpc.endpoints,flow" json:"rpc.endpoints"`
 	RPCDisableUpdate bool     `yaml:"rpc.disableUpdate" json:"rpc.disableUpdate"`
 
+	// RPCCAFile 可选：用于校验API节点证书的CA文件（PEM）。为空时使用系统根证书池。
+	RPCCAFile string `yaml:"rpc.caFile" json:"rpc.caFile"`
+	// RPCServerName 可选：校验证书时使用的ServerName，为空时使用endpoint中的主机名。
+	RPCServerName string `yaml:"rpc.serverName" json:"rpc.serverName"`
+
 	NodeId string `yaml:"nodeId"`
 	Secret string `yaml:"secret"`
 }
@@ -200,8 +205,9 @@ func (this *APIConfig) WriteFile(path string) error {
 // Clone 克隆当前配置
 func (this *APIConfig) Clone() *APIConfig {
 	return &APIConfig{
-		NodeId: this.NodeId,
-		Secret: this.Secret,
+		NodeId:    this.NodeId,
+		Secret:    this.Secret,
+		RPCCAFile: this.RPCCAFile,
 	}
 }
 

@@ -1,3 +1,10 @@
 rpc.endpoints: [ "http://127.0.0.1:8003" ]
 nodeId: ""
 secret: ""
+
+# 可选：当rpc.endpoints中使用了https://且API节点使用自建CA签发的证书时，
+# 在这里指定CA证书文件路径（PEM格式），否则默认使用系统根证书池校验。
+# rpc.caFile: ""
+
+# 可选：校验API节点证书时使用的ServerName，为空时使用rpc.endpoints中的主机名。
+# rpc.serverName: ""
