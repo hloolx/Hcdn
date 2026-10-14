@@ -42,8 +42,9 @@ type CloudFlareProvider struct {
 
 	ProviderId int64
 
-	apiKey string // API密钥
-	email  string // 账号邮箱
+	apiKey   string // API密钥（Global API Key，旧方式）
+	email    string // 账号邮箱（与 apiKey 配合使用）
+	apiToken string // API Token（推荐：只授予单个 Zone 的 DNS 权限）
 
 	zoneMap    map[string]string // domain => zoneId
 	zoneLocker sync.Mutex
@@ -51,14 +52,16 @@ type CloudFlareProvider struct {
 
 // Auth 认证
 func (this *CloudFlareProvider) Auth(params maps.Map) error {
+	this.apiToken = params.GetString("apiToken")
 	this.apiKey = params.GetString("apiKey")
-	if len(this.apiKey) == 0 {
-		return errors.New("'apiKey' should not be empty")
-	}
-
 	this.email = params.GetString("email")
-	if len(this.email) == 0 {
-		return errors.New("'email' should not be empty")
+	if len(this.apiToken) == 0 {
+		if len(this.apiKey) == 0 {
+			return errors.New("'apiToken' or 'apiKey' should not be empty")
+		}
+		if len(this.email) == 0 {
+			return errors.New("'email' should not be empty")
+		}
 	}
 
 	this.zoneMap = map[string]string{}
@@ -72,6 +75,9 @@ func (this *CloudFlareProvider) MaskParams(params maps.Map) {
 		return
 	}
 	params["apiKey"] = MaskString(params.GetString("apiKey"))
+	if params.Has("apiToken") {
+		params["apiToken"] = MaskString(params.GetString("apiToken"))
+	}
 }
 
 // GetDomains 获取所有域名列表
@@ -321,8 +327,7 @@ func (this *CloudFlareProvider) doAPI(method string, apiPath string, args map[st
 	}
 	req.Header.Set("User-Agent", teaconst.ProductName+"/"+teaconst.Version)
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Auth-Key", this.apiKey)
-	req.Header.Set("x-Auth-Email", this.email)
+	setCloudFlareAuthHeaders(req.Header, this.apiToken, this.apiKey, this.email)
 	resp, err := cloudFlareHTTPClient.Do(req)
 	if err != nil {
 		return err
@@ -377,4 +382,15 @@ func (this *CloudFlareProvider) findZoneIdWithDomain(domain string) (zoneId stri
 	this.zoneMap[domain] = zoneId
 	this.zoneLocker.Unlock()
 	return zoneId, nil
+}
+
+// setCloudFlareAuthHeaders prefers a scoped API token (Bearer) and falls back to
+// the legacy Global API Key + account email.
+func setCloudFlareAuthHeaders(h http.Header, apiToken string, apiKey string, email string) {
+	if len(apiToken) > 0 {
+		h.Set("Authorization", "Bearer "+apiToken)
+		return
+	}
+	h.Set("X-Auth-Key", apiKey)
+	h.Set("X-Auth-Email", email)
 }
