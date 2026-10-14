@@ -21,15 +21,6 @@
     <a :href="'/clusters/cluster/createNode?clusterId=' + dashboard.defaultClusterId">还没有在集群中添加节点，现在去添加？添加节点后才可部署网站。</a>
 </div>
 
-<!-- 新版本更新提醒 -->
-<div class="ui icon message error" v-if="!isLoading && newVersionCode.length > 0">
-    <i class="icon warning circle"></i>
-    升级提醒：有新版本管理系统可以更新：v{{currentVersionCode}} -&gt; v{{newVersionCode}} &nbsp; &nbsp;
-    <a href="/settings/updates?doCheck=1">[查看详情]</a>
-
-    <a href="" title="关闭" @click.prevent="closeMessage"><i class="ui icon remove small"></i></a>
-</div>
-
 <!-- 边缘节点升级提醒 -->
 <div class="ui icon message error" v-if="!isLoading && nodeUpgradeInfo.count > 0">
     <i class="icon warning circle"></i>

@@ -5,22 +5,17 @@ package utils
 import (
 	"bytes"
 	"crypto/tls"
-	"encoding/json"
 	"errors"
 	"fmt"
 	teaconst "github.com/TeaOSLab/EdgeAdmin/internal/const"
 	executils "github.com/TeaOSLab/EdgeAdmin/internal/utils/exec"
 	"github.com/iwind/TeaGo/Tea"
-	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/types"
-	stringutil "github.com/iwind/TeaGo/utils/string"
 	"io"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
-	"strings"
 	"time"
 )
 
@@ -96,75 +91,10 @@ func (this *UpgradeManager) Start() error {
 		return errors.New("can not find 'cp' command")
 	}
 
-	// 检查新版本
+	// download URL must be provided explicitly
 	var downloadURL = this.downloadURL
 	if len(downloadURL) == 0 {
-		var url = teaconst.UpdatesURL
-		var osName = runtime.GOOS
-		if Tea.IsTesting() && osName == "darwin" {
-			osName = "linux"
-		}
-		url = strings.ReplaceAll(url, "${os}", osName)
-		url = strings.ReplaceAll(url, "${arch}", runtime.GOARCH)
-		url = strings.ReplaceAll(url, "${version}", teaconst.Version)
-		req, err := http.NewRequest(http.MethodGet, url, nil)
-		if err != nil {
-			return fmt.Errorf("create url request failed: %w", err)
-		}
-		req.Header.Set("User-Agent", "Edge-Admin/"+teaconst.Version)
-
-		resp, err := this.client.Do(req)
-		if err != nil {
-			return fmt.Errorf("read latest version failed: %w", err)
-		}
-
-		defer func() {
-			_ = resp.Body.Close()
-		}()
-
-		if resp.StatusCode != http.StatusOK {
-			return errors.New("read latest version failed: invalid response code '" + types.String(resp.StatusCode) + "'")
-		}
-
-		data, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return fmt.Errorf("read latest version failed: %w", err)
-		}
-
-		var m = maps.Map{}
-		err = json.Unmarshal(data, &m)
-		if err != nil {
-			return fmt.Errorf("invalid response data: %w, origin data: %s", err, string(data))
-		}
-
-		var code = m.GetInt("code")
-		if code != 200 {
-			return errors.New(m.GetString("message"))
-		}
-
-		var dataMap = m.GetMap("data")
-		var downloadHost = dataMap.GetString("host")
-		var versions = dataMap.GetSlice("versions")
-		var downloadPath = ""
-		for _, component := range versions {
-			var componentMap = maps.NewMap(component)
-			if componentMap.Has("version") {
-				if componentMap.GetString("code") == this.component {
-					var version = componentMap.GetString("version")
-					if stringutil.VersionCompare(version, teaconst.Version) > 0 {
-						this.newVersion = version
-						downloadPath = componentMap.GetString("url")
-						break
-					}
-				}
-			}
-		}
-
-		if len(downloadPath) == 0 {
-			return errors.New("no latest version to download")
-		}
-
-		downloadURL = downloadHost + downloadPath
+		return errors.New("download url is required")
 	}
 
 	{

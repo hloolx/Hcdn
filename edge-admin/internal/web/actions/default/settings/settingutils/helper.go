@@ -40,7 +40,6 @@ func (this *Helper) BeforeAction(actionPtr actions.ActionWrapper) (goNext bool) 
 		tabbar.Add(this.Lang(actionPtr, codes.AdminSetting_TabAdminServer), "", "/settings/server", "", this.tab == "server")
 		tabbar.Add(this.Lang(actionPtr, codes.AdminSetting_TabAdminUI), "", "/settings/ui", "", this.tab == "ui")
 		tabbar.Add(this.Lang(actionPtr, codes.AdminSetting_TabAdminSecuritySettings), "", "/settings/security", "", this.tab == "security")
-		tabbar.Add(this.Lang(actionPtr, codes.AdminSetting_TabUpdates), "", "/settings/updates", "", this.tab == "updates")
 	}
 	tabbar.Add(this.Lang(actionPtr, codes.AdminSetting_TabProfile), "", "/settings/profile", "", this.tab == "profile")
 	tabbar.Add(this.Lang(actionPtr, codes.AdminSetting_TabLogin), "", "/settings/login", "", this.tab == "login")
