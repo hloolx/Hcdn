@@ -17,6 +17,7 @@ import { SiteCacheTab } from "@/pages/sites/detail/cache";
 import { SiteSecurityTab } from "@/pages/sites/detail/security";
 import { SiteLogsTab } from "@/pages/sites/detail/logs";
 import { CertsPage } from "@/pages/certs";
+import { CachePage } from "@/pages/cache";
 
 export const router = createBrowserRouter([
   {
@@ -51,7 +52,7 @@ export const router = createBrowserRouter([
         ],
       },
       { path: "certs", element: <CertsPage /> },
-      { path: "cache", element: <Placeholder title="缓存" /> },
+      { path: "cache", element: <CachePage /> },
       { path: "stats", element: <Placeholder title="统计分析" /> },
       { path: "logs", element: <Placeholder title="访问日志" /> },
       { path: "account", element: <Placeholder title="账号设置" /> },
