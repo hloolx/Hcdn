@@ -19,9 +19,9 @@ without a matching record fails. An independent rebuild that reproduces the
 same sha256 is the strongest evidence that no -X was used.
 
 Fails (exit 1) on: a build tag other than "community", -X or any ldflags other
-than "-s -w" (+ "-linkmode external -extldflags -static" for cgo builds), a Go
+than "-s -w" (+ "-linkmode external -extldflags '-static -s'" for cgo builds), a Go
 version other than go.work's toolchain, a non-trimpath build, or an ELF binary
-that is dynamically linked or built for the wrong machine. Domain hits are
+that is dynamically linked, not stripped or built for the wrong machine. Domain hits are
 reported but only fail with --strict-domains.
 """
 
@@ -46,7 +46,7 @@ DOMAIN_RE = re.compile(
 )
 ALLOWED_TAGS = "community"
 LDFLAGS_PURE = "-s -w"
-LDFLAGS_CGO = "-s -w -linkmode external -extldflags -static"
+LDFLAGS_CGO = "-s -w -linkmode external -extldflags '-static -s'"
 ELF_MACHINES = {"amd64": 62, "arm64": 183}  # EM_X86_64, EM_AARCH64
 
 
@@ -98,6 +98,20 @@ def elf_check(data, arch):
         elif p_type == 2:  # PT_DYNAMIC
             dynamic = (p_offset, p_filesz)
 
+    # section headers: release binaries must be stripped (no symbol table,
+    # no DWARF, which would also carry build-host paths)
+    unstripped = []
+    e_shoff = struct.unpack_from("<Q", data, 40)[0]
+    e_shentsize, e_shnum, e_shstrndx = struct.unpack_from("<HHH", data, 58)
+    if e_shoff and e_shnum and e_shstrndx < e_shnum:
+        strtab_off = struct.unpack_from("<Q", data, e_shoff + e_shstrndx * e_shentsize + 24)[0]
+        for i in range(e_shnum):
+            name_off = struct.unpack_from("<I", data, e_shoff + i * e_shentsize)[0]
+            start = strtab_off + name_off
+            name = data[start:data.index(b"\0", start)].decode("ascii", "replace")
+            if name in (".symtab", ".strtab") or name.startswith((".debug_", ".zdebug_")):
+                unstripped.append(name)
+
     needed = 0
     if dynamic:
         off, size = dynamic
@@ -117,13 +131,15 @@ def elf_check(data, arch):
         errors.append("has PT_INTERP (dynamically linked)")
     if needed:
         errors.append("has %d DT_NEEDED entries (dynamically linked)" % needed)
+    if unstripped:
+        errors.append("not stripped (sections: %s)" % ", ".join(unstripped))
     kind = {2: "EXEC", 3: "DYN"}.get(e_type, str(e_type))
     summary = "ELF64 %s %s, %s, %s" % (
         kind,
         machine_name,
         "no PT_INTERP" if not has_interp else "PT_INTERP",
         "no PT_DYNAMIC" if dynamic is None else "PT_DYNAMIC (%d DT_NEEDED)" % needed,
-    )
+    ) + (", stripped" if not unstripped else ", NOT stripped")
     return summary, errors
 
 

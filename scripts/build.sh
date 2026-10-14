@@ -128,7 +128,12 @@ log "versions: edge-node v$NODE_VERSION, edge-api v$API_VERSION, edge-admin v$AD
 
 TAGS="community"
 LDFLAGS="-s -w"
-LDFLAGS_STATIC="-s -w -linkmode external -extldflags -static"
+# With external linking, Go's -s/-w do not strip what the external linker
+# adds: zig links its musl libc and compiler_rt with DWARF that embeds local
+# absolute paths (zig install dir, zig cache, Go's temp work dir), which both
+# leaks build-host details and breaks reproducibility. "-s" for the external
+# linker removes .symtab and all .debug_* sections.
+LDFLAGS_STATIC="-s -w -linkmode external -extldflags '-static -s'"
 
 rm -rf "$WORK"
 mkdir -p "$WORK"

@@ -7,7 +7,7 @@
 # Writes DIR/SHA256SUMS, DIR/domain-scan.txt and DIR/buildinfo.txt and exits
 # non-zero if a binary was built with a tag other than "community", with -X or
 # other non-allowed ldflags, with a different Go version than go.work pins, or
-# is not a static Linux ELF for the expected architecture.
+# is not a stripped, static Linux ELF for the expected architecture.
 # Domain-scan hits are reported; they only fail with --strict-domains.
 
 set -euo pipefail
