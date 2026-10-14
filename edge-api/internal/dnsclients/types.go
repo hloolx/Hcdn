@@ -52,7 +52,7 @@ func FindAllProviderTypes() []maps.Map {
 	typeMaps = append(typeMaps, maps.Map{
 		"name":        "自定义HTTP DNS",
 		"code":        ProviderTypeCustomHTTP,
-		"description": "通过自定义的HTTP接口提供DNS服务，具体使用方法请参考官网文档：https://goedge.cn/docs/DNS/CustomHTTP.md ",
+		"description": "通过自定义的HTTP接口提供DNS服务，具体使用方法请参考产品文档中的自定义HTTP DNS说明。",
 	})
 	return typeMaps
 }
