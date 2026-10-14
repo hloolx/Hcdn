@@ -3,7 +3,7 @@ module github.com/TeaOSLab/EdgeNode
 go 1.21
 
 replace (
-	github.com/TeaOSLab/EdgeCommon => ../EdgeCommon
+	github.com/TeaOSLab/EdgeCommon => ../edge-common
 	github.com/dchest/captcha => github.com/iwind/captcha v0.0.0-20231130092438-ae985686ed84
 	github.com/fsnotify/fsnotify => github.com/iwind/fsnotify v1.5.2-0.20220817040843-193be2051ff4
 )

@@ -2,7 +2,7 @@ module github.com/TeaOSLab/EdgeAdmin
 
 go 1.21
 
-replace github.com/TeaOSLab/EdgeCommon => ../EdgeCommon
+replace github.com/TeaOSLab/EdgeCommon => ../edge-common
 
 require (
 	github.com/TeaOSLab/EdgeCommon v0.0.0-00010101000000-000000000000

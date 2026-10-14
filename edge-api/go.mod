@@ -2,7 +2,7 @@ module github.com/TeaOSLab/EdgeAPI
 
 go 1.21
 
-replace github.com/TeaOSLab/EdgeCommon => ../EdgeCommon
+replace github.com/TeaOSLab/EdgeCommon => ../edge-common
 
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.11.1

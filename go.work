@@ -1,0 +1,10 @@
+go 1.21
+
+toolchain go1.26.4
+
+use (
+	./edge-admin
+	./edge-api
+	./edge-common
+	./edge-node
+)
