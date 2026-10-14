@@ -81,12 +81,23 @@ func (this *SSLPolicyService) UpdateSSLPolicy(ctx context.Context, req *pb.Updat
 func (this *SSLPolicyService) FindEnabledSSLPolicyConfig(ctx context.Context, req *pb.FindEnabledSSLPolicyConfigRequest) (*pb.FindEnabledSSLPolicyConfigResponse, error) {
 	// 校验请求
 	// 这里不使用validateAdminAndUser()，是因为我们允许用户ID为0的时候也可以调用
-	_, _, _, err := rpcutils.ValidateRequest(ctx, rpcutils.UserTypeAdmin, rpcutils.UserTypeUser)
+	userType, _, userId, err := rpcutils.ValidateRequest(ctx, rpcutils.UserTypeAdmin, rpcutils.UserTypeUser)
 	if err != nil {
 		return nil, err
 	}
 
 	var tx = this.NullTx()
+
+	// FIX-11: a user-role caller acting for a specific tenant (userId > 0)
+	// may only read a policy it owns itself, or that is referenced by one
+	// of its own servers - otherwise this would let any tenant read any
+	// other tenant's SSL policy, including certificate private key data.
+	if userType == rpcutils.UserTypeUser && userId > 0 {
+		err = models.SharedSSLPolicyDAO.CheckUserPolicy(tx, userId, req.SslPolicyId)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	config, err := models.SharedSSLPolicyDAO.ComposePolicyConfig(tx, req.SslPolicyId, req.IgnoreData, nil, nil)
 	if err != nil {
