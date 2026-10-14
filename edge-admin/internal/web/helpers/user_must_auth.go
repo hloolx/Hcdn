@@ -255,7 +255,19 @@ func (this *userMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramNam
 	this.AdminId = adminId
 	action.Context.Set("adminId", this.AdminId)
 
+	// CSRF校验：覆盖所有已登录状态下的写操作（本系统的路由目前只使用GET/POST）
 	if action.Request.Method != http.MethodGet {
+		if !CheckCSRF(action) {
+			action.ResponseWriter.WriteHeader(http.StatusForbidden)
+			action.WriteString("表单已失效，请刷新页面后重试(002)")
+			return false
+		}
+		if !CheckCSRFOrigin(action.Request) {
+			action.ResponseWriter.WriteHeader(http.StatusForbidden)
+			action.WriteString("请求来源校验失败，请刷新页面后重试(003)")
+			return false
+		}
+
 		return true
 	}
 
@@ -269,6 +281,9 @@ func (this *userMustAuth) BeforeAction(actionPtr actions.ActionWrapper, paramNam
 	action.ViewFunc("teaTitle", func() string {
 		return action.Data["teaTitle"].(string)
 	})
+
+	// CSRF Token：下发给前端后，公共请求层会自动将其放入请求头随每次写请求回传
+	action.Data["teaCSRFToken"] = GenerateCSRFToken()
 
 	action.Data["teaShowVersion"] = uiConfig.ShowVersion
 	action.Data["teaTitle"] = uiConfig.AdminSystemName

@@ -5,6 +5,13 @@
 <form method="post" class="ui form" data-tea-action="$" data-tea-success="success">
 	<table class="ui table definition selectable">
 		<tr>
+			<td class="title">当前密码 *</td>
+			<td>
+				<input type="password" name="oldPassword" maxlength="50" autocomplete="current-password"/>
+				<p class="comment">修改登录用户名或密码需要先验证当前密码。</p>
+			</td>
+		</tr>
+		<tr>
 			<td class="title">登录用户名 *</td>
 			<td>
 				<input type="text" name="username" maxlength="50" v-model="admin.username" ref="focus"/>

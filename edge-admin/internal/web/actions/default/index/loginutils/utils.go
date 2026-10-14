@@ -65,33 +65,21 @@ func LookupIPRegion(ip string) string {
 
 // SetCookie 设置Cookie
 func SetCookie(action *actions.ActionObject, remember bool) {
+	var maxAge = 0
 	if remember {
-		var cookie = &http.Cookie{
-			Name:     teaconst.CookieSID,
-			Value:    action.Session().Sid,
-			Path:     "/",
-			MaxAge:   14 * 86400,
-			HttpOnly: true,
-		}
-		if action.Request.TLS != nil {
-			cookie.SameSite = http.SameSiteStrictMode
-			cookie.Secure = true
-		}
-		action.AddCookie(cookie)
-	} else {
-		var cookie = &http.Cookie{
-			Name:     teaconst.CookieSID,
-			Value:    action.Session().Sid,
-			Path:     "/",
-			MaxAge:   0,
-			HttpOnly: true,
-		}
-		if action.Request.TLS != nil {
-			cookie.SameSite = http.SameSiteStrictMode
-			cookie.Secure = true
-		}
-		action.AddCookie(cookie)
+		maxAge = 14 * 86400
 	}
+
+	var cookie = &http.Cookie{
+		Name:     teaconst.CookieSID,
+		Value:    action.Session().Sid,
+		Path:     "/",
+		MaxAge:   maxAge,
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+		Secure:   IsRequestHTTPS(action.Request),
+	}
+	action.AddCookie(cookie)
 }
 
 // UnsetCookie 重置Cookie
@@ -102,10 +90,16 @@ func UnsetCookie(action *actions.ActionObject) {
 		Path:     "/",
 		MaxAge:   -1,
 		HttpOnly: true,
-	}
-	if action.Request.TLS != nil {
-		cookie.SameSite = http.SameSiteStrictMode
-		cookie.Secure = true
+		SameSite: http.SameSiteStrictMode,
+		Secure:   IsRequestHTTPS(action.Request),
 	}
 	action.AddCookie(cookie)
+}
+
+// IsRequestHTTPS 判断当前请求是否为HTTPS：直连TLS，或反向代理声明了X-Forwarded-Proto: https。
+func IsRequestHTTPS(request *http.Request) bool {
+	if request.TLS != nil {
+		return true
+	}
+	return strings.EqualFold(strings.TrimSpace(request.Header.Get("X-Forwarded-Proto")), "https")
 }

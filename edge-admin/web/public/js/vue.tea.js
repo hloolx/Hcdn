@@ -2118,6 +2118,23 @@ window.Tea.delay = function (fn, ms) {
 };
 
 /**
+ * 获取当前页面的CSRF Token
+ *
+ * 已登录页面在GET渲染时，服务端会把一个Token放进页面初始数据(teaCSRFToken)，
+ * 这里读出来后由Tea.Action._post()自动放进请求头随每次请求回传，无需每个
+ * 页面模板单独处理。
+ */
+window.Tea.csrfToken = function () {
+	if (window.Tea.Vue != null && typeof (window.Tea.Vue.teaCSRFToken) === "string") {
+		return window.Tea.Vue.teaCSRFToken;
+	}
+	if (window.TEA != null && window.TEA.ACTION != null && window.TEA.ACTION.data != null && typeof (window.TEA.ACTION.data.teaCSRFToken) === "string") {
+		return window.TEA.ACTION.data.teaCSRFToken;
+	}
+	return "";
+};
+
+/**
  * 定义Action对象
  *
  * @param action Action
@@ -2210,7 +2227,8 @@ window.Tea.Action = function (action, params) {
 			url: Tea.url(_action),
 			timeout: _timeout * 1000,
 			headers: {
-				"X-Requested-With": "XMLHttpRequest"
+				"X-Requested-With": "XMLHttpRequest",
+				"X-Csrf-Token": Tea.csrfToken()
 			}
 		};
 
