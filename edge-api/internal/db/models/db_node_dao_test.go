@@ -5,6 +5,7 @@ import (
 	"github.com/TeaOSLab/EdgeAPI/internal/encrypt"
 	"github.com/TeaOSLab/EdgeAPI/internal/utils/sealed"
 	_ "github.com/go-sql-driver/mysql"
+	"strings"
 	"testing"
 )
 
@@ -95,4 +96,19 @@ func TestDBNodeDAO_DecodePassword_Legacy(t *testing.T) {
 	if decoded != plaintext {
 		t.Fatalf("expected %q, got %q", plaintext, decoded)
 	}
+}
+
+// TestDBNodeDAO_EncodePassword_RejectsColumnOverflow guards against silently
+// truncating (or corrupting) a password whose sealed form would no longer
+// fit edgeDBNodes.password (varchar(255)): sealing adds ~28 bytes of
+// AES-256-GCM overhead plus base64/prefix expansion on top of the plaintext.
+func TestDBNodeDAO_EncodePassword_RejectsColumnOverflow(t *testing.T) {
+	dao := NewDBNodeDAO()
+	// A 200-byte plaintext password seals to well over dbNodePasswordColumnMaxLen.
+	var tooLong = strings.Repeat("A", 200)
+	_, err := dao.EncodePassword(tooLong)
+	if err == nil {
+		t.Fatal("expected an error instead of a truncated/oversized value")
+	}
+	t.Log("got expected error:", err)
 }

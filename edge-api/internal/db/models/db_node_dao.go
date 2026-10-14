@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/base64"
+	"fmt"
 	"github.com/TeaOSLab/EdgeAPI/internal/encrypt"
 	"github.com/TeaOSLab/EdgeAPI/internal/errors"
 	"github.com/TeaOSLab/EdgeAPI/internal/utils/sealed"
@@ -22,6 +23,13 @@ const (
 type DBNodeDAO dbs.DAO
 
 const DBNodePasswordEncodedPrefix = "EDGE_ENCODED:"
+
+// dbNodePasswordColumnMaxLen is edgeDBNodes.password's varchar width (see
+// internal/setup/sql.json). Sealing adds ~28 bytes of AES-256-GCM overhead
+// plus base64/prefix expansion, so EncodePassword refuses to produce a value
+// longer than this rather than risk silent truncation by MySQL; in practice
+// this only bites unusually long (~160+ character) passwords.
+const dbNodePasswordColumnMaxLen = 255
 
 func NewDBNodeDAO() *DBNodeDAO {
 	return dbs.NewDAO(&DBNodeDAO{
@@ -180,7 +188,14 @@ func (this *DBNodeDAO) EncodePassword(password string) (string, error) {
 		// 已经是旧算法编码或已封存的值，避免重复包装
 		return password, nil
 	}
-	return sealed.Seal([]byte(password))
+	sealedValue, err := sealed.Seal([]byte(password))
+	if err != nil {
+		return "", err
+	}
+	if len(sealedValue) > dbNodePasswordColumnMaxLen {
+		return "", fmt.Errorf("sealed password is %d characters long, which exceeds the edgeDBNodes.password column limit of %d", len(sealedValue), dbNodePasswordColumnMaxLen)
+	}
+	return sealedValue, nil
 }
 
 // DecodePassword 解密密码：优先处理实例密钥封存的数据；
@@ -242,9 +257,11 @@ func (this *DBNodeDAO) MigrateLegacyPasswords(tx *dbs.Tx) error {
 				continue
 			}
 
-			sealedPassword, sealErr := sealed.Seal([]byte(plainPassword))
+			sealedPassword, sealErr := this.EncodePassword(plainPassword)
 			if sealErr != nil {
-				return sealErr
+				// 例如封存后超出列宽度限制：跳过该行，留待人工处理，不中断本批其余记录
+				logs.Println("[DB_NODE]skip sealing db node #" + types.String(row.Id) + " password: " + sealErr.Error())
+				continue
 			}
 			updateErr := this.Query(tx).
 				Pk(row.Id).

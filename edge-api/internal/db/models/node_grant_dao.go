@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	dbutils "github.com/TeaOSLab/EdgeAPI/internal/db/utils"
 	"github.com/TeaOSLab/EdgeAPI/internal/utils/sealed"
 	_ "github.com/go-sql-driver/mysql"
@@ -14,6 +15,22 @@ import (
 const (
 	NodeGrantStateEnabled  = 1 // 已启用
 	NodeGrantStateDisabled = 0 // 已禁用
+)
+
+// edgeNodeGrants.password/privateKey/passphrase column widths (see
+// internal/setup/sql.json). Sealing adds a fixed ~28-byte AES-256-GCM
+// overhead (12-byte nonce + 16-byte tag) plus base64/prefix expansion on top
+// of the plaintext, so a value that used to just fit as plaintext can
+// overflow these varchar columns once sealed - most notably privateKey for
+// large keys (RSA-4096 PEM, ~3.2KB, seals to ~4.3KB, over the 4096 limit).
+// sealGrantSecret refuses to produce such a value rather than let it be
+// silently truncated (or rejected with an opaque MySQL error); widening
+// these columns (e.g. to TEXT) is the proper fix and requires a schema
+// migration that is out of scope here.
+const (
+	nodeGrantPasswordColumnMaxLen   = 255
+	nodeGrantPrivateKeyColumnMaxLen = 4096
+	nodeGrantPassphraseColumnMaxLen = 512
 )
 
 type NodeGrantDAO dbs.DAO
@@ -39,12 +56,21 @@ func init() {
 
 // sealGrantSecret seals an SSH grant secret (password/private key/
 // passphrase) for storage. Empty input is left empty so "not set" stays
-// distinguishable from "set to an empty value".
-func sealGrantSecret(plain string) (string, error) {
+// distinguishable from "set to an empty value". It fails rather than return
+// a sealed value longer than maxLen (the destination column's width) -
+// fieldName is only used to make that error readable.
+func sealGrantSecret(plain string, fieldName string, maxLen int) (string, error) {
 	if len(plain) == 0 {
 		return "", nil
 	}
-	return sealed.Seal([]byte(plain))
+	sealedValue, err := sealed.Seal([]byte(plain))
+	if err != nil {
+		return "", err
+	}
+	if len(sealedValue) > maxLen {
+		return "", fmt.Errorf("sealed %s is %d characters long, which exceeds the edgeNodeGrants.%s column limit of %d; this is most likely a large private key (e.g. RSA-4096) - the column needs widening to TEXT to hold it once sealed", fieldName, len(sealedValue), fieldName, maxLen)
+	}
+	return sealedValue, nil
 }
 
 // openGrantSecret decrypts a sealed SSH grant secret for internal use (SSH
@@ -117,20 +143,20 @@ func (this *NodeGrantDAO) CreateGrant(tx *dbs.Tx, adminId int64, name string, me
 	switch method {
 	case "user":
 		op.Username = username
-		sealedPassword, sealErr := sealGrantSecret(password)
+		sealedPassword, sealErr := sealGrantSecret(password, "password", nodeGrantPasswordColumnMaxLen)
 		if sealErr != nil {
 			return 0, sealErr
 		}
 		op.Password = sealedPassword
 	case "privateKey":
 		op.Username = username
-		sealedPrivateKey, sealErr := sealGrantSecret(privateKey)
+		sealedPrivateKey, sealErr := sealGrantSecret(privateKey, "privateKey", nodeGrantPrivateKeyColumnMaxLen)
 		if sealErr != nil {
 			return 0, sealErr
 		}
 		op.PrivateKey = sealedPrivateKey
 
-		sealedPassphrase, sealErr := sealGrantSecret(passphrase)
+		sealedPassphrase, sealErr := sealGrantSecret(passphrase, "passphrase", nodeGrantPassphraseColumnMaxLen)
 		if sealErr != nil {
 			return 0, sealErr
 		}
@@ -160,20 +186,20 @@ func (this *NodeGrantDAO) UpdateGrant(tx *dbs.Tx, grantId int64, name string, me
 	switch method {
 	case "user":
 		op.Username = username
-		sealedPassword, sealErr := sealGrantSecret(password)
+		sealedPassword, sealErr := sealGrantSecret(password, "password", nodeGrantPasswordColumnMaxLen)
 		if sealErr != nil {
 			return sealErr
 		}
 		op.Password = sealedPassword
 	case "privateKey":
 		op.Username = username
-		sealedPrivateKey, sealErr := sealGrantSecret(privateKey)
+		sealedPrivateKey, sealErr := sealGrantSecret(privateKey, "privateKey", nodeGrantPrivateKeyColumnMaxLen)
 		if sealErr != nil {
 			return sealErr
 		}
 		op.PrivateKey = sealedPrivateKey
 
-		sealedPassphrase, sealErr := sealGrantSecret(passphrase)
+		sealedPassphrase, sealErr := sealGrantSecret(passphrase, "passphrase", nodeGrantPassphraseColumnMaxLen)
 		if sealErr != nil {
 			return sealErr
 		}
@@ -251,33 +277,41 @@ func (this *NodeGrantDAO) MigrateLegacySecrets(tx *dbs.Tx) error {
 			break
 		}
 
+		var progressed = false
 		for _, row := range rows {
 			var query = this.Query(tx).Pk(row.Id)
 			var changed = false
+			var skipped = false
 
 			if len(row.Password) > 0 && !sealed.IsSealed(row.Password) {
-				sealedValue, sealErr := sealed.Seal([]byte(row.Password))
+				sealedValue, sealErr := sealGrantSecret(row.Password, "password", nodeGrantPasswordColumnMaxLen)
 				if sealErr != nil {
-					return sealErr
+					logs.Println("[NODE_GRANT]skip sealing grant #" + types.String(row.Id) + " password: " + sealErr.Error())
+					skipped = true
+				} else {
+					query.Set("password", sealedValue)
+					changed = true
 				}
-				query.Set("password", sealedValue)
-				changed = true
 			}
 			if len(row.PrivateKey) > 0 && !sealed.IsSealed(row.PrivateKey) {
-				sealedValue, sealErr := sealed.Seal([]byte(row.PrivateKey))
+				sealedValue, sealErr := sealGrantSecret(row.PrivateKey, "privateKey", nodeGrantPrivateKeyColumnMaxLen)
 				if sealErr != nil {
-					return sealErr
+					logs.Println("[NODE_GRANT]skip sealing grant #" + types.String(row.Id) + " privateKey: " + sealErr.Error())
+					skipped = true
+				} else {
+					query.Set("privateKey", sealedValue)
+					changed = true
 				}
-				query.Set("privateKey", sealedValue)
-				changed = true
 			}
 			if len(row.Passphrase) > 0 && !sealed.IsSealed(row.Passphrase) {
-				sealedValue, sealErr := sealed.Seal([]byte(row.Passphrase))
+				sealedValue, sealErr := sealGrantSecret(row.Passphrase, "passphrase", nodeGrantPassphraseColumnMaxLen)
 				if sealErr != nil {
-					return sealErr
+					logs.Println("[NODE_GRANT]skip sealing grant #" + types.String(row.Id) + " passphrase: " + sealErr.Error())
+					skipped = true
+				} else {
+					query.Set("passphrase", sealedValue)
+					changed = true
 				}
-				query.Set("passphrase", sealedValue)
-				changed = true
 			}
 
 			if changed {
@@ -286,7 +320,17 @@ func (this *NodeGrantDAO) MigrateLegacySecrets(tx *dbs.Tx) error {
 					return updateErr
 				}
 				total++
+				progressed = true
+			} else if !skipped {
+				// nothing matched (shouldn't normally happen given the WHERE
+				// clause above), avoid treating it as an unmigrateable row
+				progressed = true
 			}
+		}
+		if !progressed {
+			// every remaining row failed to seal (e.g. a private key too
+			// large for the column) - stop instead of spinning on it forever
+			break
 		}
 	}
 	if total > 0 {
