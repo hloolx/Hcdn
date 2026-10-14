@@ -1,0 +1,4 @@
+# Real runtime config (holds EdgeAPI secrets and the DB DSN).
+/configs/console-api.yaml
+/console-api
+/console-api.exe

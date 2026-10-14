@@ -1,0 +1,116 @@
+# console-api example configuration. Copy to configs/console-api.yaml
+# (git-ignored), fill in the placeholders and `chmod 600` it.
+
+# HTTP listener. Put a TLS-terminating proxy (or the Hcdn edge) in front, or
+# set tls.certFile/keyFile to serve HTTPS directly.
+listen: 127.0.0.1:18080
+tls:
+  certFile: ""
+  keyFile: ""
+
+# Proxies whose X-Forwarded-For / X-Forwarded-Proto headers are trusted.
+trustedProxies:
+  - 127.0.0.1/32
+  - ::1/128
+
+# Host header routing. Requests for other hosts get 421.
+hosts:
+  site: [example.com, www.example.com]    # marketing site
+  console: [console.example.com]          # customer console + /api/v1
+  admin: [admin.example.com]              # admin console + /api/admin/v1
+  api: []                                 # optional API-only host for /api/v1
+
+# Built front ends (vite `dist` directories).
+static:
+  site: /opt/hcdn/web/site
+  console: /opt/hcdn/web/console
+  admin: /opt/hcdn/web/admin
+
+edgeAPI:
+  # gRPC endpoints of EdgeAPI ("http://" = plaintext, "https://" = TLS).
+  endpoints: ["https://127.0.0.1:8003"]
+  caFile: ""          # PEM bundle to verify EdgeAPI's certificate (default: system roots)
+  serverName: ""      # TLS server name override
+  # API token of the console-api "user node" (role=user). Create it with
+  # `console-api bootstrap -write`.
+  user:
+    nodeId: ""
+    secret: ""
+  # API token with role=admin (e.g. the edge-admin token from api_admin.yaml).
+  admin:
+    nodeId: ""
+    secret: ""
+  # EdgeAPI admin id used for the few customer flows that need admin rights.
+  adminId: 1
+
+db:
+  # Separate schema owned by console-api (create it first; tables are migrated at start).
+  dsn: "hcdn_console:CHANGE_ME@tcp(127.0.0.1:3306)/hcdn_console?charset=utf8mb4"
+
+cookie:
+  secure: true        # set false only for plain-http local development
+
+# Admin host is only reachable from these CIDRs (empty = anywhere).
+adminIpAllowlist:
+  - 127.0.0.1/32
+  - 192.0.2.0/24
+
+# Optional. Without SMTP, signup needs no email verification and password
+# reset is unavailable.
+smtp:
+  host: ""            # e.g. smtp.example.com
+  port: 587
+  tls: starttls       # starttls | tls | none (loopback relays only)
+  username: ""
+  password: ""
+  from: "Hcdn <no-reply@example.com>"
+
+registration:
+  open: true
+  defaultClusterId: 0              # 0 = the oldest enabled cluster
+  requireEmailVerification: true   # only effective when smtp is configured
+
+cnameDomain: cdn.example.com       # shown to customers; empty until DNS is bound
+productName: Hcdn
+consoleUrl: https://console.example.com   # base for links in emails
+
+rateLimit:
+  globalRps: 30        # per client IP, burst 4x
+  authPerMinute: 20    # per client IP for POST /auth/*
+
+login:
+  windowMinutes: 15
+  maxFailures: 8       # per username within the window -> locked
+  maxIpFailures: 30    # per IP within the window -> locked
+  lockoutMinutes: 15
+
+log:
+  level: info          # debug | info | warn | error
+  format: text         # text | json
+
+defaultPlan: free
+plans:
+  - id: free
+    name: 免费版
+    priceMonthly: 0
+    currency: CNY
+    trafficQuotaBytes: 10737418240   # 10 GiB
+    domainsQuota: 3
+    features: ["全球加速节点", "免费 HTTPS 证书", "基础 WAF"]
+    highlight: false
+  - id: pro
+    name: 专业版
+    priceMonthly: 199
+    currency: CNY
+    trafficQuotaBytes: 1099511627776 # 1 TiB
+    domainsQuota: 50
+    features: ["全部免费版功能", "CC 防护与速率限制", "实时日志", "工单支持"]
+    highlight: true
+  - id: enterprise
+    name: 企业版
+    priceMonthly: null               # contact sales
+    currency: CNY
+    trafficQuotaBytes: null
+    domainsQuota: null
+    features: ["专属集群", "SLA 保障", "7x24 技术支持"]
+    highlight: false
