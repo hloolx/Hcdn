@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"github.com/TeaOSLab/EdgeNode/internal/firewalls"
 	"github.com/TeaOSLab/EdgeNode/internal/iplibrary"
+	"github.com/pires/go-proxyproto"
 	"net"
 	"sync/atomic"
 	"time"
@@ -153,11 +154,22 @@ func (this *BaseClientConn) TCPConn() (tcpConn *net.TCPConn, ok bool) {
 		if isClientConn {
 			return clientConn.TCPConn()
 		}
-		tcpConn, ok = internalConn.(*net.TCPConn)
+		tcpConn, ok = unwrapTCPConn(internalConn)
 	default:
-		tcpConn, ok = this.rawConn.(*net.TCPConn)
+		tcpConn, ok = unwrapTCPConn(this.rawConn)
 	}
 	return
+}
+
+// unwrapTCPConn returns the underlying *net.TCPConn, also behind a PROXY protocol listener
+func unwrapTCPConn(conn net.Conn) (tcpConn *net.TCPConn, ok bool) {
+	switch c := conn.(type) {
+	case *net.TCPConn:
+		return c, true
+	case *proxyproto.Conn:
+		return c.TCPConn()
+	}
+	return nil, false
 }
 
 // SetLinger 设置Linger

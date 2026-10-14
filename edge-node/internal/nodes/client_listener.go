@@ -15,6 +15,7 @@ type ClientListener struct {
 	rawListener net.Listener
 	isHTTP      bool
 	isTLS       bool
+	localPort   int // configured listen port when the listener is remapped (configs/local.yaml)
 }
 
 func NewClientListener(listener net.Listener, isHTTP bool) *ClientListener {
@@ -26,6 +27,11 @@ func NewClientListener(listener net.Listener, isHTTP bool) *ClientListener {
 
 func (this *ClientListener) SetIsTLS(isTLS bool) {
 	this.isTLS = isTLS
+}
+
+// SetLocalPort makes accepted connections report the configured listen port in LocalAddr()
+func (this *ClientListener) SetLocalPort(port int) {
+	this.localPort = port
 }
 
 func (this *ClientListener) IsTLS() bool {
@@ -58,7 +64,7 @@ func (this *ClientListener) Accept() (net.Conn, error) {
 		}
 
 		if !canGoNext {
-			tcpConn, ok := conn.(*net.TCPConn)
+			tcpConn, ok := unwrapTCPConn(conn)
 			if ok {
 				_ = tcpConn.SetLinger(0)
 			}
@@ -69,7 +75,14 @@ func (this *ClientListener) Accept() (net.Conn, error) {
 		}
 	}
 
-	return NewClientConn(conn, this.isHTTP, this.isTLS, isInAllowList), nil
+	var clientConn = NewClientConn(conn, this.isHTTP, this.isTLS, isInAllowList)
+	if this.localPort > 0 {
+		c, ok := clientConn.(*ClientConn)
+		if ok {
+			c.setLocalPort(this.localPort)
+		}
+	}
+	return clientConn, nil
 }
 
 func (this *ClientListener) Close() error {

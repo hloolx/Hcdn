@@ -48,6 +48,8 @@ type ListenerManager struct {
 	lastPortStrings   string
 	lastTCPPortRanges [][2]int
 	lastUDPPortRanges [][2]int
+
+	lastRemapConflicts string
 }
 
 // NewListenerManager 获取新对象
@@ -98,6 +100,9 @@ func (this *ListenerManager) Start(nodeConfig *nodeconfigs.NodeConfig) error {
 		remotelogs.Println("LISTENER_MANAGER", "no available servers to startup")
 	}
 
+	// 多个地址被重新映射到同一个本地地址时只启动其中一个
+	availableServerGroups = this.filterRemapConflicts(availableServerGroups)
+
 	for _, group := range availableServerGroups {
 		var addr = group.FullAddr()
 		groupAddrs = append(groupAddrs, addr)
@@ -136,9 +141,10 @@ func (this *ListenerManager) Start(nodeConfig *nodeconfigs.NodeConfig) error {
 				} else {
 					// 当前占用的进程名
 					if strings.Contains(err.Error(), "in use") {
-						portIndex := strings.LastIndex(addr, ":")
-						if portIndex > 0 {
-							var port = addr[portIndex+1:]
+						var bindAddr = listener.BindAddr()
+						portIndex := strings.LastIndex(bindAddr, ":")
+						if portIndex >= 0 {
+							var port = bindAddr[portIndex+1:]
 							var processName = this.findProcessNameWithPort(group.IsUDP(), port)
 							if len(processName) > 0 {
 								err = fmt.Errorf("%w (the process using port: '%s')", err, processName)
@@ -146,7 +152,11 @@ func (this *ListenerManager) Start(nodeConfig *nodeconfigs.NodeConfig) error {
 						}
 					}
 
-					remotelogs.ServerError(firstServer.Id, "LISTENER_MANAGER", "listen '"+addr+"' failed: "+err.Error(), nodeconfigs.NodeLogTypeListenAddressFailed, maps.Map{"address": addr})
+					var bindInfo = ""
+					if bindAddr := listener.BindAddr(); bindAddr != group.Addr() {
+						bindInfo = " (bound at '" + bindAddr + "')"
+					}
+					remotelogs.ServerError(firstServer.Id, "LISTENER_MANAGER", "listen '"+addr+"'"+bindInfo+" failed: "+err.Error(), nodeconfigs.NodeLogTypeListenAddressFailed, maps.Map{"address": addr})
 				}
 
 				continue
@@ -161,6 +171,50 @@ func (this *ListenerManager) Start(nodeConfig *nodeconfigs.NodeConfig) error {
 	go this.addToFirewalld(groupAddrs)
 
 	return nil
+}
+
+// filterRemapConflicts 处理 configs/local.yaml 中重新映射后绑定地址冲突的分组
+// 已经在监听的分组优先，其余按完整地址排序，保证每次结果一致，避免重复绑定失败
+func (this *ListenerManager) filterRemapConflicts(groups []*serverconfigs.ServerAddressGroup) []*serverconfigs.ServerAddressGroup {
+	var sortedGroups = append([]*serverconfigs.ServerAddressGroup{}, groups...)
+	sort.SliceStable(sortedGroups, func(i, j int) bool {
+		var addr1 = sortedGroups[i].FullAddr()
+		var addr2 = sortedGroups[j].FullAddr()
+		_, running1 := this.listenersMap[addr1]
+		_, running2 := this.listenersMap[addr2]
+		if running1 != running2 {
+			return running1
+		}
+		return addr1 < addr2
+	})
+
+	var result = []*serverconfigs.ServerAddressGroup{}
+	var owners = map[string]string{} // bind addr => group full addr
+	var conflicts = []string{}
+	for _, group := range sortedGroups {
+		var remap = findListenRemap(group)
+		if remap == nil {
+			result = append(result, group)
+			continue
+		}
+		owner, ok := owners[remap.Addr]
+		if ok {
+			conflicts = append(conflicts, "'"+group.FullAddr()+"' skipped: '"+remap.Addr+"' is already used by '"+owner+"'")
+			continue
+		}
+		owners[remap.Addr] = group.FullAddr()
+		result = append(result, group)
+	}
+
+	var conflictsString = strings.Join(conflicts, "; ")
+	if conflictsString != this.lastRemapConflicts {
+		this.lastRemapConflicts = conflictsString
+		if len(conflicts) > 0 {
+			remotelogs.Error("LISTENER_MANAGER", "remapped listen address conflicts (configs/local.yaml): "+conflictsString)
+		}
+	}
+
+	return result
 }
 
 // TotalActiveConnections 获取总的活跃连接数

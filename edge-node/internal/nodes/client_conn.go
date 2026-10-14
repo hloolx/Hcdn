@@ -50,6 +50,8 @@ type ClientConn struct {
 	isDebugging      bool
 	autoReadTimeout  bool
 	autoWriteTimeout bool
+
+	localAddr net.Addr // overridden local address on remapped listeners
 }
 
 func NewClientConn(rawConn net.Conn, isHTTP bool, isTLS bool, isInAllowList bool) net.Conn {
@@ -207,10 +209,7 @@ func (this *ClientConn) Write(b []byte) (n int, err error) {
 	// 如果是写入超时，则立即关闭连接
 	if err != nil && os.IsTimeout(err) {
 		// TODO 考虑对多次慢连接的IP做出惩罚
-		conn, ok := this.rawConn.(LingerConn)
-		if ok {
-			_ = conn.SetLinger(0)
-		}
+		_ = this.SetLinger(0)
 
 		_ = this.Close()
 	}
@@ -234,7 +233,18 @@ func (this *ClientConn) Close() error {
 }
 
 func (this *ClientConn) LocalAddr() net.Addr {
+	if this.localAddr != nil {
+		return this.localAddr
+	}
 	return this.rawConn.LocalAddr()
+}
+
+// keep the configured listen port visible to upper layers when the listener is remapped
+func (this *ClientConn) setLocalPort(port int) {
+	tcpAddr, ok := this.rawConn.LocalAddr().(*net.TCPAddr)
+	if ok && tcpAddr.Port != port {
+		this.localAddr = &net.TCPAddr{IP: tcpAddr.IP, Port: port, Zone: tcpAddr.Zone}
+	}
 }
 
 func (this *ClientConn) RemoteAddr() net.Addr {

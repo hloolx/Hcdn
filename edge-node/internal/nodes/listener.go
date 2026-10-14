@@ -4,9 +4,12 @@ import (
 	"context"
 	"errors"
 	"github.com/TeaOSLab/EdgeCommon/pkg/serverconfigs"
+	"github.com/TeaOSLab/EdgeNode/internal/configs/localconfig"
 	"github.com/TeaOSLab/EdgeNode/internal/events"
 	"github.com/TeaOSLab/EdgeNode/internal/remotelogs"
 	"github.com/TeaOSLab/EdgeNode/internal/utils/goman"
+	"github.com/TeaOSLab/EdgeNode/internal/utils/proxyprotocol"
+	"github.com/iwind/TeaGo/types"
 	"golang.org/x/net/ipv4"
 	"golang.org/x/net/ipv6"
 	"net"
@@ -63,6 +66,10 @@ func (this *Listener) listenTCP() error {
 		return err
 	}
 	var netListener = NewClientListener(tcpListener, protocol.IsHTTPFamily() || protocol.IsHTTPSFamily())
+	if findListenRemap(this.group) != nil {
+		// upper layers must still see the configured port, not the actual bind port
+		netListener.SetLocalPort(groupPort(this.group))
+	}
 	events.OnKey(events.EventQuit, this, func() {
 		remotelogs.Println("LISTENER", "quit "+this.group.FullAddr())
 		_ = netListener.Close()
@@ -194,11 +201,37 @@ func (this *Listener) Close() error {
 	return this.listener.Close()
 }
 
+// BindAddr 实际绑定的地址（可能被 configs/local.yaml 重新映射）
+func (this *Listener) BindAddr() string {
+	if this.group == nil {
+		return ""
+	}
+	var remap = findListenRemap(this.group)
+	if remap != nil {
+		return remap.Addr
+	}
+	return this.group.Addr()
+}
+
 // 创建TCP监听器
 func (this *Listener) createTCPListener() (net.Listener, error) {
 	var listenConfig = net.ListenConfig{
 		Control:   nil,
 		KeepAlive: 0,
+	}
+
+	// node-local remap: bind on another local address, optionally behind PROXY protocol
+	var remap = findListenRemap(this.group)
+	if remap != nil {
+		listener, err := listenConfig.Listen(context.Background(), "tcp", remap.Addr)
+		if err != nil {
+			return nil, err
+		}
+		if remap.RequireProxyProtocol() {
+			var localConfig = localconfig.SharedConfig()
+			return proxyprotocol.NewListener(listener, localConfig.TrustedNets(), localConfig.ProxyProtocolHeaderTimeout()), nil
+		}
+		return listener, nil
 	}
 
 	switch this.group.Protocol() {
@@ -209,6 +242,23 @@ func (this *Listener) createTCPListener() (net.Listener, error) {
 	}
 
 	return listenConfig.Listen(context.Background(), "tcp", this.group.Addr())
+}
+
+// 查找TCP监听地址的本地重新映射配置，nil表示未映射
+func findListenRemap(group *serverconfigs.ServerAddressGroup) *localconfig.RemapConfig {
+	if group == nil || group.Protocol().IsUDPFamily() {
+		return nil
+	}
+	return localconfig.SharedConfig().FindRemapForAddr(group.Addr())
+}
+
+// 分组配置的端口
+func groupPort(group *serverconfigs.ServerAddressGroup) int {
+	_, port, err := net.SplitHostPort(group.Addr())
+	if err != nil {
+		return 0
+	}
+	return types.Int(port)
 }
 
 // 创建UDP IPv4监听器
