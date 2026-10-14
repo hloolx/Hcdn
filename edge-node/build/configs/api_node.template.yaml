@@ -1,3 +1,7 @@
 rpc.endpoints: [ "" ]
 nodeId: ""
 secret: ""
+
+# Optional TLS hardening for rpc.endpoints (see FIX-05):
+# rpc.caFile: ""        # path to a PEM CA bundle; when set, ONLY these CAs are trusted (pins a private CA)
+# rpc.serverName: ""    # override the expected certificate name, e.g. when an endpoint host is a bare IP

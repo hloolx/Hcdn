@@ -16,6 +16,13 @@ type ClusterConfig struct {
 	RPCEndpoints     []string `yaml:"rpc.endpoints,flow" json:"rpc.endpoints"`
 	RPCDisableUpdate bool     `yaml:"rpc.disableUpdate" json:"rpc.disableUpdate"`
 
+	// RPCCAFile / RPCServerName configure TLS verification for the one-time cluster
+	// registration dial, same meaning as the identically-named APIConfig fields (see FIX-05).
+	// They are carried over into the generated api_node.yaml so the pinned CA / server name
+	// keep applying after registration too.
+	RPCCAFile     string `yaml:"rpc.caFile,omitempty" json:"rpc.caFile"`
+	RPCServerName string `yaml:"rpc.serverName,omitempty" json:"rpc.serverName"`
+
 	ClusterId string `yaml:"clusterId" json:"clusterId"`
 	Secret    string `yaml:"secret" json:"secret"`
 }

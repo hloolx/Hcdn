@@ -3,6 +3,7 @@ package rpc
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	teaconst "github.com/TeaOSLab/EdgeNode/internal/const"
 	"github.com/TeaOSLab/EdgeNode/internal/utils"
 	"github.com/TeaOSLab/EdgeNode/internal/utils/encrypt"
+	"github.com/TeaOSLab/EdgeNode/internal/utils/rpcutils"
 	"github.com/iwind/TeaGo/maps"
 	"github.com/iwind/TeaGo/rands"
 	"google.golang.org/grpc"
@@ -21,6 +23,7 @@ import (
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/metadata"
 	"net/url"
+	"os"
 	"sync"
 	"time"
 )
@@ -185,7 +188,7 @@ func (this *RPCClient) TestEndpoints(endpoints []string) bool {
 		go func(endpoint string) {
 			defer wg.Done()
 
-			u, err := url.Parse(endpoint)
+			credOption, host, err := this.transportCredentialOption(endpoint)
 			if err != nil {
 				return
 			}
@@ -194,16 +197,8 @@ func (this *RPCClient) TestEndpoints(endpoints []string) bool {
 			defer func() {
 				cancelFunc()
 			}()
-			var conn *grpc.ClientConn
-			if u.Scheme == "http" {
-				conn, err = grpc.DialContext(ctx, u.Host, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
-			} else if u.Scheme == "https" {
-				conn, err = grpc.DialContext(ctx, u.Host, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{
-					InsecureSkipVerify: true,
-				})), grpc.WithBlock())
-			} else {
-				return
-			}
+
+			conn, err := grpc.DialContext(ctx, host, credOption, grpc.WithBlock())
 			if err != nil {
 				return
 			}
@@ -233,11 +228,11 @@ func (this *RPCClient) init() error {
 	// 重新连接
 	var conns = []*grpc.ClientConn{}
 	for _, endpoint := range this.apiConfig.RPCEndpoints {
-		u, err := url.Parse(endpoint)
+		credOption, host, err := this.transportCredentialOption(endpoint)
 		if err != nil {
-			return fmt.Errorf("parse endpoint failed: %w", err)
+			return err
 		}
-		var conn *grpc.ClientConn
+
 		var callOptions = grpc.WithDefaultCallOptions(
 			grpc.MaxCallRecvMsgSize(512<<20),
 			grpc.MaxCallSendMsgSize(512<<20),
@@ -246,15 +241,8 @@ func (this *RPCClient) init() error {
 		var keepaliveParams = grpc.WithKeepaliveParams(keepalive.ClientParameters{
 			Time: 30 * time.Second,
 		})
-		if u.Scheme == "http" {
-			conn, err = grpc.Dial(u.Host, grpc.WithTransportCredentials(insecure.NewCredentials()), callOptions, keepaliveParams)
-		} else if u.Scheme == "https" {
-			conn, err = grpc.Dial(u.Host, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{
-				InsecureSkipVerify: true,
-			})), callOptions, keepaliveParams)
-		} else {
-			return errors.New("parse endpoint failed: invalid scheme '" + u.Scheme + "'")
-		}
+
+		conn, err := grpc.Dial(host, credOption, callOptions, keepaliveParams)
 		if err != nil {
 			return err
 		}
@@ -267,6 +255,63 @@ func (this *RPCClient) init() error {
 	// 这里不需要加锁，防止和pickConn()冲突
 	this.conns = conns
 	return nil
+}
+
+// transportCredentialOption 解析单个endpoint（"scheme://host:port"），返回拨号时使用的
+// grpc凭据选项，以及实际用于拨号的host:port。
+//
+// 安全说明（FIX-05）：
+//   - endpoint必须先通过 rpcutils.ValidateEndpoint 校验：只允许 http/https 协议，且
+//     明文 http 仅允许用于回环地址（127.0.0.0/8、::1、localhost），否则一律拒绝，防止
+//     节点的认证令牌、以及服务端下发的敏感信息（例如服务证书私钥）以明文方式传输。
+//   - https 连接永远不会设置 InsecureSkipVerify：默认使用系统根证书池校验服务端证书；
+//     如果配置了 'rpc.caFile'，则只信任该PEM证书包中的CA（用于固定/双向信任我们自己
+//     的私有CA），不再信任系统根证书池。
+func (this *RPCClient) transportCredentialOption(endpoint string) (grpc.DialOption, string, error) {
+	err := rpcutils.ValidateEndpoint(endpoint)
+	if err != nil {
+		return nil, "", err
+	}
+
+	u, err := url.Parse(endpoint)
+	if err != nil {
+		return nil, "", fmt.Errorf("parse endpoint failed: %w", err)
+	}
+
+	if u.Scheme == "http" {
+		return grpc.WithTransportCredentials(insecure.NewCredentials()), u.Host, nil
+	}
+
+	tlsConfig, err := buildTLSConfig(this.apiConfig)
+	if err != nil {
+		return nil, "", err
+	}
+	return grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)), u.Host, nil
+}
+
+// buildTLSConfig 根据api配置构造拨号API节点时使用的tls.Config，参见 transportCredentialOption
+// 上的安全说明。
+func buildTLSConfig(apiConfig *configs.APIConfig) (*tls.Config, error) {
+	var tlsConfig = &tls.Config{}
+
+	if len(apiConfig.RPCCAFile) > 0 {
+		caData, err := os.ReadFile(apiConfig.RPCCAFile)
+		if err != nil {
+			return nil, fmt.Errorf("read 'rpc.caFile' failed: %w", err)
+		}
+
+		var pool = x509.NewCertPool()
+		if !pool.AppendCertsFromPEM(caData) {
+			return nil, fmt.Errorf("'rpc.caFile' ('%s') does not contain a valid PEM certificate", apiConfig.RPCCAFile)
+		}
+		tlsConfig.RootCAs = pool
+	}
+
+	if len(apiConfig.RPCServerName) > 0 {
+		tlsConfig.ServerName = apiConfig.RPCServerName
+	}
+
+	return tlsConfig, nil
 }
 
 // 随机选择一个连接

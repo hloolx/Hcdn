@@ -2,3 +2,8 @@ rpc:
   endpoints: [ "" ]
 clusterId: ""
 secret: ""
+
+# Optional TLS hardening for the registration endpoints above (see FIX-05), carried over
+# into the generated configs/api_node.yaml after registration:
+# rpc.caFile: ""        # path to a PEM CA bundle; when set, ONLY these CAs are trusted (pins a private CA)
+# rpc.serverName: ""    # override the expected certificate name, e.g. when an endpoint host is a bare IP

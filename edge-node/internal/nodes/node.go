@@ -537,6 +537,8 @@ func (this *Node) checkClusterConfig() error {
 	rpcClient, err := rpc.NewRPCClient(&configs.APIConfig{
 		RPCEndpoints:     config.RPCEndpoints,
 		RPCDisableUpdate: config.RPCDisableUpdate,
+		RPCCAFile:        config.RPCCAFile,
+		RPCServerName:    config.RPCServerName,
 		NodeId:           config.ClusterId,
 		Secret:           config.Secret,
 	})
@@ -558,6 +560,8 @@ func (this *Node) checkClusterConfig() error {
 	var apiConfig = &configs.APIConfig{
 		RPCEndpoints:     resp.Endpoints,
 		RPCDisableUpdate: false,
+		RPCCAFile:        config.RPCCAFile,
+		RPCServerName:    config.RPCServerName,
 		NodeId:           resp.UniqueId,
 		Secret:           resp.Secret,
 	}

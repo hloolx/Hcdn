@@ -18,8 +18,19 @@ type APIConfig struct {
 
 	RPCEndpoints     []string `yaml:"rpc.endpoints,flow" json:"rpc.endpoints"`
 	RPCDisableUpdate bool     `yaml:"rpc.disableUpdate" json:"rpc.disableUpdate"`
-	NodeId           string   `yaml:"nodeId" json:"nodeId"`
-	Secret           string   `yaml:"secret" json:"secret"`
+
+	// RPCCAFile, when set, is a PEM bundle of CA certificates: ONLY these CAs are trusted for
+	// verifying 'rpc.endpoints' TLS certificates (certificate pinning for a private CA). When
+	// empty, the system root CA pool is used instead. See FIX-05.
+	RPCCAFile string `yaml:"rpc.caFile,omitempty" json:"rpc.caFile"`
+
+	// RPCServerName, when set, overrides the server name used for TLS certificate verification
+	// (SNI + hostname check), useful when an endpoint's host is a bare IP address that doesn't
+	// match the certificate's subject. See FIX-05.
+	RPCServerName string `yaml:"rpc.serverName,omitempty" json:"rpc.serverName"`
+
+	NodeId string `yaml:"nodeId" json:"nodeId"`
+	Secret string `yaml:"secret" json:"secret"`
 }
 
 func NewAPIConfig() *APIConfig {
