@@ -57,7 +57,7 @@ Tea.context(function () {
 
 	// 数据库
 	this.dbInfo = {}
-	this.localDB = {"host": "", "port": "", "username": "", "port": "", "isLocal": true, "canInstall": false}
+	this.localDB = {"host": "", "port": "", "username": "", "port": "", "isLocal": true}
 	this.localDBHost = ""
 	this.dbRequesting = false
 
@@ -171,18 +171,5 @@ Tea.context(function () {
 					this.loadStatusText()
 				}, 1000)
 			})
-	}
-
-	/**
-	 * MySQL
-	 */
-	this.installMySQL = function () {
-		let that = this
-		teaweb.popup("/setup/mysql/installPopup", {
-			height: "28em",
-			onClose: function () {
-				that.detectDB()
-			}
-		})
 	}
 })

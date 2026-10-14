@@ -10,7 +10,6 @@ import (
 	"net"
 	"net/url"
 	"os"
-	"runtime"
 	"strings"
 	"time"
 )
@@ -69,11 +68,10 @@ func (this *DetectDBAction) RunPost(params struct{}) {
 	}
 
 	this.Data["localDB"] = maps.Map{
-		"host":       localHost,
-		"port":       localPort,
-		"username":   localUsername,
-		"password":   localPassword,
-		"canInstall": runtime.GOOS == "linux" && runtime.GOARCH == "amd64" && os.Getgid() == 0,
+		"host":     localHost,
+		"port":     localPort,
+		"username": localUsername,
+		"password": localPassword,
 	}
 
 	this.Success()
