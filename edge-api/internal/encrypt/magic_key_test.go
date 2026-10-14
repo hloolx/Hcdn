@@ -2,10 +2,28 @@ package encrypt
 
 import "testing"
 
-func TestMagicKeyEncode(t *testing.T) {
-	dst := MagicKeyEncode([]byte("Hello,World"))
-	t.Log("dst:", string(dst))
+// TestDecodeLegacyDBNodePassword fabricates a ciphertext the same way the
+// retired MagicKeyEncode used to (directly via the still-generic AES-256-CFB
+// primitive, not via any production "encode" helper - there no longer is
+// one), then checks DecodeLegacyDBNodePassword still reads historical data
+// correctly now that sealing (internal/utils/sealed) handles all new writes.
+func TestDecodeLegacyDBNodePassword(t *testing.T) {
+	method, err := NewMethodInstance("aes-256-cfb", legacyDBNodePasswordKey, legacyDBNodePasswordKey[:16])
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	src := MagicKeyDecode(dst)
-	t.Log("src:", string(src))
+	const plaintext = "Hello,World"
+	ciphertext, err := method.Encrypt([]byte(plaintext))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	decoded, err := DecodeLegacyDBNodePassword(ciphertext)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(decoded) != plaintext {
+		t.Fatalf("expected %q, got %q", plaintext, string(decoded))
+	}
 }

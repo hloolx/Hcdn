@@ -4,10 +4,12 @@ import (
 	"encoding/base64"
 	"github.com/TeaOSLab/EdgeAPI/internal/encrypt"
 	"github.com/TeaOSLab/EdgeAPI/internal/errors"
+	"github.com/TeaOSLab/EdgeAPI/internal/utils/sealed"
 	"github.com/TeaOSLab/EdgeCommon/pkg/nodeconfigs"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/dbs"
+	"github.com/iwind/TeaGo/logs"
 	"github.com/iwind/TeaGo/types"
 	"strings"
 )
@@ -118,9 +120,13 @@ func (this *DBNodeDAO) CreateDBNode(tx *dbs.Tx, isOn bool, name string, descript
 	op.Port = port
 	op.Database = database
 	op.Username = username
-	op.Password = this.EncodePassword(password)
+	encodedPassword, err := this.EncodePassword(password)
+	if err != nil {
+		return 0, err
+	}
+	op.Password = encodedPassword
 	op.Charset = charset
-	err := this.Save(tx, op)
+	err = this.Save(tx, op)
 	if err != nil {
 		return 0, err
 	}
@@ -141,9 +147,13 @@ func (this *DBNodeDAO) UpdateNode(tx *dbs.Tx, nodeId int64, isOn bool, name stri
 	op.Port = port
 	op.Database = database
 	op.Username = username
-	op.Password = this.EncodePassword(password)
+	encodedPassword, err := this.EncodePassword(password)
+	if err != nil {
+		return err
+	}
+	op.Password = encodedPassword
 	op.Charset = charset
-	err := this.Save(tx, op)
+	err = this.Save(tx, op)
 	return err
 }
 
@@ -161,26 +171,99 @@ func (this *DBNodeDAO) FindAllEnabledAndOnDBNodes(tx *dbs.Tx) (result []*DBNode,
 	return
 }
 
-// EncodePassword 加密密码
-func (this *DBNodeDAO) EncodePassword(password string) string {
-	if strings.HasPrefix(password, DBNodePasswordEncodedPrefix) {
-		return password
+// EncodePassword 封存密码（新数据一律使用实例密钥，不再使用已废弃的全局MagicKey）
+func (this *DBNodeDAO) EncodePassword(password string) (string, error) {
+	if len(password) == 0 {
+		return "", nil
 	}
-	encodedString := base64.StdEncoding.EncodeToString(encrypt.MagicKeyEncode([]byte(password)))
-	return DBNodePasswordEncodedPrefix + encodedString
+	if strings.HasPrefix(password, DBNodePasswordEncodedPrefix) || sealed.IsSealed(password) {
+		// 已经是旧算法编码或已封存的值，避免重复包装
+		return password, nil
+	}
+	return sealed.Seal([]byte(password))
 }
 
-// DecodePassword 解密密码
+// DecodePassword 解密密码：优先处理实例密钥封存的数据；
+// 对历史 EDGE_ENCODED: 前缀数据使用已废弃的旧算法做最后一次解密（仅用于迁移期间的兼容读取，
+// 见 legacyDBNodePasswordKey 与 MigrateLegacyPasswords）
 func (this *DBNodeDAO) DecodePassword(password string) string {
-	if !strings.HasPrefix(password, DBNodePasswordEncodedPrefix) {
+	if len(password) == 0 {
 		return password
 	}
-	dataString := password[len(DBNodePasswordEncodedPrefix):]
-	data, err := base64.StdEncoding.DecodeString(dataString)
+	if strings.HasPrefix(password, DBNodePasswordEncodedPrefix) {
+		dataString := password[len(DBNodePasswordEncodedPrefix):]
+		data, err := base64.StdEncoding.DecodeString(dataString)
+		if err != nil {
+			logs.Println("[DB_NODE]decode legacy password failed: " + err.Error())
+			return password
+		}
+		plain, err := encrypt.DecodeLegacyDBNodePassword(data)
+		if err != nil {
+			logs.Println("[DB_NODE]decode legacy password failed: " + err.Error())
+			return password
+		}
+		return string(plain)
+	}
+	plain, err := sealed.Open(password)
 	if err != nil {
+		logs.Println("[DB_NODE]open sealed password failed: " + err.Error())
 		return password
 	}
-	return string(encrypt.MagicKeyDecode(data))
+	return string(plain)
+}
+
+// MigrateLegacyPasswords 将历史 EDGE_ENCODED: 前缀数据用旧算法解密一次后，
+// 以实例密钥重新封存。幂等：已迁移的记录不再匹配 EDGE_ENCODED: 前缀，重复执行
+// （例如每次启动）代价很小。仅记录处理的数量，不记录口令内容。
+func (this *DBNodeDAO) MigrateLegacyPasswords(tx *dbs.Tx) error {
+	const batchSize = 200
+	var total = 0
+	for {
+		var rows []*DBNode
+		_, err := this.Query(tx).
+			Result("id", "password").
+			Where("password LIKE :legacyPrefix").
+			Param("legacyPrefix", DBNodePasswordEncodedPrefix+"%").
+			Limit(batchSize).
+			Slice(&rows).
+			FindAll()
+		if err != nil {
+			return err
+		}
+		if len(rows) == 0 {
+			break
+		}
+
+		var progressed = false
+		for _, row := range rows {
+			plainPassword := this.DecodePassword(row.Password)
+			if strings.HasPrefix(plainPassword, DBNodePasswordEncodedPrefix) {
+				// 旧算法解密失败，保留原值以便人工排查，避免对同一行无限重试
+				continue
+			}
+
+			sealedPassword, sealErr := sealed.Seal([]byte(plainPassword))
+			if sealErr != nil {
+				return sealErr
+			}
+			updateErr := this.Query(tx).
+				Pk(row.Id).
+				Set("password", sealedPassword).
+				UpdateQuickly()
+			if updateErr != nil {
+				return updateErr
+			}
+			total++
+			progressed = true
+		}
+		if !progressed {
+			break
+		}
+	}
+	if total > 0 {
+		logs.Println("[DB_NODE]sealed " + types.String(total) + " legacy db node password row(s)")
+	}
+	return nil
 }
 
 // CheckNodeIsOn 检查节点是否已经启用

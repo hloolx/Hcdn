@@ -23,4 +23,7 @@ func (this *APINode) migrateSealedSecrets() {
 	if err := models.SharedNodeGrantDAO.MigrateLegacySecrets(nil); err != nil {
 		logs.Println("[API_NODE]seal legacy node grant secrets failed: " + err.Error())
 	}
+	if err := models.SharedDBNodeDAO.MigrateLegacyPasswords(nil); err != nil {
+		logs.Println("[API_NODE]seal legacy db node passwords failed: " + err.Error())
+	}
 }
