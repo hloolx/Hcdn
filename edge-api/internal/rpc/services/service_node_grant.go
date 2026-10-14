@@ -10,13 +10,36 @@ import (
 	"github.com/TeaOSLab/EdgeCommon/pkg/rpc/pb"
 	"golang.org/x/crypto/ssh"
 	"net"
-	"regexp"
 	"strings"
 	"time"
 )
 
 type NodeGrantService struct {
 	BaseService
+}
+
+// maskedNodeGrantSecret is returned in place of the real password/private
+// key/passphrase by list and detail responses, so the value never leaves the
+// API node in clear; it still lets the UI show "already set". It is
+// deliberately all '*' characters so isMaskedOrUnsetSecret below (and
+// EdgeAdmin's own display-side masking) recognizes it as "unchanged" when
+// echoed back on update.
+const maskedNodeGrantSecret = "********"
+
+// maskNodeGrantSecret replaces a real secret with a placeholder for
+// responses, preserving only whether a value is set.
+func maskNodeGrantSecret(value string) string {
+	if len(value) == 0 {
+		return ""
+	}
+	return maskedNodeGrantSecret
+}
+
+// isMaskedOrUnsetSecret reports whether value is empty or made up entirely of
+// '*' characters - i.e. a masked placeholder echoed back unmodified by the
+// admin UI - rather than an operator-supplied secret.
+func isMaskedOrUnsetSecret(value string) bool {
+	return len(value) == 0 || strings.Trim(value, "*") == ""
 }
 
 // CreateNodeGrant 创建认证
@@ -50,7 +73,8 @@ func (this *NodeGrantService) UpdateNodeGrant(ctx context.Context, req *pb.Updat
 
 	var tx = this.NullTx()
 
-	// 从掩码中恢复密码和私钥
+	// 从掩码/空值中恢复密码、私钥和私钥口令（这三个字段不会以明文形式回显给客户端，
+	// 客户端未修改时会原样回传掩码或空字符串）
 	grant, err := models.SharedNodeGrantDAO.FindEnabledNodeGrant(tx, req.NodeGrantId)
 	if err != nil {
 		return nil, err
@@ -60,16 +84,20 @@ func (this *NodeGrantService) UpdateNodeGrant(ctx context.Context, req *pb.Updat
 		return this.Success()
 	}
 
-	var maskReg = regexp.MustCompile(`^\*+$`)
-	if len(req.Password) > 0 && maskReg.MatchString(req.Password) {
+	if isMaskedOrUnsetSecret(req.Password) {
 		req.Password = grant.Password
 	}
-
-	if len(req.PrivateKey) > 0 && strings.HasSuffix(req.PrivateKey, "********") {
+	if isMaskedOrUnsetSecret(req.PrivateKey) {
 		req.PrivateKey = grant.PrivateKey
+	}
+	if isMaskedOrUnsetSecret(req.Passphrase) {
+		req.Passphrase = grant.Passphrase
 	}
 
 	err = models.SharedNodeGrantDAO.UpdateGrant(tx, req.NodeGrantId, req.Name, req.Method, req.Username, req.Password, req.PrivateKey, req.Passphrase, req.Description, req.NodeId, req.Su)
+	if err != nil {
+		return nil, err
+	}
 	return this.Success()
 }
 
@@ -122,9 +150,9 @@ func (this *NodeGrantService) ListEnabledNodeGrants(ctx context.Context, req *pb
 			Name:        grant.Name,
 			Method:      grant.Method,
 			Username:    grant.Username,
-			Password:    grant.Password,
+			Password:    maskNodeGrantSecret(grant.Password),
 			Su:          grant.Su == 1,
-			PrivateKey:  grant.PrivateKey,
+			PrivateKey:  maskNodeGrantSecret(grant.PrivateKey),
 			Description: grant.Description,
 			NodeId:      int64(grant.NodeId),
 		})
@@ -150,9 +178,9 @@ func (this *NodeGrantService) FindAllEnabledNodeGrants(ctx context.Context, req 
 			Name:        grant.Name,
 			Method:      grant.Method,
 			Username:    grant.Username,
-			Password:    grant.Password,
+			Password:    maskNodeGrantSecret(grant.Password),
 			Su:          grant.Su == 1,
-			PrivateKey:  grant.PrivateKey,
+			PrivateKey:  maskNodeGrantSecret(grant.PrivateKey),
 			Description: grant.Description,
 			NodeId:      int64(grant.NodeId),
 		})
@@ -180,10 +208,10 @@ func (this *NodeGrantService) FindEnabledNodeGrant(ctx context.Context, req *pb.
 		Name:        grant.Name,
 		Method:      grant.Method,
 		Username:    grant.Username,
-		Password:    grant.Password,
+		Password:    maskNodeGrantSecret(grant.Password),
 		Su:          grant.Su == 1,
-		PrivateKey:  grant.PrivateKey,
-		Passphrase:  grant.Passphrase,
+		PrivateKey:  maskNodeGrantSecret(grant.PrivateKey),
+		Passphrase:  maskNodeGrantSecret(grant.Passphrase),
 		Description: grant.Description,
 		NodeId:      int64(grant.NodeId),
 	}}, nil

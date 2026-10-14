@@ -20,4 +20,7 @@ func (this *APINode) migrateSealedSecrets() {
 	if err := models.SharedSSLCertDAO.MigrateLegacyKeyData(nil); err != nil {
 		logs.Println("[API_NODE]seal legacy ssl cert keyData failed: " + err.Error())
 	}
+	if err := models.SharedNodeGrantDAO.MigrateLegacySecrets(nil); err != nil {
+		logs.Println("[API_NODE]seal legacy node grant secrets failed: " + err.Error())
+	}
 }
