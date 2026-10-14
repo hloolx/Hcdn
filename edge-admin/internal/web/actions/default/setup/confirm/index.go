@@ -27,14 +27,16 @@ func (this *IndexAction) RunGet(params struct{}) {
 	config, err := configs.LoadAPIConfig()
 	if err == nil {
 		endpoints = config.RPCEndpoints
-		this.Data["nodeId"] = config.NodeId
-		this.Data["secret"] = config.Secret
 		this.Data["canInstall"] = false
 	} else {
-		this.Data["nodeId"] = ""
-		this.Data["secret"] = ""
 		this.Data["canInstall"] = true
 	}
+
+	// 不把现有的nodeId/secret下发到页面：这两个值等同于平台管理员级RPC凭据，
+	// 不应该明文渲染进页面数据（见FIX-18/审计ADMIN-04）。迁移确认时请管理员
+	// 从服务器上的配置文件里手动复制填入。
+	this.Data["nodeId"] = ""
+	this.Data["secret"] = ""
 
 	if len(endpoints) == 0 {
 		endpoints = []string{""} // 初始化一个空的
@@ -139,6 +141,9 @@ func (this *IndexAction) RunPost(params struct {
 	if err != nil {
 		this.Fail("重载RPC配置失败：" + err.Error())
 	}
+
+	// 确认完成，写入安装标记文件，此后/setup*全部路由关闭（见FIX-18）
+	_ = configs.MarkInstalled()
 
 	this.Success()
 }

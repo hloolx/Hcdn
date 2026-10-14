@@ -294,6 +294,9 @@ func (this *InstallAction) RunPost(params struct {
 			this.Fail("保存配置失败，原因：" + err.Error())
 		}
 
+		// 安装完成，写入安装标记文件，此后/setup*全部路由关闭（见FIX-18）
+		_ = configs.MarkInstalled()
+
 		this.Success()
 	} else if mode == "old" {
 		// 构造RPC
@@ -346,6 +349,9 @@ func (this *InstallAction) RunPost(params struct {
 		if err != nil {
 			this.Fail("保存配置失败，原因：" + err.Error())
 		}
+
+		// 安装完成，写入安装标记文件，此后/setup*全部路由关闭（见FIX-18）
+		_ = configs.MarkInstalled()
 
 		// 成功
 		this.Success()
