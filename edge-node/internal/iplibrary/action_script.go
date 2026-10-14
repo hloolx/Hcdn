@@ -5,6 +5,8 @@ import (
 	"github.com/TeaOSLab/EdgeCommon/pkg/rpc/pb"
 	"github.com/TeaOSLab/EdgeCommon/pkg/serverconfigs/firewallconfigs"
 	executils "github.com/TeaOSLab/EdgeNode/internal/utils/exec"
+	"github.com/TeaOSLab/EdgeNode/internal/utils/safepath"
+	"github.com/iwind/TeaGo/Tea"
 	"path/filepath"
 	"time"
 )
@@ -30,6 +32,19 @@ func (this *ScriptAction) Init(config *firewallconfigs.FirewallActionConfig) err
 	if len(this.config.Path) == 0 {
 		return NewFataError("'path' should not be empty")
 	}
+
+	// 脚本只允许从 Tea.Root/scripts/ 目录下执行，防止服务端下发（或管理界面误配置）
+	// 的动作配置被用来在节点上执行任意路径的可执行文件。
+	var scriptsDir = filepath.Clean(Tea.Root + string(filepath.Separator) + "scripts")
+	var scriptPath = this.config.Path
+	if !filepath.IsAbs(scriptPath) {
+		scriptPath = scriptsDir + string(filepath.Separator) + scriptPath
+	}
+	scriptPath = filepath.Clean(scriptPath)
+	if !safepath.Contains(scriptsDir, scriptPath) {
+		return NewFataError("'path' (" + this.config.Path + ") is not allowed: must be inside '" + scriptsDir + "'")
+	}
+	this.config.Path = scriptPath
 
 	return nil
 }

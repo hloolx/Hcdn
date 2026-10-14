@@ -23,6 +23,10 @@ type IPTablesAction struct {
 
 	config *firewallconfigs.FirewallActionIPTablesConfig
 
+	// path是通过系统PATH查找到的真实iptables可执行文件路径；出于安全考虑，
+	// 这里不信任config.Path（可能来自服务端下发的配置），避免被用来执行
+	// 任意的本地可执行文件。
+	path             string
 	iptablesNotFound bool
 }
 
@@ -83,7 +87,10 @@ func (this *IPTablesAction) runActionSingleIP(action string, listType IPListType
 	if item.Type == "all" {
 		return nil
 	}
-	var path = this.config.Path
+
+	// 出于安全考虑，这里忽略config.Path（可能来自服务端下发的配置），始终通过
+	// 系统PATH查找真正的iptables可执行文件，避免被用来执行任意的本地可执行文件。
+	var path = this.path
 	var err error
 	if len(path) == 0 {
 		path, err = executils.LookPath("iptables")
@@ -94,7 +101,7 @@ func (this *IPTablesAction) runActionSingleIP(action string, listType IPListType
 			this.iptablesNotFound = true
 			return err
 		}
-		this.config.Path = path
+		this.path = path
 	}
 	iptablesAction := ""
 	switch action {

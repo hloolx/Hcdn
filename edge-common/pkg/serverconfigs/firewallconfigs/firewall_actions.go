@@ -17,6 +17,13 @@ type FirewallActionTypeDefinition struct {
 	Description string             `json:"description"`
 }
 
+// FindAllFirewallActionTypes 返回可以通过管理界面创建的防火墙动作类型。
+//
+// "script" 和 "httpAPI" 两种类型有意不在此列出：它们分别会在节点上执行一个
+// 由配置下发的路径/内容所指向的本地脚本，或请求一个由配置下发的任意URL，一旦
+// 控制面（API）被攻破或者误配置，等同于在所有节点上获得任意命令执行/SSRF能力。
+// 节点侧仍保留对这两种历史类型的解析以兼容已有配置（并在 action_script.go 中
+// 增加了脚本路径必须位于 Tea.Root/scripts/ 之内的限制），但不再作为新建选项提供。
 func FindAllFirewallActionTypes() []*FirewallActionTypeDefinition {
 	return []*FirewallActionTypeDefinition{
 		{
@@ -33,16 +40,6 @@ func FindAllFirewallActionTypes() []*FirewallActionTypeDefinition {
 			Name:        "iptables",
 			Code:        FirewallActionTypeIPTables,
 			Description: "使用IPTables管理IP，不支持超时时间设定，非持久保存，reload之后重置规则。",
-		},
-		{
-			Name:        "自定义脚本",
-			Code:        FirewallActionTypeScript,
-			Description: "使用自定义的脚本执行IP操作。",
-		},
-		{
-			Name:        "自定义HTTP API",
-			Code:        FirewallActionTypeHTTPAPI,
-			Description: "使用自定义的HTTP API执行IP操作。",
 		},
 		{
 			Name:        "显示HTML内容",
