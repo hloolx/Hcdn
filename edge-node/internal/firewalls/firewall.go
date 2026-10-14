@@ -3,6 +3,7 @@
 package firewalls
 
 import (
+	"github.com/TeaOSLab/EdgeNode/internal/configs/localconfig"
 	teaconst "github.com/TeaOSLab/EdgeNode/internal/const"
 	"github.com/TeaOSLab/EdgeNode/internal/events"
 	"github.com/TeaOSLab/EdgeNode/internal/remotelogs"
@@ -29,11 +30,23 @@ func init() {
 	})
 }
 
+// KernelFirewallEnabled 是否允许使用系统防火墙（nftables、firewalld等）安装封禁规则
+// 可以在节点本地的 configs/local.yaml 中通过 firewall.kernel: false 关闭
+func KernelFirewallEnabled() bool {
+	return localconfig.SharedConfig().KernelFirewallEnabled()
+}
+
 // Firewall 查找当前系统中最适合的防火墙
 func Firewall() FirewallInterface {
 	firewallLocker.Lock()
 	defer firewallLocker.Unlock()
 	if currentFirewall != nil {
+		return currentFirewall
+	}
+
+	// kernel firewall disabled in configs/local.yaml: application-level blocking only
+	if !KernelFirewallEnabled() {
+		currentFirewall = NewMockFirewall()
 		return currentFirewall
 	}
 

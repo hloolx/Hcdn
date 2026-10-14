@@ -73,6 +73,11 @@ func NewDDoSProtectionManager() *DDoSProtectionManager {
 
 // Apply 应用配置
 func (this *DDoSProtectionManager) Apply(config *ddosconfigs.ProtectionConfig) error {
+	// kernel firewall disabled in configs/local.yaml
+	if !KernelFirewallEnabled() {
+		return nil
+	}
+
 	// 加锁防止并发更改
 	if !this.locker.TryLock() {
 		return nil

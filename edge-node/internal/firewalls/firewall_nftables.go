@@ -33,8 +33,8 @@ func init() {
 		var ticker = time.NewTicker(3 * time.Minute)
 		goman.New(func() {
 			for range ticker.C {
-				// if already ready, we break
-				if nftablesIsReady {
+				// if already ready or kernel firewall is disabled, we break
+				if nftablesIsReady || !KernelFirewallEnabled() {
 					ticker.Stop()
 					break
 				}
