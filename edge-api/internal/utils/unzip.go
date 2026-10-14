@@ -3,8 +3,17 @@ package utils
 import (
 	"archive/zip"
 	"errors"
+	"github.com/TeaOSLab/EdgeAPI/internal/utils/pathsafety"
 	"io"
 	"os"
+)
+
+// Permissions applied to extracted entries, ignoring whatever mode bits the
+// archive entry itself claims - which may include setuid/setgid/sticky bits
+// or otherwise be overly permissive (FIX-02/FIX-43).
+const (
+	safeExtractDirMode  os.FileMode = 0755
+	safeExtractFileMode os.FileMode = 0644
 )
 
 type Unzip struct {
@@ -38,7 +47,13 @@ func (this *Unzip) Run() error {
 
 	for _, file := range reader.File {
 		info := file.FileInfo()
-		target := this.targetDir + "/" + file.Name
+
+		// FIX-02/FIX-43: never trust an archive entry's path - clean it and
+		// make sure it stays inside targetDir ("zip slip" protection).
+		target, err := pathsafety.SafeJoin(this.targetDir, file.Name)
+		if err != nil {
+			return err
+		}
 
 		// 目录
 		if info.IsDir() {
@@ -47,13 +62,13 @@ func (this *Unzip) Run() error {
 				if !os.IsNotExist(err) {
 					return err
 				} else {
-					err = os.MkdirAll(target, info.Mode())
+					err = os.MkdirAll(target, safeExtractDirMode)
 					if err != nil {
 						return err
 					}
 				}
 			} else if !stat.IsDir() {
-				err = os.MkdirAll(target, info.Mode())
+				err = os.MkdirAll(target, safeExtractDirMode)
 				if err != nil {
 					return err
 				}
@@ -62,7 +77,7 @@ func (this *Unzip) Run() error {
 		}
 
 		// 文件
-		err := func(file *zip.File, target string) error {
+		err = func(file *zip.File, target string) error {
 			fileReader, err := file.Open()
 			if err != nil {
 				return err
@@ -71,7 +86,7 @@ func (this *Unzip) Run() error {
 				_ = fileReader.Close()
 			}()
 
-			fileWriter, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, file.FileInfo().Mode())
+			fileWriter, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, safeExtractFileMode)
 			if err != nil {
 				return err
 			}

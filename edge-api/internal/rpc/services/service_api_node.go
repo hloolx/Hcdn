@@ -1,7 +1,6 @@
 package services
 
 import (
-	"compress/gzip"
 	"context"
 	"crypto/md5"
 	"errors"
@@ -10,11 +9,10 @@ import (
 	"github.com/TeaOSLab/EdgeAPI/internal/db/models"
 	"github.com/TeaOSLab/EdgeAPI/internal/installers"
 	rpcutils "github.com/TeaOSLab/EdgeAPI/internal/rpc/utils"
-	executils "github.com/TeaOSLab/EdgeAPI/internal/utils/exec"
+	"github.com/TeaOSLab/EdgeAPI/internal/utils/pathsafety"
 	"github.com/TeaOSLab/EdgeCommon/pkg/rpc/pb"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/dbs"
-	stringutil "github.com/iwind/TeaGo/utils/string"
 	"io"
 	"os"
 	"path/filepath"
@@ -331,157 +329,20 @@ func (this *APINodeService) DebugAPINode(ctx context.Context, req *pb.DebugAPINo
 }
 
 // UploadAPINodeFile 上传新版API节点文件
+// UploadAPINodeFile 上传并自我替换API节点可执行文件
+//
+// FIX-43: disabled. This used to let any caller that passed ValidateAdmin
+// upload an arbitrary binary, overwrite the running executable with it, and
+// have the process restart itself into it - a full self-replace RCE primitive
+// gated only on RPC admin auth. Upgrades are now done out of band (build and
+// deploy pipeline), never by uploading a replacement executable over RPC.
 func (this *APINodeService) UploadAPINodeFile(ctx context.Context, req *pb.UploadAPINodeFileRequest) (*pb.UploadAPINodeFileResponse, error) {
 	_, err := this.ValidateAdmin(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	exe, err := os.Executable()
-	if err != nil {
-		return nil, errors.New("can not find executable file: " + err.Error())
-	}
-
-	var targetDir = filepath.Dir(exe)
-	var targetFilename = teaconst.ProcessName // 这里不使用 filepath.Base() 是因为文件名可能变成修改后的临时文件名
-	var targetCompressedFile = targetDir + "/." + targetFilename + ".gz"
-	var targetFile = targetDir + "/." + targetFilename
-
-	if req.IsFirstChunk {
-		_ = os.Remove(targetCompressedFile)
-		_ = os.Remove(targetFile)
-	}
-
-	if len(req.ChunkData) > 0 {
-		err = func() error {
-			var flags = os.O_CREATE | os.O_WRONLY
-			if req.IsFirstChunk {
-				flags |= os.O_TRUNC
-			} else {
-				flags |= os.O_APPEND
-			}
-			fp, err := os.OpenFile(targetCompressedFile, flags, 0666)
-			if err != nil {
-				return err
-			}
-			defer func() {
-				_ = fp.Close()
-			}()
-
-			_, err = fp.Write(req.ChunkData)
-			return err
-		}()
-		if err != nil {
-			return nil, errors.New("write file failed: " + err.Error())
-		}
-	}
-
-	if req.IsLastChunk {
-		err = func() error {
-			// 删除压缩文件
-			defer func() {
-				_ = os.Remove(targetCompressedFile)
-			}()
-
-			// 检查SUM
-			fp, err := os.Open(targetCompressedFile)
-			if err != nil {
-				return err
-			}
-			defer func() {
-				_ = fp.Close()
-			}()
-
-			var hash = md5.New()
-			_, err = io.Copy(hash, fp)
-			if err != nil {
-				return err
-			}
-
-			var sum = fmt.Sprintf("%x", hash.Sum(nil))
-			if sum != req.Sum {
-				return errors.New("check sum failed: '" + sum + "' expected: '" + req.Sum + "'")
-			}
-
-			// 解压
-			fp2, err := os.Open(targetCompressedFile)
-			if err != nil {
-				return err
-			}
-
-			defer func() {
-				_ = fp2.Close()
-			}()
-
-			gzipReader, err := gzip.NewReader(fp2)
-			if err != nil {
-				return err
-			}
-			defer func() {
-				_ = gzipReader.Close()
-			}()
-			targetWriter, err := os.OpenFile(targetFile, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0777)
-			if err != nil {
-				return err
-			}
-			defer func() {
-				_ = targetWriter.Close()
-			}()
-			_, err = io.Copy(targetWriter, gzipReader)
-			if err != nil {
-				return err
-			}
-
-			return nil
-		}()
-		if err != nil {
-			return nil, errors.New("extract file failed: " + err.Error())
-		}
-
-		// 检查文件是否可执行
-		var versionCmd = executils.NewCmd(targetFile, "-V").WithStdout().WithStderr()
-		err = versionCmd.Run()
-		if err != nil {
-			return nil, errors.New("test file failed: " + versionCmd.Stderr())
-		}
-		var newVersion = versionCmd.Stdout()
-		if len(newVersion) == 0 {
-			return nil, errors.New("test file failed, new version should not be empty")
-		}
-
-		// 检查版本
-		if stringutil.VersionCompare(newVersion, teaconst.Version) <= 0 {
-			return &pb.UploadAPINodeFileResponse{}, nil
-		}
-
-		// 替换文件
-		err = os.Remove(exe)
-		if err != nil {
-			return nil, errors.New("remove old file failed: " + err.Error())
-		}
-		err = os.Rename(targetFile, exe)
-		if err != nil {
-			return nil, errors.New("rename file failed: " + err.Error())
-		}
-
-		// 执行升级
-		if !Tea.IsTesting() { // 开发环境下防止破坏本地数据库
-			var upgradeCmd = executils.NewCmd(exe, "upgrade").WithStderr()
-			err = upgradeCmd.Run()
-			if err != nil {
-				return nil, errors.New("execute 'upgrade' command failed: " + upgradeCmd.Stderr())
-			}
-		}
-
-		// 重启
-		var restartCmd = executils.NewCmd(exe, "restart").WithStderr()
-		err = restartCmd.Start()
-		if err != nil {
-			return nil, errors.New("start new process failed: " + restartCmd.Stderr())
-		}
-	}
-
-	return &pb.UploadAPINodeFileResponse{}, nil
+	return nil, errors.New("uploading and self-replacing the API node executable is disabled; upgrades are performed out of band")
 }
 
 // UploadDeployFileToAPINode 上传节点安装文件
@@ -491,9 +352,23 @@ func (this *APINodeService) UploadDeployFileToAPINode(ctx context.Context, req *
 		return nil, err
 	}
 
-	var targetDir = Tea.Root + "/deploy/"
-	var targetTmpFile = targetDir + "/" + req.Filename + ".tmp"
-	var targetFile = targetDir + "/" + req.Filename
+	// FIX-44: req.Filename is caller-supplied. Without validation it could
+	// contain '..' or be an absolute path, letting an admin-authenticated
+	// caller write a file outside the deploy directory. filepath.Base()
+	// strips any directory components, the character check rejects
+	// anything but a plain [A-Za-z0-9._-]+ name, and SafeJoin double-checks
+	// the final path still resolves inside the deploy directory.
+	var baseFilename = filepath.Base(req.Filename)
+	if !pathsafety.IsSafeFilename(baseFilename) {
+		return nil, errors.New("invalid filename: '" + req.Filename + "'")
+	}
+
+	var targetDir = filepath.Clean(Tea.Root + "/deploy")
+	targetFile, err := pathsafety.SafeJoin(targetDir, baseFilename)
+	if err != nil {
+		return nil, errors.New("invalid filename: '" + req.Filename + "'")
+	}
+	var targetTmpFile = targetFile + ".tmp"
 
 	if req.IsFirstChunk {
 		_ = os.Remove(targetTmpFile)
@@ -507,7 +382,7 @@ func (this *APINodeService) UploadDeployFileToAPINode(ctx context.Context, req *
 			} else {
 				flags |= os.O_APPEND
 			}
-			fp, err := os.OpenFile(targetTmpFile, flags, 0666)
+			fp, err := os.OpenFile(targetTmpFile, flags, 0600)
 			if err != nil {
 				return err
 			}
