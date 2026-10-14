@@ -2,10 +2,10 @@ package models
 
 import (
 	"github.com/TeaOSLab/EdgeAPI/internal/errors"
+	"github.com/TeaOSLab/EdgeAPI/internal/utils/securerand"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/dbs"
-	"github.com/iwind/TeaGo/rands"
 	"time"
 )
 
@@ -74,8 +74,8 @@ func (this *UserAccessKeyDAO) CreateAccessKey(tx *dbs.Tx, adminId int64, userId 
 	op.AdminId = adminId
 	op.UserId = userId
 	op.Description = description
-	op.UniqueId = rands.String(16)
-	op.Secret = rands.String(32)
+	op.UniqueId = securerand.RandString(16)
+	op.Secret = securerand.RandString(32)
 	op.IsOn = true
 	op.State = UserAccessKeyStateEnabled
 	return this.SaveInt64(tx, op)

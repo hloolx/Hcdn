@@ -5,11 +5,11 @@ import (
 	"github.com/TeaOSLab/EdgeAPI/internal/db/models"
 	"github.com/TeaOSLab/EdgeAPI/internal/errors"
 	"github.com/TeaOSLab/EdgeAPI/internal/utils"
+	"github.com/TeaOSLab/EdgeAPI/internal/utils/securerand"
 	"github.com/TeaOSLab/EdgeCommon/pkg/nodeconfigs"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/dbs"
-	"github.com/iwind/TeaGo/rands"
 	"github.com/iwind/TeaGo/types"
 )
 
@@ -114,7 +114,7 @@ func (this *AuthorityNodeDAO) CreateAuthorityNode(tx *dbs.Tx, name string, descr
 	if err != nil {
 		return 0, err
 	}
-	secret := rands.String(32)
+	secret := securerand.RandString(32)
 	err = models.NewApiTokenDAO().CreateAPIToken(tx, uniqueId, secret, nodeconfigs.NodeRoleAuthority)
 	if err != nil {
 		return
@@ -174,7 +174,7 @@ func (this *AuthorityNodeDAO) FindEnabledAuthorityNodeIdWithUniqueId(tx *dbs.Tx,
 // GenUniqueId 生成唯一ID
 func (this *AuthorityNodeDAO) GenUniqueId(tx *dbs.Tx) (string, error) {
 	for {
-		uniqueId := rands.HexString(32)
+		uniqueId := securerand.RandHexString(32)
 		ok, err := this.Query(tx).
 			Attr("uniqueId", uniqueId).
 			Exist()

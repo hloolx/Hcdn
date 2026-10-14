@@ -5,14 +5,12 @@ import (
 	teaconst "github.com/TeaOSLab/EdgeAPI/internal/const"
 	"github.com/TeaOSLab/EdgeAPI/internal/goman"
 	"github.com/TeaOSLab/EdgeAPI/internal/remotelogs"
+	"github.com/TeaOSLab/EdgeAPI/internal/utils/securerand"
 	"github.com/TeaOSLab/EdgeCommon/pkg/iputils"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/dbs"
 	"github.com/iwind/TeaGo/rands"
-	"github.com/iwind/TeaGo/types"
-	stringutil "github.com/iwind/TeaGo/utils/string"
-	"math/rand"
 	"time"
 )
 
@@ -66,7 +64,10 @@ func (this *LoginTicketDAO) CreateLoginTicket(tx *dbs.Tx, adminId int64, userId 
 		return
 	}
 
-	ticketValue = stringutil.Md5(types.String(adminId) + "@" + types.String(userId) + types.String(time.Now().UnixNano()) + "@" + types.String(rand.Int63()) + "@" + ip)
+	// FIX-16: a pure crypto/rand value, instead of md5() of mostly-guessable
+	// inputs (small adminId/userId, a timestamp, a known/guessable ip) mixed
+	// with a math/rand (non-cryptographic) value.
+	ticketValue = securerand.RandHexString(32)
 
 	var op = NewLoginTicketOperator()
 	op.AdminId = adminId

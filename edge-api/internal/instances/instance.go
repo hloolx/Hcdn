@@ -12,6 +12,7 @@ import (
 	"github.com/TeaOSLab/EdgeAPI/internal/installers/helpers"
 	"github.com/TeaOSLab/EdgeAPI/internal/setup"
 	executils "github.com/TeaOSLab/EdgeAPI/internal/utils/exec"
+	"github.com/TeaOSLab/EdgeAPI/internal/utils/securerand"
 	"github.com/TeaOSLab/EdgeCommon/pkg/nodeconfigs"
 	"github.com/TeaOSLab/EdgeCommon/pkg/serverconfigs"
 	"github.com/TeaOSLab/EdgeCommon/pkg/serverconfigs/firewallconfigs"
@@ -20,7 +21,6 @@ import (
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/dbs"
 	"github.com/iwind/TeaGo/lists"
-	"github.com/iwind/TeaGo/rands"
 	"github.com/iwind/TeaGo/types"
 	"gopkg.in/yaml.v3"
 	"log"
@@ -155,8 +155,8 @@ func (this *Instance) SetupDB() error {
 			return err
 		}
 		if len(one) == 0 {
-			var nodeId = rands.HexString(32)
-			var secret = rands.String(32)
+			var nodeId = securerand.RandHexString(32)
+			var secret = securerand.RandString(32)
 			err = models.SharedApiTokenDAO.CreateAPIToken(tx, nodeId, secret, "admin")
 			if err != nil {
 				return fmt.Errorf("create admin node token failed: %w", err)
@@ -171,7 +171,7 @@ func (this *Instance) SetupDB() error {
 			return err
 		}
 		if len(one) == 0 {
-			var password = rands.String(16)
+			var password = securerand.RandString(16)
 			// 保存密码到文件
 			var dir = this.options.WorkDir + "/usr/local/goedge"
 			_, err = os.Stat(dir)

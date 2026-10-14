@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/TeaOSLab/EdgeAPI/internal/configs"
 	"github.com/TeaOSLab/EdgeAPI/internal/db/models"
+	"github.com/TeaOSLab/EdgeAPI/internal/utils/securerand"
 	"github.com/TeaOSLab/EdgeCommon/pkg/dnsconfigs"
 	"github.com/TeaOSLab/EdgeCommon/pkg/serverconfigs"
 	_ "github.com/go-sql-driver/mysql"
@@ -185,8 +186,8 @@ func (this *SQLExecutor) checkAdminNode(db *dbs.DB) error {
 		return nil
 	}
 
-	var nodeId = rands.HexString(32)
-	var secret = rands.String(32)
+	var nodeId = securerand.RandHexString(32)
+	var secret = securerand.RandString(32)
 	_, err = db.Exec("INSERT INTO edgeAPITokens (nodeId, secret, role) VALUES (?, ?, ?)", nodeId, secret, "admin")
 	if err != nil {
 		return err
@@ -213,8 +214,8 @@ func (this *SQLExecutor) checkUserNode(db *dbs.DB) error {
 		return nil
 	}
 
-	var nodeId = rands.HexString(32)
-	var secret = rands.String(32)
+	var nodeId = securerand.RandHexString(32)
+	var secret = securerand.RandString(32)
 	_, err = db.Exec("INSERT INTO edgeAPITokens (nodeId, secret, role) VALUES (?, ?, ?)", nodeId, secret, "user")
 	if err != nil {
 		return err
@@ -244,8 +245,8 @@ func (this *SQLExecutor) checkCluster(db *dbs.DB) error {
 	}
 
 	// 创建默认集群
-	var uniqueId = rands.HexString(32)
-	var secret = rands.String(32)
+	var uniqueId = securerand.RandHexString(32)
+	var secret = securerand.RandString(32)
 
 	var clusterDNSConfig = &dnsconfigs.ClusterDNSConfig{
 		NodesAutoSync:    true,

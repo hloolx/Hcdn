@@ -2,10 +2,10 @@ package models
 
 import (
 	"github.com/TeaOSLab/EdgeAPI/internal/errors"
+	"github.com/TeaOSLab/EdgeAPI/internal/utils/securerand"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/dbs"
-	"github.com/iwind/TeaGo/rands"
 	"time"
 )
 
@@ -53,7 +53,7 @@ func (this *APIAccessTokenDAO) GenerateAccessToken(tx *dbs.Tx, adminId int64, us
 		return "", 0, err
 	}
 
-	token = rands.String(128) // TODO 增强安全性，将来使用 base64_encode(encrypt(salt+random)) 算法来代替
+	token = securerand.RandString(128) // FIX-16: crypto/rand instead of math/rand-backed rands.String
 	expiresAt = time.Now().Unix() + 7200
 
 	var op = NewAPIAccessTokenOperator()
