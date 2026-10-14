@@ -6,7 +6,6 @@ import (
 	"github.com/TeaOSLab/EdgeAPI/internal/goman"
 	"github.com/go-sql-driver/mysql"
 	"github.com/iwind/TeaGo/dbs"
-	"golang.org/x/sys/unix"
 	"time"
 )
 
@@ -60,13 +59,10 @@ func CheckHasFreeSpace() bool {
 		}
 		LocalDatabaseDataDir = dir
 
-		var stat unix.Statfs_t
-		err = unix.Statfs(dir, &stat)
+		availableSpace, err := availableSpaceGB(dir)
 		if err != nil {
 			return true
 		}
-
-		var availableSpace = (stat.Bavail * uint64(stat.Bsize)) / (1 << 30) // GB
 		return availableSpace > minFreeSpaceGB
 	}
 	return true
