@@ -120,7 +120,7 @@ function mkNode(
     isUp: up,
     isInstalled: true,
     region,
-    version: id === 5 ? "1.4.0" : "1.4.2",
+    version: id === 5 ? "1.3.9-hcdn.1" : "1.3.9-hcdn.2",
     cpu: up ? load.cpu : null,
     memory: up ? load.mem : null,
     load1: up ? Math.round(load.cpu * 8 * 100) / 100 : null,
@@ -421,7 +421,7 @@ export function dashboard(range: TimeRange): AdminDashboard {
     { id: "a1", level: "critical", title: "节点离线", message: "hkg-01（198.51.100.31）已 3 小时无心跳", time: NOW - 3 * HOUR - 840 },
     { id: "a2", level: "warning", title: "CPU 使用率偏高", message: "tyo-03 CPU 持续 15 分钟高于 80%", time: NOW - 22 * 60 },
     { id: "a3", level: "warning", title: "证书即将过期", message: `${certs.filter((c) => c.status === "expiring").length} 张证书将在 14 天内过期`, time: NOW - 2 * HOUR },
-    { id: "a4", level: "info", title: "新版本可用", message: "edge-node 1.4.2 已发布，hkg-01 仍为 1.4.0", time: NOW - DAY - 4 * HOUR },
+    { id: "a4", level: "info", title: "版本不一致", message: "hkg-01 仍运行 1.3.9-hcdn.1，其余节点为 1.3.9-hcdn.2", time: NOW - DAY - 4 * HOUR },
   ];
   return {
     range,

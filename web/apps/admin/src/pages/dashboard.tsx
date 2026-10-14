@@ -194,7 +194,7 @@ function TrafficCard({ data, loading }: { data: AdminDashboard | undefined; load
           data={(data?.series ?? []) as unknown as Record<string, number>[]}
           series={series}
           formatValue={(v) => formatBytes(v)}
-          formatAxisValue={(v) => formatBytes(v, 0)}
+          unit="bytes"
           formatTime={timeLabel(step, locale)}
           formatTooltipTime={tooltipTimeLabel(step, locale)}
         />

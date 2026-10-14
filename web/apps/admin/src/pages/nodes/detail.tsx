@@ -19,7 +19,7 @@ import { formatBits, formatDateTime, formatNumber, formatRelative } from "@hcdn/
 import { api } from "@/lib/api";
 import { currentLocale } from "@/lib/i18n";
 import { toastError } from "@/lib/hooks";
-import { bitsAxis, timeLabel, tooltipTimeLabel } from "@/lib/stats";
+import { timeLabel, tooltipTimeLabel } from "@/lib/stats";
 import { NodeStatusBadge, nodeState } from "@/components/node-status";
 import { UsageMeter } from "@/components/usage-meter";
 import { NotFoundPage } from "@/pages/not-found";
@@ -266,7 +266,7 @@ function NodeView({ node }: { node: NodeDetail }) {
                 series={[{ key: "bandwidthBps", label: t("出口带宽"), color: "var(--chart-3)" }]}
                 height={220}
                 formatValue={(v) => formatBits(v)}
-                formatAxisValue={bitsAxis}
+                unit="bits"
                 formatTime={fmtTime}
                 formatTooltipTime={fmtTip}
               />
