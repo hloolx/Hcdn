@@ -1,0 +1,71 @@
+# Hcdn repository-wide ignore rules.
+# Module-level .gitignore files (edge-*/.gitignore, edge-*/build/**/.gitignore)
+# stay authoritative; the rules below add defense in depth.
+
+# ---- Build outputs ----
+# scripts/build.sh writes everything to /dist/ by default.
+/dist/
+# Upstream per-module dist dirs (keep the tracked .gitignore placeholders).
+/edge-*/dist/*
+!/edge-*/dist/.gitignore
+# Artifacts produced by the upstream build flow inside build dirs.
+/edge-*/build/**/*.zip
+/edge-api/build/installers/edge-*
+/edge-node/build/bin/
+/edge-admin/build/edge-api/
+# Local Go build / test leftovers.
+*.test
+*.out
+*.prof
+/edge-*/edge-admin
+/edge-*/edge-api
+/edge-*/edge-node
+
+# ---- Logs and runtime data ----
+*.log
+/edge-*/build/logs/*
+!/edge-*/build/logs/.gitignore
+/edge-node/build/data/
+/edge-node/build/caches/
+
+# ---- Runtime configs that hold real credentials ----
+# Only the *.template.yaml files under build/configs are tracked.
+/edge-api/build/configs/api.yaml
+/edge-api/build/configs/db.yaml
+/edge-api/build/configs/.db.yaml
+/edge-node/build/configs/api.yaml
+/edge-node/build/configs/api_node.yaml
+/edge-node/build/configs/cluster.yaml
+/edge-node/build/configs/api_cluster.yaml
+/edge-node/build/configs/node.json
+/edge-admin/build/configs/api.yaml
+/edge-admin/build/configs/api_admin.yaml
+/edge-admin/build/configs/api_db.yaml
+/edge-admin/build/configs/server.yaml
+/edge-*/build/configs/*.pem
+/edge-*/build/configs/*.cache
+/edge-*/build/configs/*.cache.json
+# Same files if a module is ever run with configs/ at the module root.
+/edge-*/configs/
+*.pem
+*.key
+!*.template.*
+
+# ---- Secrets / environment ----
+.env
+.env.*
+!.env.example
+
+# ---- Tooling ----
+node_modules/
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+__pycache__/
+*.pyc
