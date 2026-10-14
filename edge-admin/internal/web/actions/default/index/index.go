@@ -162,10 +162,6 @@ func (this *IndexAction) RunPost(params struct {
 		Field("password", params.Password).
 		Require("请输入密码")
 
-	if params.Password == stringutil.Md5("") {
-		this.FailField("password", "请输入密码")
-	}
-
 	// 检查token
 	if len(params.Token) <= 32 {
 		this.Fail("请通过登录页面登录")

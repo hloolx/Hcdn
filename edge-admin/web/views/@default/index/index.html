@@ -11,7 +11,6 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0">
     {$TEA.VUE}
     {$TEA.SEMANTIC}
-	<script type="text/javascript" src="/js/md5.min.js"></script>
 	<script type="text/javascript" src="/js/utils.min.js"></script>
 	<script type="text/javascript" src="/js/sweetalert2/dist/sweetalert2.all.min.js"></script>
 	<script type="text/javascript" src="/js/components.js"></script>
@@ -23,7 +22,7 @@
 	<div class="form-box">
 		<form method="post" class="ui form" data-tea-action="$" data-tea-before="submitBefore" data-tea-done="submitDone" data-tea-success="submitSuccess" autocomplete="off">
 			<csrf-token></csrf-token>
-			<input type="hidden" name="password" v-model="passwordMd5"/>
+			<input type="hidden" name="password" v-model="password"/>
 			<input type="hidden" name="token" v-model="token"/>
 			<div class="ui segment stacked">
 				<div class="ui header">
@@ -38,7 +37,7 @@
 				<div class="ui field">
 					<div class="ui left icon input">
 						<i class="ui lock icon small"></i>
-						<input type="password" v-model="password" placeholder="请输入密码" maxlength="200" @input="changePassword()" ref="passwordRef"/>
+						<input type="password" v-model="password" placeholder="请输入密码" maxlength="200" ref="passwordRef"/>
 					</div>
 				</div>
 				<div class="ui field" v-if="rememberLogin">

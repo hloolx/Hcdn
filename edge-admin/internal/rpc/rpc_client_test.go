@@ -4,7 +4,6 @@ import (
 	"github.com/TeaOSLab/EdgeAdmin/internal/configs"
 	"github.com/TeaOSLab/EdgeCommon/pkg/rpc/pb"
 	_ "github.com/iwind/TeaGo/bootstrap"
-	stringutil "github.com/iwind/TeaGo/utils/string"
 	"testing"
 	"time"
 )
@@ -24,7 +23,7 @@ func TestRPCClient_NodeRPC(t *testing.T) {
 	}
 	resp, err := rpc.AdminRPC().LoginAdmin(rpc.Context(0), &pb.LoginAdminRequest{
 		Username: "admin",
-		Password: stringutil.Md5("123456"),
+		Password: "123456",
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -98,7 +97,7 @@ func BenchmarkNewRPCClient(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		resp, err := rpc.AdminRPC().LoginAdmin(rpc.Context(0), &pb.LoginAdminRequest{
 			Username: "admin",
-			Password: stringutil.Md5("123456"),
+			Password: "123456",
 		})
 		if err != nil {
 			b.Fatal(err)
@@ -124,7 +123,7 @@ func BenchmarkNewRPCClient_2(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		resp, err := conn.LoginAdmin(rpc.Context(0), &pb.LoginAdminRequest{
 			Username: "admin",
-			Password: stringutil.Md5("123456"),
+			Password: "123456",
 		})
 		if err != nil {
 			b.Fatal(err)
