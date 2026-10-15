@@ -225,6 +225,8 @@ const en: Record<string, string> = {
   "已加载 {{n}} 条": "{{n}} loaded",
   "第 {{n}} 步，共 4 步": "Step {{n}} of 4",
   "四步完成接入：填写域名和源站，选择选项，然后在 DNS 服务商处添加 CNAME 记录。": "Four steps: domains, origin, options, then add a CNAME record at your DNS provider.",
+  "人机验证失败，请重试": "Verification failed, please try again.",
+  "人机验证服务暂不可用，请稍后重试": "Verification is temporarily unavailable, please try again later.",
 };
 
 export default en;

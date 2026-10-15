@@ -58,6 +58,8 @@ export const handlers = [
       emailVerificationRequired: false,
       passwordResetAvailable: true,
       cnameDomain: "cdn.example.com",
+      // Cloudflare's documented "always passes" Turnstile test site key.
+      turnstileSiteKey: "1x00000000000000000000AA",
     }),
   ),
   http.get(`${B}/public/plans`, async () => {

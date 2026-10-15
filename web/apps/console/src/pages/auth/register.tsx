@@ -10,6 +10,7 @@ import { ApiError } from "@hcdn/api/client";
 import { Button } from "@hcdn/ui/components/button";
 import { Input } from "@hcdn/ui/components/input";
 import { PasswordInput, PasswordStrength } from "@hcdn/ui/components/password-input";
+import { Turnstile, type TurnstileHandle } from "@hcdn/ui/components/turnstile";
 import { Field } from "@hcdn/ui/blocks/field";
 import { EmptyState } from "@hcdn/ui/blocks/states";
 import { toast } from "@hcdn/ui/components/toaster";
@@ -33,12 +34,16 @@ const schema = z
 type FormValues = z.infer<typeof schema>;
 
 export function RegisterPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const config = usePublicConfig();
   const [pending, setPending] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [captchaError, setCaptchaError] = React.useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = React.useState<string | null>(null);
+  const turnstileRef = React.useRef<TurnstileHandle>(null);
+  const siteKey = config.data?.turnstileSiteKey ?? "";
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { username: "", email: "", password: "", confirm: "" },
@@ -46,11 +51,18 @@ export function RegisterPage() {
   const password = form.watch("password");
   const { errors, isSubmitting } = form.formState;
   const msg = (m?: string) => (m ? t(m) : undefined);
+  const needsCaptcha = Boolean(siteKey) && !turnstileToken;
 
   async function onSubmit(v: FormValues) {
     setError(null);
+    setCaptchaError(null);
     try {
-      const res = await api.register({ username: v.username, email: v.email, password: v.password });
+      const res = await api.register({
+        username: v.username,
+        email: v.email,
+        password: v.password,
+        turnstileToken: turnstileToken ?? undefined,
+      });
       if (res.pendingVerification || !res.me) {
         setPending(v.email);
         return;
@@ -59,7 +71,18 @@ export function RegisterPage() {
       toast.success(t("注册成功，欢迎使用 Hcdn"));
       navigate("/sites/new", { replace: true });
     } catch (e) {
+      // Tokens are single-use: any failed submit needs a fresh one.
+      turnstileRef.current?.reset();
+      setTurnstileToken(null);
       if (e instanceof ApiError) {
+        if (e.code === "captcha_failed") {
+          setCaptchaError(t("人机验证失败，请重试"));
+          return;
+        }
+        if (e.code === "captcha_unavailable") {
+          setCaptchaError(t("人机验证服务暂不可用，请稍后重试"));
+          return;
+        }
         for (const [field, message] of Object.entries(e.fields)) {
           if (field in v) form.setError(field as keyof FormValues, { message });
         }
@@ -126,12 +149,25 @@ export function RegisterPage() {
         <Field label={t("确认密码")} htmlFor="confirm" error={msg(errors.confirm?.message)}>
           <PasswordInput id="confirm" autoComplete="new-password" className="h-10" {...form.register("confirm")} />
         </Field>
+        {siteKey ? (
+          <div className="grid gap-2">
+            <Turnstile
+              ref={turnstileRef}
+              siteKey={siteKey}
+              lang={i18n.language === "en" ? "en" : "zh"}
+              onVerify={setTurnstileToken}
+              onExpire={() => setTurnstileToken(null)}
+              onError={() => setTurnstileToken(null)}
+            />
+            {captchaError ? <p className="text-[12.5px] font-medium text-destructive-foreground">{captchaError}</p> : null}
+          </div>
+        ) : null}
         {error ? (
           <div role="alert" className="rounded-lg border border-destructive/25 bg-destructive-soft px-3 py-2.5 text-[13px] text-destructive-foreground">
             {error}
           </div>
         ) : null}
-        <Button type="submit" size="lg" className="mt-1 w-full" loading={isSubmitting}>
+        <Button type="submit" size="lg" className="mt-1 w-full" loading={isSubmitting} disabled={needsCaptcha}>
           {t("创建账号")}
         </Button>
         <p className="text-center text-xs leading-relaxed text-muted-foreground">

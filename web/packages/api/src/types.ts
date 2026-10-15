@@ -44,6 +44,8 @@ export interface PublicConfig {
   passwordResetAvailable: boolean;
   /** Base domain customers CNAME to, e.g. "cdn.example.com". Empty when DNS is not configured yet. */
   cnameDomain: string;
+  /** Cloudflare Turnstile site key for the login/register/forgot-password captcha. Empty disables it. */
+  turnstileSiteKey: string;
 }
 
 export interface PlanSummary {
@@ -70,6 +72,8 @@ export interface LoginRequest {
   password: string;
   /** Required when the previous attempt returned code "otp_required". */
   otp?: string;
+  /** Required when PublicConfig.turnstileSiteKey is non-empty; tokens are single-use. */
+  turnstileToken?: string;
 }
 
 export interface RegisterRequest {
@@ -77,6 +81,8 @@ export interface RegisterRequest {
   email: string;
   password: string;
   fullname?: string;
+  /** Required when PublicConfig.turnstileSiteKey is non-empty; tokens are single-use. */
+  turnstileToken?: string;
 }
 
 export interface RegisterResponse {

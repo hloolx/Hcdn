@@ -44,7 +44,7 @@ export function createConsoleApi(opts: Partial<ClientOptions> = {}) {
     login: (body: LoginRequest) => c.post<Me>("/auth/login", body),
     register: (body: RegisterRequest) => c.post<RegisterResponse>("/auth/register", body),
     logout: () => c.post<void>("/auth/logout"),
-    forgotPassword: (email: string) => c.post<void>("/auth/password/forgot", { email }),
+    forgotPassword: (email: string, turnstileToken?: string) => c.post<void>("/auth/password/forgot", { email, turnstileToken }),
     resetPassword: (token: string, password: string) => c.post<void>("/auth/password/reset", { token, password }),
     verifyEmail: (token: string) => c.post<void>("/auth/email/verify", { token }),
 

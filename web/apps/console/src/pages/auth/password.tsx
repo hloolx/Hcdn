@@ -5,10 +5,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, MailCheck, CircleCheck, CircleAlert } from "lucide-react";
-import { errorMessage } from "@hcdn/api/client";
+import { ApiError, errorMessage } from "@hcdn/api/client";
 import { Button } from "@hcdn/ui/components/button";
 import { Input } from "@hcdn/ui/components/input";
 import { PasswordInput, PasswordStrength } from "@hcdn/ui/components/password-input";
+import { Turnstile, type TurnstileHandle } from "@hcdn/ui/components/turnstile";
 import { Field } from "@hcdn/ui/blocks/field";
 import { EmptyState } from "@hcdn/ui/blocks/states";
 import { toast } from "@hcdn/ui/components/toaster";
@@ -19,9 +20,14 @@ import { AuthHeader } from "@/layouts/auth-layout";
 const forgotSchema = z.object({ email: z.string().trim().email("请输入有效的邮箱地址") });
 
 export function ForgotPasswordPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const config = usePublicConfig();
   const [sent, setSent] = React.useState<string | null>(null);
+  const [captchaError, setCaptchaError] = React.useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = React.useState<string | null>(null);
+  const turnstileRef = React.useRef<TurnstileHandle>(null);
+  const siteKey = config.data?.turnstileSiteKey ?? "";
+  const needsCaptcha = Boolean(siteKey) && !turnstileToken;
   const form = useForm<z.infer<typeof forgotSchema>>({ resolver: zodResolver(forgotSchema), defaultValues: { email: "" } });
 
   if (config.data && !config.data.passwordResetAvailable) {
@@ -58,10 +64,22 @@ export function ForgotPasswordPage() {
         noValidate
         className="grid gap-5"
         onSubmit={form.handleSubmit(async (v) => {
+          setCaptchaError(null);
           try {
-            await api.forgotPassword(v.email);
+            await api.forgotPassword(v.email, turnstileToken ?? undefined);
             setSent(v.email);
           } catch (e) {
+            // Tokens are single-use: any failed submit needs a fresh one.
+            turnstileRef.current?.reset();
+            setTurnstileToken(null);
+            if (e instanceof ApiError && e.code === "captcha_failed") {
+              setCaptchaError(t("人机验证失败，请重试"));
+              return;
+            }
+            if (e instanceof ApiError && e.code === "captcha_unavailable") {
+              setCaptchaError(t("人机验证服务暂不可用，请稍后重试"));
+              return;
+            }
             toast.error(errorMessage(e));
           }
         })}
@@ -69,7 +87,20 @@ export function ForgotPasswordPage() {
         <Field label={t("邮箱")} htmlFor="email" error={form.formState.errors.email?.message ? t(form.formState.errors.email.message) : undefined}>
           <Input id="email" type="email" autoComplete="email" autoFocus className="h-10" {...form.register("email")} />
         </Field>
-        <Button type="submit" size="lg" className="w-full" loading={form.formState.isSubmitting}>
+        {siteKey ? (
+          <div className="grid gap-2">
+            <Turnstile
+              ref={turnstileRef}
+              siteKey={siteKey}
+              lang={i18n.language === "en" ? "en" : "zh"}
+              onVerify={setTurnstileToken}
+              onExpire={() => setTurnstileToken(null)}
+              onError={() => setTurnstileToken(null)}
+            />
+            {captchaError ? <p className="text-[12.5px] font-medium text-destructive-foreground">{captchaError}</p> : null}
+          </div>
+        ) : null}
+        <Button type="submit" size="lg" className="w-full" loading={form.formState.isSubmitting} disabled={needsCaptcha}>
           {t("发送重置邮件")}
         </Button>
         <Button asChild variant="ghost">
