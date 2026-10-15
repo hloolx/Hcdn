@@ -88,6 +88,13 @@ log:
   level: info          # debug | info | warn | error
   format: text         # text | json
 
+# Optional Cloudflare Turnstile captcha on login, register and the
+# forgot-password form. Leave both empty to disable; both must be set to
+# enable it. Get keys at https://dash.cloudflare.com/ -> Turnstile.
+turnstile:
+  siteKey: ""
+  secretKey: ""
+
 defaultPlan: free
 plans:
   - id: free

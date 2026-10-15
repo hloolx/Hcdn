@@ -130,6 +130,9 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger) error {
 	if !cfg.EdgeAPI.Admin.Valid() {
 		log.Warn("edgeAPI.admin credential missing: admin endpoints will fail")
 	}
+	if (cfg.Turnstile.SiteKey == "") != (cfg.Turnstile.SecretKey == "") {
+		log.Warn("turnstile.siteKey and turnstile.secretKey must both be set to enable the captcha; leaving it disabled")
+	}
 	a, err := app.New(cfg, st, edge, log)
 	if err != nil {
 		return err

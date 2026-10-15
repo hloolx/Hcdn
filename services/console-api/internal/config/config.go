@@ -69,6 +69,9 @@ type Config struct {
 		Level  string `yaml:"level"`
 		Format string `yaml:"format"` // "text" | "json"
 	} `yaml:"log"`
+	// Turnstile is the Cloudflare human-verification widget shown on login,
+	// register and the password-reset request form.
+	Turnstile Turnstile `yaml:"turnstile"`
 
 	path string
 }
@@ -94,6 +97,16 @@ type SMTP struct {
 
 // Configured reports whether mail can be sent.
 func (s SMTP) Configured() bool { return s.Host != "" && s.From != "" }
+
+// Turnstile is the Cloudflare Turnstile captcha configuration. Both keys come
+// from the Cloudflare dashboard for the console's domain.
+type Turnstile struct {
+	SiteKey   string `yaml:"siteKey"`
+	SecretKey string `yaml:"secretKey"`
+}
+
+// Enabled reports whether captcha verification should run: both keys must be set.
+func (t Turnstile) Enabled() bool { return t.SiteKey != "" && t.SecretKey != "" }
 
 // Registration controls self-service signup.
 type Registration struct {

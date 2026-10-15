@@ -41,9 +41,10 @@ type meResp struct {
 }
 
 type loginReq struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-	OTP      string `json:"otp"`
+	Username       string `json:"username"`
+	Password       string `json:"password"`
+	OTP            string `json:"otp"`
+	TurnstileToken string `json:"turnstileToken"`
 }
 
 // ---------------------------------------------------------------- validation helpers
@@ -93,6 +94,7 @@ func (a *App) publicConfig(w http.ResponseWriter, r *http.Request) error {
 		"emailVerificationRequired": a.emailVerificationRequired(),
 		"passwordResetAvailable":    a.mail != nil,
 		"cnameDomain":               a.cfg.CNAMEDomain,
+		"turnstileSiteKey":          a.turnstileSiteKey(),
 	})
 }
 
@@ -215,6 +217,9 @@ func (a *App) login(w http.ResponseWriter, r *http.Request) error {
 	if err := f.Err(); err != nil {
 		return err
 	}
+	if err := a.verifyTurnstile(r, req.TurnstileToken); err != nil {
+		return err
+	}
 	ip := clientIP(r)
 	ctx := r.Context()
 	if err := a.checkLoginAllowed(ctx, store.KindUser, req.Username, ip); err != nil {
@@ -299,10 +304,11 @@ func (a *App) logoutWith(cookie string) handlerFunc {
 // ---------------------------------------------------------------- registration
 
 type registerReq struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Fullname string `json:"fullname"`
+	Username       string `json:"username"`
+	Email          string `json:"email"`
+	Password       string `json:"password"`
+	Fullname       string `json:"fullname"`
+	TurnstileToken string `json:"turnstileToken"`
 }
 
 func (a *App) register(w http.ResponseWriter, r *http.Request) error {
@@ -334,6 +340,9 @@ func (a *App) register(w http.ResponseWriter, r *http.Request) error {
 		f.Add("fullname", "姓名不能超过 64 个字符")
 	}
 	if err := f.Err(); err != nil {
+		return err
+	}
+	if err := a.verifyTurnstile(r, req.TurnstileToken); err != nil {
 		return err
 	}
 	ctx := r.Context()
@@ -492,7 +501,8 @@ func (a *App) forgotPassword(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	var req struct {
-		Email string `json:"email"`
+		Email          string `json:"email"`
+		TurnstileToken string `json:"turnstileToken"`
 	}
 	if err := httpx.DecodeJSON(r, &req); err != nil {
 		return err
@@ -500,6 +510,9 @@ func (a *App) forgotPassword(w http.ResponseWriter, r *http.Request) error {
 	email := strings.TrimSpace(req.Email)
 	if !validEmail(email) {
 		return httpx.Validation(map[string]string{"email": "请输入有效的邮箱地址"})
+	}
+	if err := a.verifyTurnstile(r, req.TurnstileToken); err != nil {
+		return err
 	}
 	if a.mail == nil {
 		return noContent(w) // never reveal anything; UI hides the flow via passwordResetAvailable=false

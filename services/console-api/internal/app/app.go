@@ -45,6 +45,10 @@ type App struct {
 	userAPI  *http.ServeMux
 	adminAPI *http.ServeMux
 
+	// turnstileVerifyURL overrides Cloudflare's siteverify endpoint; empty
+	// uses turnstileSiteverifyURL. Tests point this at an httptest server.
+	turnstileVerifyURL string
+
 	acmeSem chan struct{}
 	base    context.Context // cancelled on shutdown; parent of background jobs
 
@@ -196,8 +200,12 @@ func (a *App) classify(host string) hostKind {
 	return hostUnknown
 }
 
-const csp = "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; " +
-	"connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
+// script-src/frame-src/connect-src additionally allow challenges.cloudflare.com
+// so the Turnstile widget (login/register/forgot-password) can load, run and
+// report back; everything else stays as strict as before.
+const csp = "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; " +
+	"script-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; " +
+	"connect-src 'self' https://challenges.cloudflare.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
 
 // ServeHTTP is the root handler.
 func (a *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
