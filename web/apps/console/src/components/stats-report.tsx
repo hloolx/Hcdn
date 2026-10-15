@@ -182,6 +182,7 @@ export function TrafficChartCard({ report, loading, className }: { report?: Stat
           data={(report?.series ?? []) as unknown as Record<string, number>[]}
           series={series}
           formatValue={fmt}
+          unit={metric === "bytes" ? "bytes" : "bits"}
           formatAxisValue={fmtAxis}
           formatTime={timeLabel(step, locale)}
           formatTooltipTime={tooltipTimeLabel(step, locale)}
