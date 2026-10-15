@@ -23,6 +23,7 @@ import (
 	"github.com/iwind/TeaGo/rands"
 	"github.com/iwind/TeaGo/types"
 	timeutil "github.com/iwind/TeaGo/utils/time"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -2030,9 +2031,15 @@ func (this *ServerDAO) ExistServerNameInCluster(tx *dbs.Tx, clusterId int64, ser
 }
 
 // GenDNSName 生成DNS Name
+// HCDN_SERVER_DNS_SUFFIX (e.g. "cdn") nests server records one label below the
+// DNS domain, so customers CNAME to <hex>.cdn.<domain> instead of <hex>.<domain>.
 func (this *ServerDAO) GenDNSName(tx *dbs.Tx) (string, error) {
+	var suffix = strings.Trim(strings.ToLower(strings.TrimSpace(os.Getenv("HCDN_SERVER_DNS_SUFFIX"))), ".")
 	for {
 		dnsName := rands.HexString(8)
+		if len(suffix) > 0 {
+			dnsName += "." + suffix
+		}
 		exist, err := this.Query(tx).
 			Attr("dnsName", dnsName).
 			Exist()

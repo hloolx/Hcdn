@@ -9,6 +9,8 @@ User=hcdn
 Group=hcdn
 WorkingDirectory=/opt/hcdn/edge-api
 ExecStart=/opt/hcdn/edge-api/bin/edge-api
+# New websites get CNAME targets like <hex>.cdn.<cluster DNS domain>.
+Environment=HCDN_SERVER_DNS_SUFFIX=cdn
 Restart=on-failure
 RestartSec=5
 LimitNOFILE=65535
