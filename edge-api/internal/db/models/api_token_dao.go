@@ -1,10 +1,12 @@
 package models
 
 import (
+	"github.com/TeaOSLab/EdgeAPI/internal/utils/ttlcache"
 	"github.com/TeaOSLab/EdgeCommon/pkg/nodeconfigs"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/iwind/TeaGo/Tea"
 	"github.com/iwind/TeaGo/dbs"
+	"time"
 )
 
 const (
@@ -12,7 +14,11 @@ const (
 	ApiTokenStateDisabled = 0 // 已禁用
 )
 
-var apiTokenCacheMap = map[string]*ApiToken{} // uniqueId => ApiToken
+// apiTokenCacheTTLSeconds is how long FindEnabledTokenWithNodeCacheable may
+// serve a cached *ApiToken before re-checking the database (FIX-32). A
+// revoked/rotated token's old secret stops being accepted within this
+// window instead of until the process restarts.
+const apiTokenCacheTTLSeconds = int64(60)
 
 type ApiTokenDAO dbs.DAO
 
@@ -64,23 +70,29 @@ func (this *ApiTokenDAO) FindEnabledApiToken(tx *dbs.Tx, id uint32) (*ApiToken, 
 }
 
 // FindEnabledTokenWithNodeCacheable 获取可缓存的节点Token信息
+//
+// FIX-32: cached with a TTL (ttlcache.SharedCache, apiTokenCacheTTLSeconds)
+// instead of an unbounded in-memory map, so a revoked/rotated token stops
+// being served from cache within a minute instead of until the process
+// restarts.
 func (this *ApiTokenDAO) FindEnabledTokenWithNodeCacheable(tx *dbs.Tx, nodeId string) (*ApiToken, error) {
-	SharedCacheLocker.RLock()
-	token, ok := apiTokenCacheMap[nodeId]
-	if ok {
-		SharedCacheLocker.RUnlock()
-		return token, nil
+	var cacheKey = "apiToken@nodeId@" + nodeId
+
+	var item = ttlcache.SharedCache.Read(cacheKey)
+	if item != nil {
+		token, ok := item.Value.(*ApiToken)
+		if ok {
+			return token, nil
+		}
 	}
-	SharedCacheLocker.RUnlock()
+
 	one, err := this.Query(tx).
 		Attr("nodeId", nodeId).
 		State(ApiTokenStateEnabled).
 		Find()
 	if one != nil {
-		token = one.(*ApiToken)
-		SharedCacheLocker.Lock()
-		apiTokenCacheMap[nodeId] = token
-		SharedCacheLocker.Unlock()
+		var token = one.(*ApiToken)
+		ttlcache.SharedCache.Write(cacheKey, token, time.Now().Unix()+apiTokenCacheTTLSeconds)
 		return token, nil
 	}
 	return nil, err
