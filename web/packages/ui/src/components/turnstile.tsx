@@ -138,7 +138,7 @@ const Turnstile = React.forwardRef<TurnstileHandle, TurnstileProps>(function Tur
 
   return (
     <div className={cn("w-full", className)}>
-      <div ref={containerRef} className={cn("w-full", status !== "ready" && "sr-only")} />
+      <div ref={containerRef} className={cn("w-full overflow-hidden rounded-lg", status !== "ready" && "sr-only")} />
       {status === "loading" ? <Skeleton className={cn("w-full rounded-lg", WIDGET_HEIGHT)} /> : null}
       {status === "error" ? (
         <div
